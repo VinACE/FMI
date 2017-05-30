@@ -531,10 +531,16 @@ class SurveyWorkbook:
 
     workbooks = {
         "fresh and clean" : {
+            'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
+            'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
+                               "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
             'charts'        : dashboard_fresh,
             'storyboard'    : storyboard_fresh,
             },
         "orange beverages" : {
+            'display'       : ["gender", "age", 'brand', "blindcode", "liking"],
+            'facets'        : ["survey.keyword", "gender.keyword", "age.keyword", "blindcode.keyword", "liking.keyword",
+                               "hedonics", "affective", "ballot", "behavioral", "physical"],
             'charts'        : dashboard_orange,
             'storyboard'    : storyboard_orange,
             },

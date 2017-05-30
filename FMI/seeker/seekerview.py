@@ -949,6 +949,12 @@ class SeekerView (View):
                 workbook = self.workbooks[workbook_name]
                 if 'display' in workbook:
                     self.display = workbook['display']
+                if 'facets' in workbook:
+                    for facet in self.facets:
+                        if facet.field in workbook['facets']:
+                            facet.visible_pos = 1
+                        else:
+                            facet.visible_pos = 0
                 if 'charts' in workbook:
                     self.dashboard = workbook['charts']
                 if 'storyboard' in workbook:
@@ -984,7 +990,6 @@ class SeekerView (View):
         keywords_q = self.get_keywords_q()
         facets = self.get_facet_data(initial=self.initial_facets if not self.request.is_ajax() else None)
         facets_keyword = self.get_facets_keyword_data()
-
 
         search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
         search = self.get_aggr(search, self.dashboard)

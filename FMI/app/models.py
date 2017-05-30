@@ -2026,13 +2026,14 @@ class SurveySeekerView (seeker.SeekerView, workbooks.SurveyWorkbook):
         seeker.TermsFacet("regions.keyword", label = "Region", visible_pos=0),
         seeker.TermsFacet("city.keyword", label = "City", visible_pos=0),
         seeker.TermsFacet("gender.keyword", label = "Gender"),
-        seeker.TermsFacet("ethnics.keyword", label = "Ethnics"),
+        seeker.TermsFacet("ethnics.keyword", label = "Ethnics", visible_pos=0),
         seeker.TermsFacet("income.keyword", label = "Income", visible_pos=0),
         seeker.TermsFacet("age.keyword", label = "Age"),
         #seeker.RangeFilter("age", label = "Age"),
         seeker.TermsFacet("cluster.keyword", label = "Cluster"),
         seeker.TermsFacet("brand.keyword", label = "Brand"),
         seeker.TermsFacet("product_form.keyword", label = "Product Form"),
+        seeker.TermsFacet("method.keyword", label = "Method"),
         seeker.TermsFacet("blindcode.keyword", label = "Blind Code"),
         seeker.TermsFacet("olfactive.keyword", label = "Olfactive"),
         seeker.TermsFacet("perception.keyword", label = "Perception"),
@@ -2059,13 +2060,13 @@ class SurveySeekerView (seeker.SeekerView, workbooks.SurveyWorkbook):
     facets_keyword = [
         seeker.KeywordFacet("facet_keyword", label = "Benchmark", input="keywords_k"),
         ];
-    display = [
-        "gender",
-        "age",
-        'brand',
-        "blindcode",
-        "freshness",
-        ]
+    #display = [
+    #    "gender",
+    #    "age",
+    #    'brand',
+    #    "blindcode",
+    #    "freshness",
+    #    ]
     exclude = [
         "resp_id",
         ]
