@@ -47,7 +47,7 @@ fld_encode = {
     "perception"    : {"Clean" : ["2", "Clean"], "Fresh": ["3", "Fresh"], "Long lasting" : ["1", "Long lasting"]},
     "Frequency"     : {"occasionally":["Occasionally"], "regularly":["Regularly"]},
     "Gender frag"   : {"Female":["F"], "Male":["M"],"Unisex":["U"],"Other":["00OTHER"]},
-    "gender"        : {"Male" : ["Male", "Man", "1"], "Female": ["Femal", "Woman", "2"]},
+    "gender"        : {"Male" : ["Male", "Man", "1", "1.00"], "Female": ["Femal", "Woman", "2", "2.00"]},
     "strength5"     : {"5 Much too Strong" : ["5"], "4 A little too Strong": ["4"],
                        "3 Just About Right" : ["3"], "2 A little too Weak": ["2"], "1 Much too Weak": ["1"]},
     "liking7"       : {"7 Like very much" : ["7"], "6 Like moderately": ["6"], "5 Like a little" : ["5"], "4 Neither like / dislike": ["4"],
@@ -85,9 +85,9 @@ col2fld = {
     "cleanliness"   : ["h9_Cleanliness"],
     "lastingness"   : ["h9_Long lastingness"],
     "intensity"     : ["j_JAR Strength"],
-    'age'           : ["Age cat", "Age group"],
+    'age'           : ["Age cat", "Age group", "Q17_1__Age"],
     "product_form"  : ["Detergent format"],
-    'gender'        : ["Woman/Man", "Gender"],
+    'gender'        : ["Woman/Man", "Gender", "Q16__Gender"],
     "perception"    : ["would you say this fragrance is"],
     }
 
