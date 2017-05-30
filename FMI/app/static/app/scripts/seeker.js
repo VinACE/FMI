@@ -37,6 +37,13 @@ function tab_active() {
 }
 
 
+function get_workbook() {
+    var input = document.getElementsByName("workbook")[0];
+    var query = window.location.search;
+    var workbook_name = getParameterByName("workbook");
+    input.value = workbook_name;
+}
+
 function db_facet_select_onchange() {
     var facet = document.getElementById("db_facet_select").value;
     var params = {
@@ -475,6 +482,7 @@ $(document).ready(function () {
 
 
 tab_active();
+get_workbook();
 
 
 
