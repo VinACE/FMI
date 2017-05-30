@@ -1,0 +1,154 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Market Insights {{ title }} <small>Market Intelligence, News/RSS Feeds, Web Sites {{ es_hosts.0.host }}</small></h1>
+</div>
+
+{% load staticfiles %}
+<form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/mi.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Market<br />Intelligence</h3>
+				                <p>
+                                    Analyze the Market Intelligence site.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the <a href="https://iffconnect.iff.com/Fragrances/marketintelligence/default.aspx" target="_blank">Market Intelligence site</a>. This site contains 
+                            hot off the press articles on IFF customers, competitors and general industry to keep you up-to-date on the latest  market developments.
+                            <br />
+                            The following facets are scraped from each posting: <em>posting-date, category, editor, source, relevance, toplines, average rating, numbere of ratings,
+                            number of comments</em> and the posting itself.
+                        </p>
+                        <p>
+                            <button type="submit" name="search_mi"  class="btn btn-primary">Search Market Intelligence
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/Feedly2.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Feedly</h3>
+				                <p>
+                                    Analyze the Feedly newsfeed site.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the <a href="https://feedly.com/" target="_blank">Feedly newsfeed site</a>. Feeldy is a new and RSS reader. For the subscribed
+                            sites and RSS feeds feedly obtains the latest news postings. These postings are indexed in ElasticSearch and rated on relevance. Relevance
+                            is measured by counting the amount of pre-defined keywords that occur in the posting. The
+                            relevant posting are candidates to be added to the Market Intelligence site.
+                            <br />
+                            The following facets are scraped from each posting: <em>published-date, feed category, feed, feed topics, title, posing keywords,
+                            </em> and the posting itself.
+                        </p>
+                        <p>
+                            <button type="submit" name="search_feedly"  class="btn btn-primary">Search Feedly
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				            <div class="info-card-front">
+					            <img class="card-image" src="{% static "app/media/cosmetics.jpg" %}">
+				            </div>
+			                <div class="info-card-back">
+				                <h3>Cosmetics</h3>
+				                <p>
+                                    Analyze the Cosmetic Design sites.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>>
+                            Analyze the <a href="http://www.cosmeticsdesign.com/" target="_blank">Cosmetic Design sites</a>. This site contains a Product Library and Marketing Headlines.
+                            Of the Product Library the next product cateogries are indexed: Skin Care, Hair Care, Color Cosmetics and Fragraces.
+                            From the Marketing Headlines the Brand Innovation and Marketing Trends are indexed.
+                            <br />
+                            The following facets are scraped from each posting: <em>posting-date, site, sub-site, section</em> and the article itself.
+                        </p>
+                        <p>
+                            <button type="submit" name="search_cosmetic"  class="btn btn-primary">Search Cosmetic
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        {% if form.errors %}
+            <p class="validation-summary-errors">Errors detected.</p>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div class="alert alert-error">
+                    <strong>{{ field.label_tag }}{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-error">
+                <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</form>
+
+<div class="row">
+    <div class="col-md-12" id="scrape_progress"></>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    {% load staticfiles %}
+        <script src="{% static 'app/scripts/jquery.validate.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.widgets.js"></script>
+
+{% endblock %}
+

@@ -1,0 +1,81 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Product Insights {{ title }} <small>Product data and Reviews is indexed for facet search</small></h1>
+</div>
+
+{% load staticfiles %}
+<form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/fragrantica.png" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Fragrentica</h3>
+				                <p>
+                                    Analyze the Product Intelligence sites.
+				                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the Product Intelligence sites</a>. The <a href="http://www.fragrantica.com/" target="_blank">Fragrantica</a> site holds product information on almost all Fragrances.
+                            Each fragrance is reviewed the fragrantica team on its characteristics. Next the public can also add reviews for a fragrance.
+                            <br />
+                            The following facets are scraped from each fragrance: <em>fragrance, accords, moods, notes, review-date, review, sentiment-label (pos, neg, neutral)</em>.
+                            Note that a label is added to each review based on a sentiment analysis using <a href="http://text-processing.com/demo/sentiment/" target="_blank">NLTK toolkit.</a>
+                        </p>
+                        <p>
+                            <button type="submit" name="search_pi"  class="btn btn-primary">Search Product Intelligence
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if form.errors %}
+            <p class="validation-summary-errors">Errors detected.</p>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div class="alert alert-error">
+                    <strong>{{ field.label_tag }}{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-error">
+                <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</form>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    {% load staticfiles %}
+        <script src="{% static 'app/scripts/jquery.validate.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.widgets.js"></script>
+
+{% endblock %}
+

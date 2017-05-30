@@ -1,0 +1,174 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Consumer Insights {{ title }} <small>CI Surveys, Facts and Norms {{ es_hosts.0.host }}</small></h1>
+</div>
+
+{% load staticfiles %}
+<form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <input type="hidden" id="survey.keyword" name="survey.keyword"value="">
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/fresh_and_clean.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Fresh and Clean</h3>
+				                <p>
+                                    Analyze the Fresh and Clean study.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the Fresh and Clean study.
+                        </p>
+                        <p>
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_search_survey('fresh and clean')">Fresh and Clean
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/orange_beverages.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Orange Beverages</h3>
+				                <p>
+                                    Analyze the Orange Beverages study.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the Orange Beverages study
+                        </p>
+                        <p>
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_search_survey('orange beverages')">Orange Beverages
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/guide.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Guide</h3>
+				                <p>
+                                    To find the right search results, this Guide will help in following the right route.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            To find the right search results, this Guide will help in following the right route that leads to the results you are looking for.
+                            First select the route that matches the trail you want to follow. The route consists of a serie of selections and decisions that have
+                            to be made. These selections and decisions help in defining the search query. Instead of a free format search, the route is a
+                            guided process that leads to the right search query which will return the results you are looking for.
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'guide' %}">Guide &raquo;</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/CI2.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>Facts and Norms</h3>
+                                <p>
+                                    They survey data is interpreted to derive facts and norms.
+                                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            They survey data is interpreted to derive facts and norms. A <em>Fact</em> expresses a survey Q&A as a percentile; the response of the
+                            respondents to this Q&A compared to the total number of respondents. In case of a boolean response (no/yes), the response value
+                            is a 0 or 1. For a nominal response, the response value is normalized between 0 and 1.
+                            These Facts can be computed for the whole population, but it is also possible to compute these Facts for sub-groups of respondents.
+                            These sub-groups corresponds to Facets that characterize respondents such as Age group, Gender, Country.
+                            Having different Fact values for these sub-groups results into <em>Norms</em>. What are the average Fact values for the different groups
+                            and where do you see patterns or correlations.
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'facts' %}">Facts and Norms &raquo;</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        {% if form.errors %}
+            <p class="validation-summary-errors">Errors detected.</p>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div class="alert alert-error">
+                    <strong>{{ field.label_tag }}{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-error">
+                <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+</form>
+
+<div class="row">
+    <div class="col-md-12" id="scrape_progress"></>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+    {% load staticfiles %}
+        <script src="{% static 'app/scripts/insight.js' %}"></script>
+
+{% endblock %}
+

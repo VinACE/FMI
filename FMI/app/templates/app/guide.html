@@ -1,0 +1,89 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+{% load seeker %}
+
+<div class="page-header">
+  <h1>Guide {{ title }} <small>Select the route that leads to results</small></h1>
+    <p>
+        To find the right search results, this Guide will help in following the right route that leads to the results you are looking for.
+        First select the route that matches the trail you want to follow. The route consists of a serie of selections and decisions that have
+        to be made. These selections and decisions help in defining the search query. Instead of a free format search, the route is a
+        guided process that leads to the right search query which will return the results you are looking for.
+    </p>
+</div>
+
+<div class="container-fluid">
+    <form action="" method="get" class="form-horizontal" id="guide_form">
+        <div class="row">
+            <div class="col-md-4" style="padding-bottom:10px; padding-top:10px;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="panel panel-primary">
+                            <div class="panel-body">
+                                <label for="sel1">Guide, select your Route:</label>
+                                <select name="route_select" class="form-control" id="route_select">
+                                </select>
+                                <input type="hidden" name="step_name" value="">
+                                <table class="table table-bordered table-condensed" id="route_definition_table"></table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="panel panel-primary">
+                            <div class="panel-body">
+                                <table>
+                                    {% for facet, selected in facets.items %}
+                                        <tr>
+                                            <td>
+                                                <div class="form-group">
+                                                    {% seeker_facet facet results selected %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                                <table id="decision_table">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8" style="padding-bottom:10px; padding-top:10px;">
+                <div class="panel panel-primary">
+                    <div class="panel-body">
+                        <button type="submit" name="guide_previous"  class="btn btn-primary">
+                            <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Previous
+                        </button>
+                        <button type="submit" name="guide_next"  class="btn btn-primary">Next
+                            <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+                        </button>
+                        <div id="dashboard_div"></div>
+                        <div id="gallery_div"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    {% load staticfiles %}
+        <script src="{% static 'app/scripts/jquery.validate.min.js' %}"></script>
+    {% load staticfiles %}
+        <script src="{% static 'app/scripts/charts.js' %}"></script>
+        <script src="{% static 'app/scripts/storyboard.js' %}"></script>
+        <script src="{% static 'app/scripts/guide.js' %}"></script>
+
+<script>
+    guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }}, {{ charts|safe }});
+</script>
+
+{% endblock %}
