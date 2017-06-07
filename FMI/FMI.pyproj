@@ -31,6 +31,7 @@
     <Compile Include="app\apps.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\r_and_d.py" />
     <Compile Include="app\guide.py" />
     <Compile Include="app\fmi_admin.py" />
     <Compile Include="app\crawl.py" />
@@ -143,6 +144,8 @@
     <Content Include="app\static\app\scripts\seeker.js" />
     <Content Include="app\static\app\scripts\product.js" />
     <Content Include="app\templates\app\base.html" />
+    <Content Include="app\templates\app\r_and_dresults.html" />
+    <Content Include="app\templates\app\r_and_d.html" />
     <Content Include="app\templates\app\guide.html" />
     <Content Include="app\templates\app\fmi_admin.html" />
     <Content Include="app\templates\app\crawl.html" />

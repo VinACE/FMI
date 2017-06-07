@@ -36,6 +36,15 @@ class scrape_form(forms.Form):
             self._errors[NON_FIELD_ERRORS] = self.error_class()
         self._errors[NON_FIELD_ERRORS].append(message)
 
+class r_and_d_form(forms.Form):
+    ipc_field = forms.CharField(label='IPC', max_length=40, required = True, initial = '', help_text='IPC for which to retrieve the models')
+    def add_form_error(self, message):
+        if not self._errors:
+            self._errors = ErrorDict()
+        if not NON_FIELD_ERRORS in self._errors:
+            self._errors[NON_FIELD_ERRORS] = self.error_class()
+        self._errors[NON_FIELD_ERRORS].append(message)
+
 class facts_form(forms.Form):
     survey_field = forms.CharField(label='Survey', max_length=40, required = True, initial = '', help_text='Survey for which to create Facts and Norms')
     facts_choices = (('emotion', 'Emotion'), ('concept', 'Concept'), ('suitable_product', 'Suitable Product'), ('suitable_stage', 'Suitable Stage'),

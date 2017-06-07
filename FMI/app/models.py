@@ -272,6 +272,7 @@ class Post(models.Model):
     post_category_id = models.CharField(max_length=30)
     title = models.CharField(max_length=256)
     relevance = models.TextField()
+    subject = models.TextField()
     topline = models.TextField()
     source = models.TextField()
     article = models.TextField()
@@ -286,6 +287,7 @@ class PostMap(models.Model):
     post_category_id = models.CharField(max_length=30)
     title = models.CharField(max_length=256)
     relevance = models.TextField()
+    subject = models.TextField()
     topline = models.TextField()
     source = models.TextField()
     article = models.TextField()
@@ -302,6 +304,7 @@ class PostMap(models.Model):
                 'post_category_id'  : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'title'             : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'relevance'         : {'type' : 'text'},
+                'subject'           : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'topline'           : {'type' : 'text'},
                 'source'            : {'type' : 'text'},
                 'article'           : {'type' : 'text', "fields" : { "raw": { "type":  "keyword" }}},
@@ -340,8 +343,10 @@ class PostSeekerView (seeker.SeekerView):
     facets = [
         seeker.TermsFacet("post_category_id.keyword", label = "Category"),
         seeker.TermsFacet("editor_id.keyword", label = "Editor"),
-        seeker.YearHistogram("published_date", label = "Published"),
-        seeker.RangeFilter("rating_count", label = "Rating"),
+        seeker.TermsFacet("subject.keyword", label = "Subject"),
+        #seeker.YearHistogram("published_date", label = "Published Year"),
+        seeker.MonthHistogram("published_date", label = "Published Month"),
+        #seeker.RangeFilter("rating_count", label = "Rating"),
         ]
     facets_keyword = [
         seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
@@ -351,6 +356,7 @@ class PostSeekerView (seeker.SeekerView):
         "post_category_id",
         "published_date",
         "title",
+        "subject",
         "relevance",
         "topline"
         ]
@@ -378,50 +384,54 @@ class PostSeekerView (seeker.SeekerView):
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
-        "keyword_category_table" : {
-            'chart_type': "Table",
-            'chart_title' : "Keyword / Category Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            'Y_facet'     : {
-                'field'   : "post_category_id.keyword",
-                'label'   : "Category" },
-            },
-        "facet_keyword_pie" : {
-            'chart_type': "PieChart",
-            'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            },
-        "facet_coorp_pie" : {
-            'chart_type': "PieChart",
-            'chart_title' : "Corporation Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "facet_corp",
-                'label'   : "Corporations" },
-            },
+        #"keyword_category_table" : {
+        #    'chart_type': "Table",
+        #    'chart_title' : "Keyword / Category Doc Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "facet_keyword",
+        #        'label'   : "Keywords" },
+        #    'Y_facet'     : {
+        #        'field'   : "post_category_id.keyword",
+        #        'label'   : "Category" },
+        #    },
+        #"facet_keyword_pie" : {
+        #    'chart_type': "PieChart",
+        #    'chart_title' : "Keyword Doc Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "facet_keyword",
+        #        'label'   : "Keywords" },
+        #    },
+        #"facet_coorp_pie" : {
+        #    'chart_type': "PieChart",
+        #    'chart_title' : "Corporation Doc Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "facet_corp",
+        #        'label'   : "Corporations" },
+        #    },
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
-            'chart_title' : "Published Year Doc Count",
+            'chart_title' : "Published Month Doc Count",
             'chart_data'  : "facet",
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
-                'key'     : 'key_as_string'},
+                'key'     : 'key_as_string',
+                'total'   : False},
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
         }
 
+    #dashboard_layout = {
+    #    'table1' : [["published_keyword_line"], ["keyword_category_table"]],
+    #    'table2' : [["category_keyword_table", "facet_keyword_pie", "facet_coorp_pie"]]
+    #    }
     dashboard_layout = {
-        'table1' : [["published_keyword_line"], ["keyword_category_table"]],
-        'table2' : [["category_keyword_table", "facet_keyword_pie", "facet_coorp_pie"]]
+        'table1' : [["published_keyword_line"], ["category_keyword_table"]],
         }
     storyboard = [
         {'name' : 'initial',

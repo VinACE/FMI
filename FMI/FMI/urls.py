@@ -41,6 +41,7 @@ urlpatterns = patterns('',
     url(r'^product_insight/$', app.views.product_insight_view, name='product_insight'),
     url(r'^search_pi/$', models.PerfumeSeekerView.as_view(), name='search_pi'),
     url(r'^product_elastic$', app.product.ProductElasticView.as_view(), name='product_elastic'),
+    url(r'^r_and_d$', app.views.r_and_d_view, name='r_and_d'),
 
     url(r'^scrape', app.views.scrape_view, name='scrape'),
 

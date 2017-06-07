@@ -495,7 +495,7 @@ class MonthHistogram (Facet):
         return search
 
     def filter(self, search, values):
-        if len(values > 0):
+        if len(values) > 0:
             filters = []
             for val in values:
                 kw = {

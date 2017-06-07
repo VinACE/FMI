@@ -104,6 +104,7 @@ def tile(seekerview, facets_tile, dashboard, results_tile):
             question_field = question_field.replace('.', '_')
             answer_field = answer_field.replace('.', '_')
             if agg_name in results_tile.aggregations:
+                # this also converts AttrDict and AttrList to dict and list types !!
                 tile_aggr = results_tile.aggregations[agg_name].to_dict()
                 tiles = tile_aggr['buckets']
             else:
@@ -117,13 +118,13 @@ def tile(seekerview, facets_tile, dashboard, results_tile):
                     questions = tile[question_field]['question']['buckets']
                 else:
                     questions = tile[question_field]['buckets']
-                if type(questions) == AttrList:
+                if type(questions) == AttrList or type(questions) == list:
                     for qi in range(0, len(questions)):
                         question = questions[qi]
                         question_value = question['key']
                         if type(question_value) == int:
                             question_value = "{0:d}".format(question_value)
-                        if not single:
+                        if not single and answer_field in question:
                             answers = question[answer_field]['buckets']
                             if type(answers) == dict:
                                 for answer_value in answers:
@@ -257,6 +258,7 @@ class Chart(object):
         X_field = X_facet['field']
         X_label = X_facet['label']
         x_total = True
+        sub_total = False
         if 'total' in X_facet:
             x_total = X_facet['total']
         if 'Y_facet' in self.db_chart:
@@ -277,11 +279,8 @@ class Chart(object):
             dt_index = []
             dt_columns = [X_label]
             y_start = 1
-            if x_total:
-                #categories.append(self.db_chart['X_facet']['label'])
-                #categories.append("Total")
-                dt_columns.append("Total")
-                y_start = y_start + 1
+            dt_columns.append("Total")
+            y_start = y_start + 1
             dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
             # next fill the series for the categories
             rownr = 0
@@ -291,11 +290,10 @@ class Chart(object):
                 #series[0] = X_key
                 dt.loc[rownr, X_label] = X_key
                 dt_index.append(X_key)
-                if x_total:
-                    #series[1] = X_metric
-                    dt.loc[rownr, "Total"] = X_metric
+                dt.loc[rownr, "Total"] = X_metric
                 if Y_field != "" and Y_field in bucket:
                     subagg = bucket[Y_field]
+                    sub_total = True
                     for key_subbucket in subagg.buckets:
                         Y_key, Y_metric, subbucket = bucket_coor(key_subbucket, subagg.buckets, self.db_chart['Y_facet'])
                         if self.decoder:
@@ -319,7 +317,11 @@ class Chart(object):
             #if len(self.db_chart['data']) > 0:
             #   self.db_chart['data'].insert(0, categories)
             dt.fillna(0, inplace=True)
+            if sub_total == True and x_total == False:
+                dt_columns.remove('Total')
+                del dt['Total']
             self.db_chart['data'].append(dt_columns)
+            # remove Total only when sub_totals exists
             for ix, row in dt.iterrows():
                 self.db_chart['data'].append(row.tolist())
 

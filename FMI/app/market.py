@@ -37,6 +37,7 @@ editor_map = {
 def scrape_body(title, body):
     bs = BeautifulSoup(body, 'lxml')
     relevance = ''
+    subject = ''
     topline = ''
     source = ''
     article = body
@@ -51,6 +52,8 @@ def scrape_body(title, body):
                     list.append(li_tag.text)
             if "RELEVANCE:" in topic:
                 relevance = list
+                s = relevance[0]
+                subject = s[:s.find(' - ')+1].strip()
             elif "TOPLINE:" in topic:
                 topline = list
             elif "SOURCE:" in topic:
@@ -63,7 +66,7 @@ def scrape_body(title, body):
         except:
             print("scrape body failed for topic: ", topic, " ", title)
 
-    return relevance, topline, source, article
+    return relevance, subject, topline, source, article
 
 
 def push_posts_to_index():
@@ -86,7 +89,7 @@ def push_posts_to_index():
         else:
             mi_post.post_category_id = post_category_id
         mi_post.title           = sp_post.title.encode("ascii", 'replace')
-        mi_post.relevance, mi_post.topline, mi_post.source, mi_post.article = scrape_body(mi_post.title, sp_post.body.encode("ascii", 'replace'))
+        mi_post.relevance, mi_post.subject, mi_post.topline, mi_post.source, mi_post.article = scrape_body(mi_post.title, sp_post.body.encode("ascii", 'replace'))
         try:
             mi_post.average_rating  = float(sp_post.average_rating)
             mi_post.rating_count    = int(sp_post.rating_count)

@@ -28,7 +28,7 @@
                     </div>
                     <div class="col-md-7">
                         <p>
-                            Analyze the Product Intelligence sites</a>. The <a href="http://www.fragrantica.com/" target="_blank">Fragrantica</a> site holds product information on almost all Fragrances.
+                            Analyze the Product Intelligence sites. The <a href="http://www.fragrantica.com/" target="_blank">Fragrantica</a> site holds product information on almost all Fragrances.
                             Each fragrance is reviewed the fragrantica team on its characteristics. Next the public can also add reviews for a fragrance.
                             <br />
                             The following facets are scraped from each fragrance: <em>fragrance, accords, moods, notes, review-date, review, sentiment-label (pos, neg, neutral)</em>.
@@ -38,6 +38,33 @@
                             <button type="submit" name="search_pi"  class="btn btn-primary">Search Product Intelligence
                                 <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
                             </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/fragrantica.png" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>R&D</h3>
+				                <p>
+                                    Analyze R&D sites.
+				                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            Analyze the R&D sites
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'r_and_d' %}">Research & Development &raquo;</a>
                         </p>
                     </div>
                 </div>

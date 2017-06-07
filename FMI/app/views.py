@@ -24,6 +24,7 @@ import app.crawl as crawl
 import app.survey as survey
 import app.guide as guide
 import app.facts as facts
+import app.r_and_d as r_and_d
 import app.fmi_admin as fmi_admin
 import app.azure as azure
 import app.models as models
@@ -78,6 +79,21 @@ def product_insight_view(request):
 
     return render(request, 'app/product_insight.html',
                   context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
+
+def r_and_d_view(request):
+    """Renders the R&D page."""
+    if request.method == 'POST':
+        form = r_and_d_form(request.POST)
+        if form.is_valid():
+            ipc_field = form.cleaned_data['ipc_field']
+            molecules_d = r_and_d.molecules(ipc_field)
+            return render(request, 'app/r_and_dresults.html', {'molecules_d' : molecules_d } )
+    else:
+        form = r_and_d_form()
+
+    return render(request, 'app/r_and_d.html', {'form': form },
+                  context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
+
 
 def scent_emotion_view(request):
     """Renders the scent emotion page."""

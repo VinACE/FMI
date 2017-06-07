@@ -246,7 +246,8 @@ def crawl_feedly(from_date, rss_field):
 #       sjaak.waarts@gmail.com
 #       "Authorization" : "OAuth Az5SlrMMGO5owXJjGNpxDdf7B6tKdhJ_a9bmV-B7QG4pYhggBica6k0ONuE38l2PrpqjxU42UYoeO_QcV3feSBma6rAgT627orLQYo385hH_0A_iX3IyYWePPKJdpKEgl81eBUtw0tALOA-DeVdt4LVsynpHcBOLS4P1Z6Ll6473B4f6leXO3vMK-BFqUA8PM_Ny4JnHOI8vXJ_ErcR0ixDVeDOzER8:feedlydev"
 #       sjaak.waarts@gmail.com (expires on 2017-04-12)
-       "Authorization" : "A2ScDrZV4o-6ZYKXifNVJHif7dsFhQrbkvCue6MrvbuKYcilmi5TbtMIl5IwATfpELY52INwNMZQ5vkqAGfwqQMUVV60iReBvH_lp-HXq1vGTmHb7Iow-d3evduu-De9yz3D-9z9z-DIffkeyQtVdwiONj4UBlk4sakgoE3Cx-_zVIfuiTnLRCyABxJS29acATrpRAmXthGfmBwIetk-moYNMna6tg:feedlydev"
+#       "Authorization" : "A2ScDrZV4o-6ZYKXifNVJHif7dsFhQrbkvCue6MrvbuKYcilmi5TbtMIl5IwATfpELY52INwNMZQ5vkqAGfwqQMUVV60iReBvH_lp-HXq1vGTmHb7Iow-d3evduu-De9yz3D-9z9z-DIffkeyQtVdwiONj4UBlk4sakgoE3Cx-_zVIfuiTnLRCyABxJS29acATrpRAmXthGfmBwIetk-moYNMna6tg:feedlydev"
+        "Authorization" : "Aw9M5rkU1gRrrvZJahGpxozQTzRhUxIflGX6leMC3cYUBO7UosO5A7fclErhJ3O3uTjWNMQ33nsE02viJjNeFx5jwhCRlLc036OpUkBqqc099cLtV7T2lEkyc5Wy153PV8iu2eOBclzuT1-Jpjwt3ZMhuHZGbd4QMDM4uxUMgaCERGQKAH4zeAEjORim_Be_ah99hPfqRdSqymzuH6axi0po9SIeu-M:feedlydev"
 #       Rebecca (expires on 2017-02-02)
 #       "Authorization" : "AwFFQrRDR0ALNVMpm0xQJ_Rp2BSuy_n7nNrsYmoAbAqIPCJsIZxggzBabTLVb0Qxtjrk8xMDepyA3gvuO3h3j2b5m45V9biYqBS6XBszpk6x-oa-mcWCAy1a5HvM3cg7V41fllELFUyqPpbMvFolhPmqJGAQsfKc28huj6R4U-cHS7Ted4sSLQmWUj83XHQebFegI3UlClUU-YEdA4bhGsBOwW3nBg:feedlydev"
         }

@@ -854,7 +854,8 @@ class SeekerView (View):
                     body_kf = {}
                     if facets_keyword:
                         for facet_keyword in facets_keyword.keys():
-                            if facet_keyword.keywords_k and dashboard:
+                            #if facet_keyword.keywords_k and dashboard:
+                            if dashboard:
                                 for chart_name, chart in dashboard.items():
                                     if chart['chart_data'] != "facet":
                                         continue
@@ -871,7 +872,8 @@ class SeekerView (View):
                                             agg_name = facet_tile.name+'_'+chart_name
                                             facet_tile.apply(s, agg_name, self.aggs_stack)
                                             facet.apply(s, agg_name, self.aggs_stack)
-                                            facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
+                                            if len(body_kf) > 0:
+                                                facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
                     for facet2 in facets.keys():
                         for chart_name, chart in dashboard.items():
                             if chart['chart_data'] != "facet":
@@ -921,7 +923,8 @@ class SeekerView (View):
                     subaggr = False
                     term_kf = {}
                     subbody_kf = {}
-                    if facet_keyword.keywords_k and dashboard:
+                    #if facet_keyword.keywords_k and dashboard:
+                    if dashboard:
                         for facet in facets.keys():
                             for chart_name, chart in dashboard.items():
                                 if chart['chart_data'] != "facet":
@@ -933,7 +936,8 @@ class SeekerView (View):
                                         #term_kf[facet.field] = {'terms' : {'field': facet.field}}
                                         #term_kf[facet.name] = facet.aggr()
                                         facet_tile.apply(s, agg_name, self.aggs_stack)
-                                        facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
+                                        if len(body_kf) > 0:
+                                            facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
                                         facet.apply(s, agg_name, self.aggs_stack)
                     if not subaggr:
                         #s.aggs[facet_keyword.field] = {'filters': {'filters': body_kf }}
