@@ -74,33 +74,37 @@ def stats(tile_df):
     return stats_df, corr_df
 
 
-def tile(seekerview, facets_tile, dashboard, results_tile):
+def tile(seekerview, facets_tile, charts, results_tile):
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
     tiles_select = {};
     rownr = 0
     for facet_tile in facets_tile:
         tiles_select[facet_tile.label] = []
-        for chart_name, chart in dashboard.items():
-            if chart['chart_data'] == 'topline':
+        for chart_name, chart in charts.items():
+            chart_data = chart.db_chart['chart_data']
+            if chart_data == 'topline':
                 continue
-            if chart['chart_data'] == 'topline_base':
+            if chart_data == 'topline_base':
                 continue
-            if chart['chart_data'] == 'hits':
+            if chart_data == 'hits':
                 continue
-            if chart['chart_data'] == 'aggr':
+            if chart_data == 'aggr':
                 continue
             agg_name = facet_tile.name + '_' + chart_name
-            question_field = chart['X_facet']['field']
+            X_facet = chart.db_chart['X_facet']
+            question_field = X_facet['field']
             answer_field = ''
             single = False
             nested = False
-            if 'Y_facet' not in chart:
+            if 'Y_facet' not in chart.db_chart:
+                Y_facet = None
                 single = True
-            elif chart['Y_facet']['field'] == "answer":
-                nested = True
-                answer_field = 'answer'
             else:
-                answer_field = chart['Y_facet']['field']
+                Y_facet = chart.db_chart['Y_facet']
+                if Y_facet['field'] == "answer":
+                    nested = True
+                    answer_field = 'answer'
+                answer_field = Y_facet['field']
             question_field = question_field.replace('.', '_')
             answer_field = answer_field.replace('.', '_')
             if agg_name in results_tile.aggregations:
@@ -121,9 +125,12 @@ def tile(seekerview, facets_tile, dashboard, results_tile):
                 if type(questions) == AttrList or type(questions) == list:
                     for qi in range(0, len(questions)):
                         question = questions[qi]
-                        question_value = question['key']
+                        question_value = question[X_facet['key']]
+                        question_count = question[X_facet['metric']]
                         if type(question_value) == int:
                             question_value = "{0:d}".format(question_value)
+                        tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, "Total", question_count]
+                        rownr = rownr + 1
                         if not single and answer_field in question:
                             answers = question[answer_field]['buckets']
                             if type(answers) == dict:
@@ -142,10 +149,15 @@ def tile(seekerview, facets_tile, dashboard, results_tile):
                                     rownr = rownr + 1
                         else:
                             count = question['doc_count']
-                            tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_field, question_value, count]
+                            answer_value = question_value
+                            tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, answer_value, count]
                             rownr = rownr + 1
-                if type(questions) == AttrDict:
-                    pass
+                if type(questions) == AttrDict or type(questions) == dict:
+                    for question_value, answer in questions.items():
+                        if single:
+                            count = answer['doc_count']
+                            tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, "Total", count]
+                            rownr = rownr + 1
     return tile_df, tiles_select 
 
 

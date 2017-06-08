@@ -335,7 +335,7 @@ class PostMap(models.Model):
                 field_es_value = getattr(self, field_name)
         return field_es_value
 
-class PostSeekerView (seeker.SeekerView):
+class PostSeekerView (seeker.SeekerView, workbooks.PostWorkbook):
     document = None
     using = client
     index = "post"
@@ -369,76 +369,6 @@ class PostSeekerView (seeker.SeekerView):
     SUMMARY_URL="https://iffconnect.iff.com/Fragrances/marketintelligence/Lists/Posts/ViewPost.aspx?ID={}"
 
     tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
-
-    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
-    # in the template this is translated into HTML tables, rows, cells and div elements
-    dashboard = {
-        'category_keyword_table' : {
-            'chart_type'  : "Table",
-            'chart_title' : "Category / Keyword Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "post_category_id.keyword",
-                'label'   : "Category" },
-            'Y_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            },
-        #"keyword_category_table" : {
-        #    'chart_type': "Table",
-        #    'chart_title' : "Keyword / Category Doc Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "facet_keyword",
-        #        'label'   : "Keywords" },
-        #    'Y_facet'     : {
-        #        'field'   : "post_category_id.keyword",
-        #        'label'   : "Category" },
-        #    },
-        #"facet_keyword_pie" : {
-        #    'chart_type': "PieChart",
-        #    'chart_title' : "Keyword Doc Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "facet_keyword",
-        #        'label'   : "Keywords" },
-        #    },
-        #"facet_coorp_pie" : {
-        #    'chart_type': "PieChart",
-        #    'chart_title' : "Corporation Doc Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "facet_corp",
-        #        'label'   : "Corporations" },
-        #    },
-        "published_keyword_line" : {
-            'chart_type'  : "LineChart",
-            'chart_title' : "Published Month Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "published_date",
-                'label'   : "Published",
-                'key'     : 'key_as_string',
-                'total'   : False},
-            'Y_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            },
-        }
-
-    #dashboard_layout = {
-    #    'table1' : [["published_keyword_line"], ["keyword_category_table"]],
-    #    'table2' : [["category_keyword_table", "facet_keyword_pie", "facet_coorp_pie"]]
-    #    }
-    dashboard_layout = {
-        'table1' : [["published_keyword_line"], ["category_keyword_table"]],
-        }
-    storyboard = [
-        {'name' : 'initial',
-         'layout'   : dashboard_layout,
-         'active'   : True,
-         }
-    ] 
 
 
 ###
@@ -1752,7 +1682,7 @@ class Survey(models.Model):
     suitable_stage = models.TextField()
 
  
-class SurveyMap(models.Model, workbooks.SurveyWorkbook):
+class SurveyMap(models.Model):
     resp_id = models.TextField()
     survey = models.TextField()
     country = models.TextField()

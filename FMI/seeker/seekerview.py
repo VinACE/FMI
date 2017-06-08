@@ -844,6 +844,9 @@ class SeekerView (View):
 
     def get_tile_aggr(self, s, facet_tile, keywords_q=None, facets=None, facets_keyword=None, dashboard=None, aggregate=False):
         #s = s.params(search_type="count")
+        #The next charts can occur:
+        # - 1) facet*facet, 2) facet*facet_keyword, 3) facet
+        # - 4) facet_keyword*facet_keyword (NOT SUPPORTED), 5) facet_keyword*facet, 6) facet_keyword
         if keywords_q:
             s = self.get_search_query_type(s, keywords_q)
         if facets:
@@ -863,12 +866,15 @@ class SeekerView (View):
                                         if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet_keyword.field:
                                             subaggr = True
                                             for kf in facet_keyword.keywords_k:
-                                                body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
+                                                #body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
+                                                body_kf[kf] = {'simple_query_string' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields(),
+                                                                                        'default_operator': self.operator}}
                                             extra = {
                                                 facet.name : {'terms': {'field': facet.field},
                                                     facet_keyword.field : {'filters': {'filters': body_kf }}}
                                                 }
                                             #facet_tile.apply_tile(s, chart_name, facet.field, facet_keyword.field, aggs=extra)
+                                            # chart 2) facet * facet_keyword
                                             agg_name = facet_tile.name+'_'+chart_name
                                             facet_tile.apply(s, agg_name, self.aggs_stack)
                                             facet.apply(s, agg_name, self.aggs_stack)
@@ -886,6 +892,7 @@ class SeekerView (View):
                                             facet2.name : {'terms': {'field': facet2.field }}}
                                         }
                                     #facet_tile.apply_tile(s, chart_name, facet.field, facet2.field, aggs=extra)
+                                    # chart 1) facet * facet
                                     agg_name = facet_tile.name+'_'+chart_name
                                     facet_tile.apply(s, agg_name, self.aggs_stack)
                                     facet.apply(s, agg_name, self.aggs_stack)
@@ -895,6 +902,7 @@ class SeekerView (View):
                             continue
                         single = False
                         nested = False
+                        # chart 3) facet
                         agg_name = facet_tile.name+'_'+chart_name
                         if 'Y_facet' not in chart:
                             single = True
@@ -919,7 +927,9 @@ class SeekerView (View):
                 if facet_keyword.keywords_k:
                     body_kf = {}
                     for kf in facet_keyword.keywords_k:
-                        body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
+                        #body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
+                        body_kf[kf] = {'simple_query_string' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields(),
+                                                                'default_operator': self.operator}}
                     subaggr = False
                     term_kf = {}
                     subbody_kf = {}
@@ -935,19 +945,29 @@ class SeekerView (View):
                                         subaggr = True
                                         #term_kf[facet.field] = {'terms' : {'field': facet.field}}
                                         #term_kf[facet.name] = facet.aggr()
+                                        # chart 5) facet_keyword * facet
                                         facet_tile.apply(s, agg_name, self.aggs_stack)
                                         if len(body_kf) > 0:
                                             facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
                                         facet.apply(s, agg_name, self.aggs_stack)
-                    if not subaggr:
-                        #s.aggs[facet_keyword.field] = {'filters': {'filters': body_kf }}
-                        facet_tile.apply(s, agg_name, self.aggs_stack)
-                        facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
+                        if not subaggr:
+                            for chart_name, chart in dashboard.items():
+                                if chart['chart_data'] != "facet":
+                                    continue
+                                agg_name = facet_tile.name+'_'+chart_name
+                                if 'Y_facet' not in chart:
+                                    if chart['X_facet']['field'] == facet_keyword.field:
+                                        #s.aggs[facet_keyword.field] = {'filters': {'filters': body_kf }}
+                                        # chart 6) facet_keyword
+                                        facet_tile.apply(s, agg_name, self.aggs_stack)
+                                        facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
 
         return s
 
     def get_workbook(self):
         workbook_name = self.request.GET.get('workbook', '').strip()
+        if workbook_name == '':
+            workbook_name = 'initial'
         if hasattr(self, 'workbooks'):
             if workbook_name in self.workbooks:
                 workbook = self.workbooks[workbook_name]
@@ -1046,6 +1066,11 @@ class SeekerView (View):
         #if self.summary != None:, also fill url in results
         self.summary_tab(results, columns)
 
+        # convert dashboard definition into Chart objects
+        charts = {}
+        for chart_name, chart in self.dashboard.items():
+            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.decoder)
+
         storyboard_ix = self.get_storyboard()
         facets_tile = self.get_facet_tile(initial=self.initial_facets if not self.request.is_ajax() else None)
         results_tile = None
@@ -1059,7 +1084,7 @@ class SeekerView (View):
             for facet_tile in facets_tile:
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, self.dashboard, results_tile)
+            tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results_tile)
             seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df)
         else:
             tile_df = pd.DataFrame()
@@ -1067,25 +1092,22 @@ class SeekerView (View):
             seeker.models.stats_df = pd.DataFrame()
             seeker.models.corr_df = pd.DataFrame()
 
-
-        charts = {}
-        for chart_name, chart in self.dashboard.items():
-            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.decoder)
-            chart_data = self.dashboard[chart_name]['chart_data']
+        for chart_name, chart in charts.items():
+            chart_data = chart.db_chart['chart_data']
             if chart_data == 'facet':
-                charts[chart_name].bind_facet(results.aggregations)
+                chart.bind_facet(results.aggregations)
             if chart_data == 'aggr':
-                charts[chart_name].bind_aggr(results.aggregations)
+                chart.bind_aggr(results.aggregations)
             elif chart_data == 'tiles':
-                charts[chart_name].bind_aggr(results_tile.aggregations)
+                chart.bind_aggr(results_tile.aggregations)
             elif chart_data == 'hits':
-                charts[chart_name].bind_hits(results.hits, facets_keyword)
+                chart.bind_hits(results.hits, facets_keyword)
             elif chart_data == 'topline':
-                charts[chart_name].bind_topline(results.hits, facets_keyword)
-        for chart_name, chart in self.dashboard.items():
-            chart_data = self.dashboard[chart_name]['chart_data']
+                chart.bind_topline(results.hits, facets_keyword)
+        for chart_name, chart in charts.items():
+            chart_data = chart.db_chart['chart_data']
             if chart_data == 'topline_base':
-                charts[chart_name].bind_topline_base(results.hits, facets_keyword, base_chart=self.dashboard[chart['base']])
+                chart.bind_topline_base(results.hits, facets_keyword, base_chart=self.dashboard[chart.db_chart['base']])
 
 
 #       tablechart = seeker.dashboard.Chart("category_keyword_table", dashboard)

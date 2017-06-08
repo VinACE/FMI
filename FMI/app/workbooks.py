@@ -24,6 +24,84 @@ from django.utils.encoding import python_2_unicode_compatible
 # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
 # in the template this is translated into HTML tables, rows, cells and div elements  
 
+
+class PostWorkbook:
+    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
+    # in the template this is translated into HTML tables, rows, cells and div elements
+    dashboard = {
+        'category_keyword_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Category / Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "post_category_id.keyword",
+                'label'   : "Category" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        #"subject_keyword_table" : {
+        #    'chart_type': "Table",
+        #    'chart_title' : "Subject / Keyword Doc Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "subject.keyword",
+        #        'label'   : "Subject" },
+        #    'Y_facet'     : {
+        #        'field'   : "facet_keyword",
+        #        'label'   : "Keywords" },
+        #    },
+        "facet_keyword_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        "facet_coorp_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Corporation Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_corp",
+                'label'   : "Corporations" },
+            },
+        "published_keyword_line" : {
+            'chart_type'  : "LineChart",
+            'chart_title' : "Published Month Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "published_date",
+                'label'   : "Published",
+                'key'     : 'key_as_string',
+                'total'   : False},
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        }
+
+    dashboard_layout = {
+        #'table1' : [["published_keyword_line"], ["subject_keyword_table"]
+        'table1' : [["published_keyword_line"]],
+        'table2' : [["category_keyword_table", "facet_keyword_pie", "facet_coorp_pie"]]
+        }
+
+    storyboard = [
+        {'name' : 'initial',
+         'layout'   : dashboard_layout,
+         'active'   : True,
+         }
+    ] 
+
+    workbooks = {
+        "initial" : {
+            'charts'        : dashboard,
+            'storyboard'    : storyboard,
+            }
+        }
+
 class SurveyWorkbook:
 
     dashboard_fresh = {
