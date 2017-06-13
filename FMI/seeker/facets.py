@@ -112,6 +112,7 @@ class TermsFacet (Facet):
         if extra:
             aggs_stack[agg_name].append(list(extra['aggs'].keys())[0])
         #search.aggs.bucket(agg_name, 'terms', field=self.field, size=40, min_doc_count=1)
+        d = search.to_dict()
         return search
 
     ## use apply for facet tile aggregation
@@ -303,6 +304,8 @@ class OptionFacet (TermsFacet):
             aggs_tail = search
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
+        aggs_stack[agg_name].append('question')
+        aggs_stack[agg_name].append('answer')
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
         return search
 

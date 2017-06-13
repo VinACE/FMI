@@ -394,7 +394,10 @@ $("#_reset").click(function () {
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
             input.value = tab;
-            document.getElementById("_reset").href = "?q=&tab="+encodeURIComponent(tab);
+            var workbook_name = getParameterByName("workbook");
+            document.getElementById("_reset").href = "?q=&tab=" + encodeURIComponent(tab)
+                + "&workbook=" + encodeURIComponent(workbook_name)
+                + "&survey.keyword=" + encodeURIComponent(workbook_name);
         }
     }
 });

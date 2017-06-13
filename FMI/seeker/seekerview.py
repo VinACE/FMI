@@ -726,32 +726,34 @@ class SeekerView (View):
                 if aggregate or seeker.dashboard.facet_aggregate(facet, self.dashboard):
                     subaggr = False
                     body_kf = {}
-                    for facet_keyword in facets_keyword.keys():
-                        if facet_keyword.keywords_k and dashboard:
+                    if facets_keyword:
+                        for facet_keyword in facets_keyword.keys():
+                            if facet_keyword.keywords_k and dashboard:
+                                for chart_name, chart in dashboard.items():
+                                    if chart['chart_data'] != "facet":
+                                        continue
+                                    if 'Y_facet' in chart:
+                                        if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet_keyword.field:
+                                            subaggr = True
+                                            for kf in facet_keyword.keywords_k:
+                                                body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
+                                            extra = {facet_keyword.field : {'filters': {'filters': body_kf }}}
+                                            #facet.apply(s, facet.name, self.aggs_stack, aggs=extra), replaced by two aggs
+                                            facet.apply(s, facet.name, self.aggs_stack)
+                                            facet_keyword.apply(s, facet.name, self.aggs_stack, filters=body_kf)
+                    if dashboard:
+                        for facet2 in facets.keys():
                             for chart_name, chart in dashboard.items():
                                 if chart['chart_data'] != "facet":
                                     continue
                                 if 'Y_facet' in chart:
-                                    if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet_keyword.field:
+                                    if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet2.field:
                                         subaggr = True
-                                        for kf in facet_keyword.keywords_k:
-                                            body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.get_search_fields()}}
-                                        extra = {facet_keyword.field : {'filters': {'filters': body_kf }}}
-                                        #facet.apply(s, facet.name, self.aggs_stack, aggs=extra), replaced by two aggs
+                                        extra = {}
+                                        extra = {facet2.name : {'terms': {'field': facet2.field, 'size':40, 'min_doc_count':1}}}
+                                        #facet.apply(s, facet.name, self.aggs_stack, aggs=extra)
                                         facet.apply(s, facet.name, self.aggs_stack)
-                                        facet_keyword.apply(s, facet.name, self.aggs_stack, filters=body_kf)
-                    for facet2 in facets.keys():
-                        for chart_name, chart in dashboard.items():
-                            if chart['chart_data'] != "facet":
-                                continue
-                            if 'Y_facet' in chart:
-                                if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet2.field:
-                                    subaggr = True
-                                    extra = {}
-                                    extra = {facet2.name : {'terms': {'field': facet2.field, 'size':40, 'min_doc_count':1}}}
-                                    #facet.apply(s, facet.name, self.aggs_stack, aggs=extra)
-                                    facet.apply(s, facet.name, self.aggs_stack)
-                                    facet2.apply(s, facet.name, self.aggs_stack)
+                                        facet2.apply(s, facet.name, self.aggs_stack)
                     if not subaggr:
                         facet.apply(s, facet.name, self.aggs_stack)
 
@@ -1190,9 +1192,17 @@ class SeekerView (View):
         A helper method called when ``_export`` is present in ``request.GET``. Returns a ``StreamingHttpResponse``
         that yields CSV data for all matching results.
         """
+
+        self.aggs_stack = None
+        self.aggs_stack = {}
+        self.get_workbook()
+
         keywords_q = self.get_keywords_q()
         facets = self.get_facet_data()
-        search = self.get_search(keywords_q, facets, aggregate=False)
+        facets_keyword = self.get_facets_keyword_data()
+
+        search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
+        #search = self.get_search(keywords_q, facets, aggregate=False)
         columns = self.get_columns()
 
         def csv_escape(value):

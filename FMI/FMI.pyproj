@@ -127,6 +127,7 @@
     <Content Include="app\static\app\media\male.jpg" />
     <Content Include="app\static\app\media\malefemale.jpg" />
     <Content Include="app\static\app\media\mi.jpg" />
+    <Content Include="app\static\app\media\r_and_d.jpg" />
     <Content Include="app\static\app\media\SDM.jpg" />
     <Content Include="app\static\app\scripts\insight.js" />
     <Content Include="app\static\app\scripts\platformsearch.js" />

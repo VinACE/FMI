@@ -89,7 +89,7 @@ def r_and_d_view(request):
             molecules_d = r_and_d.molecules(ipc_field)
             return render(request, 'app/r_and_dresults.html', {'molecules_d' : molecules_d } )
     else:
-        form = r_and_d_form()
+        form = r_and_d_form(initial={'ipc_field':'100154'})
 
     return render(request, 'app/r_and_d.html', {'form': form },
                   context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
