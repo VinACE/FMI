@@ -10,7 +10,7 @@
     {% csrf_token %}
     <div class="row">
         <div class="col-md-4">
-            {{ form.index_choices_field.label_tag }} {{ form.index_choices_field }}
+            {{ form.nrpages_field.label_tag }} {{ form.nrpages_field }}
         </div>
         <div class="col-md-4">
             {{ form.from_date.label_tag }} {{ form.from_date }}
@@ -43,15 +43,14 @@
             <div class="panel-body">
                 <div class="container">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h4>Crawl Site <a href="http://www.cosmeticsdesign.com/"  target="_blank">Cosmetic Design sites</a></h4>Select the sections you want to have
-                            crawled, scraped and indexed.
+                        <div class="col-md-5">
+                            {{ form.site_choices_field.label_tag }} {{ form.site_choices_field }}
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             {{ form.scrape_choices_field.label_tag }} {{ form.scrape_choices_field }}
                          </div>
                         <div class="col-md-3">
-                            <button type="submit" name="crawl_cosmetic" class="btn btn-primary">Crawl Cosmetic
+                            <button type="submit" name="crawl_si_sites" class="btn btn-primary">Crawl SI Sites
                                 <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
                             </button>
                         </div>
@@ -168,26 +167,6 @@
     </div>
 </form>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th> Perfume </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for perfume in scrape_li %}
-                    <tr>
-                        <td><a link href="{{ perfume.1.0 }}" target="_blank">{{ perfume.0 }}</a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
- </div>
 
 {% endblock %}
 

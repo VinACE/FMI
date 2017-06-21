@@ -71,17 +71,21 @@ class product_form(forms.Form):
         self._errors[NON_FIELD_ERRORS].append(message)
 
 class crawl_form(forms.Form):
-    index_choices = (('elastic', 'Elastic Index/Search'), ('azure', 'Azure Index/Search'))
+    #index_choices = (('elastic', 'Elastic Index/Search'), ('azure', 'Azure Index/Search'))
+    #index_choices_field = forms.MultipleChoiceField(label='Index', choices=index_choices, widget=forms.CheckboxSelectMultiple, required=True)
     from_date = forms.DateField(required=False)
-    index_choices_field = forms.MultipleChoiceField(label='Index', choices=index_choices, widget=forms.CheckboxSelectMultiple, required=True)
-    scrape_choices = (('market', 'Market'), ('business', 'Business'), ('product', 'Product'), ('events', 'Events'))
+    nrpages_field = forms.IntegerField(label='Number of Pages to Scrape', initial = 50)
+    site_choices = (('cosmetics', 'Cosmetics'), ('apf', 'APF'), ('contagious', 'Contagious'), ('mit', 'MIT Media Lab'), ('gci', 'GCI magazine'))
+    site_choices_field = forms.MultipleChoiceField(label='Web Site', choices=site_choices, widget=forms.CheckboxSelectMultiple, required=False)
+    scrape_choices = (('market', 'Market'), ('business', 'Business'), ('product', 'Product'), ('events', 'Events'),
+                      ('publications', 'Publications'), ('blog', 'Blog'))
     scrape_choices_field = forms.MultipleChoiceField(label='Scrape', choices=scrape_choices, widget=forms.CheckboxSelectMultiple, required=True)
     rss_field = forms.CharField(label='RSS Category', max_length=40, required = False, initial = '', help_text='Crawl this category')
     product_field = forms.CharField(label='Product', max_length=40, required = False, initial = '', help_text='Index this product')
     username = forms.CharField(max_length=254, widget=forms.TextInput({'class': 'form-control','placeholder': 'User name'}), required=False)
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput({'class': 'form-control','placeholder':'Password'}), required=False)
     cft_filename_field = forms.CharField(label='CFT file', max_length=40, required = False, initial = 'CFT Ing.csv')
-    ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'fresh and clean - test.csv')
+    ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'fresh and clean Survey test.csv')
     #ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'ChoiceModel FF USA.csv')
     def add_form_error(self, message):
         if not self._errors:
@@ -91,8 +95,7 @@ class crawl_form(forms.Form):
         self._errors[NON_FIELD_ERRORS].append(message)
 
 class fmi_admin_form(forms.Form):
-    index_choices = (('pi', 'Product Intelligence'), ('mi', 'MI - Market Intelligence'), ('mi_cosmetic', 'MI - Cosmetic Design'),
-                     ('mi_gci', 'MI - GCI Magazine'), ('mi_perf_flav', 'MI - Perfumer/Flavorist'), ('mi_happi', 'MI - HAPPI'),
+    index_choices = (('pi', 'Product Intelligence'), ('mi', 'MI - Market Intelligence'), ('si_sites', 'SI - Sites'),
                      ('feedly', 'Feedly'), ('scentemotion', 'Scent Emotion'), ('studies', 'CI/SE Studies'), ('survey', 'CI Survey'))
     index_choices_field = forms.MultipleChoiceField(label='Web Site', choices=index_choices, widget=forms.CheckboxSelectMultiple, required=True)
     opml_filename_field = forms.CharField(label='OPML file', max_length=40, required = False, initial = '')

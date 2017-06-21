@@ -19,7 +19,7 @@ from .scrape_ds import *
 platformseekers = {
     'Fragrantica'           : (models.PerfumeSeekerView, "search_pi"),
     'Market Intelligence'   : (models.PostSeekerView, "search_mi"),
-    'Cosmetica'             : (models.PageSeekerView, "search_cosmetic"),
+    'Cosmetica'             : (models.PageSeekerView, "search_si_sites"),
     'Feedly'                : (models.FeedlySeekerView, "search_feedly"),
     'Scent Emotion (Ingr)'  : (models.ScentemotionSeekerView, "search_scentemotion"),
     #'Scent Emotion (Studies)' : (models.StudiesSeekerView, "search_studies"),

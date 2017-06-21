@@ -67,7 +67,7 @@ def create_index_mi():
     )
 
 
-def create_index_mi_cosmetic():
+def create_index_si_sites():
     indices_client = IndicesClient(models.client)
     index_name = models.PageMap._meta.es_index_name
     if indices_client.exists(index_name):
@@ -138,14 +138,8 @@ def create_index_elastic(index_choices):
             create_index_pi()
         elif index_choice == 'mi':
             create_index_mi()
-        elif index_choice == 'mi_cosmetic':
-            create_index_mi_cosmetic()
-        elif index_choice == 'mi_gci':
-            pass
-        elif index_choice == 'mi_perf_flav':
-            pass
-        elif index_choice == 'mi_happi':
-            pass
+        elif index_choice == 'si_sites':
+            create_index_si_sites()
         elif index_choice == 'feedly':
             create_index_mi_feedly()
         elif index_choice == 'scentemotion':
@@ -163,14 +157,8 @@ def create_analyzer(index_choices):
             put_settings(models.Review)
         elif index_choice == 'mi':
             put_settings(models.PostMap)
-        elif index_choice == 'mi_cosmetic':
+        elif index_choice == 'si_sites':
             put_settings(models.PageMap)
-        elif index_choice == 'mi_gci':
-            pass
-        elif index_choice == 'mi_perf_flav':
-            pass
-        elif index_choice == 'mi_happi':
-            pass
         elif index_choice == 'feedly':
             put_settings(models.FeedlyMap)
 

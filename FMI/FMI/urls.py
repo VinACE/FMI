@@ -54,7 +54,7 @@ urlpatterns = patterns('',
 
     url(r'^search_mi$', models.PostSeekerView.as_view(), name='search_mi'),
     url(r'^search_feedly$', models.FeedlySeekerView.as_view(), name='search_feedly'),
-    url(r'^search_cosmetic/$', models.PageSeekerView.as_view(), name='search_cosmetic'),
+    url(r'^search_si_sites/$', models.PageSeekerView.as_view(), name='search_si_sites'),
     
     #url(r'^search_survey/(?P<devise>[-\w]+)/$', models.SurveySeekerView.as_view(), name='search_survey'),
     url(r'^search_survey$', models.SurveySeekerView.as_view(), name='search_survey'),

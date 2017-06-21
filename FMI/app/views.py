@@ -145,8 +145,8 @@ def market_insight_view(request):
             return redirect('search_mi')
         elif 'search_feedly' in request.POST:
             return redirect('search_feedly')
-        elif 'search_cosmetic' in request.POST:
-            return redirect('search_cosmetic')
+        elif 'search_si_sites' in request.POST:
+            return redirect('search_si_sites')
     return render(request, 'app/market_insight.html', 
                   context_instance = RequestContext(request,
                                                     {'es_hosts' : FMI.settings.ES_HOSTS, 'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
@@ -224,8 +224,8 @@ def consumer_insight_view(request):
             return redirect('search_mi')
         elif 'search_feedly' in request.POST:
             return redirect('search_feedly')
-        elif 'search_cosmetic' in request.POST:
-            return redirect('search_cosmetic')
+        elif 'search_si_sites' in request.POST:
+            return redirect('search_si_sites')
         elif 'search_pi' in request.POST:
             return redirect('search_pi')
         elif 'search_scentemotion' in request.POST:
@@ -281,8 +281,9 @@ def crawl_view(request):
             crawl.crawl_survey(ci_filename)
         # called from crawh.html
         if form.is_valid():
-            index_choices = form.cleaned_data['index_choices_field']
             from_date = form.cleaned_data['from_date']
+            nrpages = form.cleaned_data['nrpages_field']
+            site_choices = form.cleaned_data['site_choices_field']
             scrape_choices = form.cleaned_data['scrape_choices_field']
             rss_field = form.cleaned_data['rss_field']
             product_field = form.cleaned_data['product_field']
@@ -293,8 +294,14 @@ def crawl_view(request):
             if from_date == None:
                 today = datetime.now()
                 from_date = datetime(today.year-1, 1, 1, 0, 0, 0)
-            if 'crawl_cosmetic' in form.data:
-                crawl.crawl_cosmetic(scrape_choices)
+            if 'crawl_si_sites' in form.data:
+                for site_choice in site_choices:
+                    if site_choice == 'apf':
+                        crawl.crawl_apf(scrape_choices, nrpages)
+                    elif site_choice == 'cosmetics':
+                        crawl.crawl_cosmetic(scrape_choices, nrpages)
+                    else:
+                        crawl.si_site(site_choice, nrpages)
             elif 'crawl_mi' in form.data:
                 if not market.index_posts(from_date, username, password):
                     form.add_form_error("Could not index category posts")
@@ -332,7 +339,7 @@ def crawl_view(request):
                 pass
             return render(request, 'app/crawl.html', {'form': form, 'es_hosts' : FMI.settings.ES_HOSTS, 'scrape_li' : models.scrape_li } )
     else:
-        form = crawl_form(initial={'scrape_choices_field':['product'], 'index_choices_field':['elastic']})
+        form = crawl_form(initial={'scrape_choices_field':['product', 'blog']})
 
     return render(request, 'app/crawl.html', {'form': form, 'es_hosts' : FMI.settings.ES_HOSTS },
                   context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))

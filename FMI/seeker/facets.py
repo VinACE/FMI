@@ -94,6 +94,20 @@ class TermsFacet (Facet):
         params.update(extra)
         return A('terms', **params)
 
+#"aggs": {
+#"blindcode": {
+#    "reverse_nested": {},
+#    "aggs": {
+#    "blindcode": {
+#        "terms": {
+#        "field": "blindcode.keyword"
+#        }
+#    }
+#    }
+#}
+#}
+
+
     # use apply for aggregation (facet, chart, tile)
     def apply(self, search, agg_name, aggs_stack, **extra):
         #search.aggs[self.name] = self._get_aggregation(**extra)
@@ -218,6 +232,7 @@ class NestedFacet (TermsFacet):
             aggs_tail = search
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
+        aggs_stack[agg_name].append('val')
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
         return search
 

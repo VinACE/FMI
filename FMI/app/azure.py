@@ -84,13 +84,7 @@ def create_index_azure(index_choices):
             create_index_pi()
         elif index_choice == 'mi':
             pass
-        elif index_choice == 'mi_cosmetic':
-            pass
-        elif index_choice == 'mi_gci':
-            pass
-        elif index_choice == 'mi_perf_flav':
-            pass
-        elif index_choice == 'mi_happi':
+        elif index_choice == 'si_sites':
             pass
         elif index_choice == 'feedly':
             pass

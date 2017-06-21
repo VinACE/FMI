@@ -438,18 +438,21 @@ class PageSeekerView (seeker.SeekerView):
     index = "page"
     page_size = 30
     facets = [
+        seeker.TermsFacet("site.keyword", label = "Site"),
         seeker.TermsFacet("sub_site.keyword", label = "Sub Site"),
         seeker.TermsFacet("section.keyword", label = "Section"),
-        seeker.YearHistogram("posted_date", label = "Posted")
+        seeker.MonthHistogram("posted_date", label = "Posted Month"),
+        seeker.YearHistogram("posted_date", label = "Posted Year")
         ]
     facets_keyword = [
-        seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
-        seeker.KeywordFacet("facet_corp", label = "Corporations", input="keywords_corp")
+        seeker.KeywordFacet("facet_keyword", label = "Keywords 1", input="keywords_k"),
+        seeker.KeywordFacet("facet_keyword_2", label = "Keywords 2", input="keywords_2")
         ];
     display = [
         "posted_date",
-        "section",
-        "title"
+        "title",
+        "site",
+        "sub_site",
         ]
     summary = [
         "page"
@@ -858,7 +861,7 @@ class ScentemotionSeekerView (seeker.SeekerView):
         "review",
         ]
     sort = [
-        "-descriptor"
+        #"-descriptor"
     ]
     exclude = [
         "cft_id",

@@ -25,23 +25,137 @@ import app.elastic as elastic
 import app.survey as survey
 
 
+si_sites = {
+    'gci'   : {
+        'site_url'  : 'http://www.gcimagazine.com/',
+        'sub_sites' : {
+            'gci'   : 'http://www.gcimagazine.com/'},
+        },
+    }
+
+
 class Crawler:
-    site = ''
+    site_name = ''
     pages = set()
     bulk_data = []
+    nrpages = 50
 
-    def __init__(self, site):
+    def __init__(self, site, nrpages):
         self.site = site
+        self.nrpages = nrpages
 
-    def scrape(self, url):
+    # read the content of a page into BeautifulSoup
+    def read_page(self, url):
         try:
-            print("Scrape: scraping url ", url)
+            print("read_page: scraping url ", url)
             html = urllib.request.urlopen(url)
             bs = BeautifulSoup(html.read(), "lxml")
             [script.decompose() for script in bs("script")]
         except:
             print("Scrape: could not open url ", url)
         return bs
+
+    # Step though all summery pages (Next, Pagination) and from each summary page get all the link refering to the articles
+    def get_pagination_links(self, sub_site):
+        include_url = urlparse(sub_site).scheme+"://"+urlparse(sub_site).netloc
+        links = set()
+        url = sub_site
+        page_nr = 0
+        page_size = 10
+        link_count = 1
+        links.add(sub_site)
+        return links
+
+    # get all the links that point within this site
+    def get_internal_links(self, url, bs):
+        include_url = urlparse(url).scheme+"://"+urlparse(url).netloc
+        links = set()
+        link_count = 0
+        for link_tag in bs.findAll("a", href=re.compile("^(/|.*"+include_url+")")) and link_count < self.nrpages:
+            if link_tag.attrs['href'] is not None:
+                if link_tag.attrs['href'] not in links:
+                    if link_tag.attrs['href'].startswith('/'):
+                        link = include_url+link_tag.attrs['href']
+                    else:
+                        link = link_tag.attrs['href']
+                    links.add(link)
+                    link_count = link_count + 1
+        return links
+
+    # get all the links that point outside this site
+    def get_external_links(self, url, bs):
+        include_url = urlparse(url).scheme+"://"+urlparse(url).netloc
+        links = set()
+        for link_tag in bs.findAll("a", href=re.compile("^(/|.*"+include_url+")")):
+            if link_tag.attrs['href'] is not None:
+                if link_tag.attrs['href'] not in links:
+                    if link_tag.attrs['href'].startswith('/'):
+                        links.append(include_url+link_tag.attrs['href'])
+                    else:
+                        link_tag.append(link.attrs['href'])
+        return links
+
+    # for this page (url) scrape its context and map this to the elasticsearch record (pagemap)
+    def scrape_page_map(self, sub_site, url, bs):
+        id = url
+        site_url = urlparse(url).netloc.split('.')[1]
+        sub_site_url = urlparse(url).path.split('/')
+        sub_site_name = '-'.join(sub_site[1:-1])
+        if sub_site_name == '':
+            sub_site_name = 'Home'
+        pagemap             = models.PageMap()
+
+        pagemap.page_id     = id
+        pagemap.site        = self.site
+        pagemap.sub_site    = sub_site
+        pagemap.url         = url
+        pagemap.section     = ''
+
+        # get posted date
+        try:
+            pagemap.posted_date = datetime.today()
+        except:
+            pass
+
+        # get page
+        try:
+            pagemap.page        = bs.get_text()
+        except:
+            pass
+
+        # get title
+        try:
+            if bs.title != None:
+                pagemap.title   = bs.title.text
+            else:
+                pagemap.title   = ''
+        except:
+            pass
+
+        data = elastic.convert_for_bulk(pagemap, 'update')
+        return data
+
+def crawl_si_site(site_choice, nrpages):
+    crawler = Crawler (site_choice, nrpages)
+    si_site = si_sites[site_choice]
+    sub_sites = si_site.sub_sites
+    site_url = si_site.site_url
+           
+    for sub_site, sub_site_url in sub_sites.items():
+        bs = crawler.read_page(sub_site_url)
+        links = crawler.get_internal_links(sub_site_url, bs)        
+        for link in links:
+             bs = crawler.read_page(link)
+             apf.pages.add(link)
+             data = apf.scrape_page_map(sub_site, link, bs)
+             apf.bulk_data.append(data)
+    
+    bulk(models.client, actions=apf.bulk_data, stats_only=True)
+
+
+#****************************** APF Crawler *****************************************
+
+class AFPCrawler(Crawler):
 
     def get_pagination_links(self, sub_site):
         include_url = urlparse(sub_site).scheme+"://"+urlparse(sub_site).netloc
@@ -50,8 +164,117 @@ class Crawler:
         page_nr = 0
         page_size = 10
         link_count = 0
-        while url != None and link_count < 100:
-            bs = self.scrape(url)
+        while url != None and link_count < self.nrpages:
+            bs = self.read_page(url)
+            blog_posts_tag = bs.find("div", class_="blog-posts")
+            for link_tag in blog_posts_tag.findAll("a", href=re.compile("^(/|.*"+include_url+")")):
+                if link_tag.attrs['href'] is not None:
+                    if link_tag.attrs['href'] not in links:
+                        if link_tag.attrs['href'].startswith('/'):
+                            link = include_url+link_tag.attrs['href']
+                        else:
+                            link = link_tag.attrs['href']
+                        links.add(link)
+                        link_count = link_count + 1
+            navigation_tag = bs.find("nav", class_="nav-below")
+            if navigation_tag != None:
+                next_tag = navigation_tag.find("span", class_="nav-next")
+                if next_tag != None:
+                    next_url = next_tag.parent.attrs['href']
+                else:
+                    next_url = None
+            url = next_url
+        return links
+
+
+    def scrape_page_map(self, sub_site, url, bs):
+        id = url
+        pagemap             = models.PageMap()
+        pagemap.page_id     = id
+        pagemap.site        = self.site
+        pagemap.sub_site    = sub_site
+        pagemap.url         = url
+
+        # get posted date
+        # <span class="entry-date">May 23, 2017</span>
+        try:
+            pagemap.posted_date = datetime.today()
+            entry_date_tag = bs.find("span", class_="entry-date")
+            published = entry_date_tag.text
+            pagemap.posted_date = datetime.strptime(published, '%B %d, %Y')
+        except:
+            pass
+        #try:
+        #    box_1_tag = bs.find("div", class_="box_1")
+        #    product_info_bar_tag = box_1_tag.find("div", class_="product_info_bar")
+        #    published = re.search(r'([0-9]{2}-[a-z,A-Z]{3}-[0-9]{4})', product_info_bar.text, re.MULTILINE)
+        #    pagemap.posted_date = datetime.strptime(published.group(0), '%d-%b-%Y')
+        #except:
+        #    pass
+
+        # get page
+        # <section class="entry-content">
+        try:
+            pagemap.page = bs.get_text()
+            entry_content_tag = bs.find("section", class_="entry-content")
+            pagemap.page = entry_content_tag.text
+        except:
+            pass
+        # get title
+        # <h1 class="entry-title"></h1>  text
+        try:
+            if bs.title != None:
+                pagemap.title   = bs.title.text
+            else:
+                pagemap.title   = ''
+            entry_title_tag = bs.find("h1", class_="entry-title")
+            pagemap.title = entry_title_tag.text
+        except:
+            pass
+        # get section
+        try:
+            pagemap.section = sub_site
+        except:
+            pass
+
+        data = elastic.convert_for_bulk(pagemap, 'update')
+        return data
+
+
+def crawl_apf(scrape_choices, nrpages):
+    apf = AFPCrawler ('APF', nrpages)
+    sub_sites = {}
+    site_url = 'https://apf.org/'
+    for scrape_choice in scrape_choices:
+        if scrape_choice == 'blog':
+            sub_sites['blog'] = site_url + '/blog'
+        if scrape_choice == 'publications':
+            sub_sites['blog'] = site_url + '/publications'
+           
+    for sub_site, sub_site_url in sub_sites.items():
+        links = apf.get_pagination_links(sub_site_url)        
+        for link in links:
+             bs = apf.read_page(link)
+             apf.pages.add(link)
+             data = apf.scrape_page_map(sub_site, link, bs)
+             apf.bulk_data.append(data)
+    
+    bulk(models.client, actions=apf.bulk_data, stats_only=True)
+
+
+#****************************** Cosmetics Crawler *****************************************
+
+class CosmeticsCrawler(Crawler):
+
+    def get_pagination_links(self, sub_site):
+        include_url = urlparse(sub_site).scheme+"://"+urlparse(sub_site).netloc
+        links = set()
+        url = sub_site
+        page_nr = 0
+        page_size = 10
+        link_count = 0
+        while url != None and link_count < self.nrpages:
+            bs = self.read_page(url)
             box_1_tag = bs.find("div", class_="box_1")
             for link_tag in box_1_tag.findAll("a", href=re.compile("^(/|.*"+include_url+")")):
                 if link_tag.attrs['href'] is not None:
@@ -84,42 +307,12 @@ class Crawler:
             url = next_url
         return links
 
-    def get_internal_links(self, url, bs):
-        include_url = urlparse(url).scheme+"://"+urlparse(url).netloc
-        links = set()
-        for link_tag in bs.findAll("a", href=re.compile("^(/|.*"+include_url+")")):
-            if link_tag.attrs['href'] is not None:
-                if link_tag.attrs['href'] not in links:
-                    if link_tag.attrs['href'].startswith('/'):
-                        link = include_url+link_tag.attrs['href']
-                    else:
-                        link = link_tag.attrs['href']
-                    links.add(link)
-        return links
 
-    def get_external_links(self, url, bs):
-        include_url = urlparse(url).scheme+"://"+urlparse(url).netloc
-        links = set()
-        for link_tag in bs.findAll("a", href=re.compile("^(/|.*"+include_url+")")):
-            if link_tag.attrs['href'] is not None:
-                if link_tag.attrs['href'] not in links:
-                    if link_tag.attrs['href'].startswith('/'):
-                        links.append(include_url+link_tag.attrs['href'])
-                    else:
-                        link_tag.append(link.attrs['href'])
-        return links
-
-    def push_to_index(self, url, bs):
+    def scrape_page_map(self, sub_site, url, bs):
         id = url
-        site = urlparse(url).netloc.split('.')[1]
-        sub_site = urlparse(url).path.split('/')
-        sub_site = '-'.join(sub_site[1:-1])
-        if sub_site == '':
-            sub_site = 'Home'
         pagemap             = models.PageMap()
-
         pagemap.page_id     = id
-        pagemap.site        = site
+        pagemap.site        = self.site
         pagemap.sub_site    = sub_site
         pagemap.url         = url
 
@@ -172,61 +365,34 @@ class Crawler:
         return data
 
 
-def crawl_cosmetic(scrape_choices):
-    cosmetic = Crawler('cosmeticsdesign')
-    cosmetic.bulk_data = None
-    cosmetic.bulk_data = []
-    cosmetic.pages = set()
-    sub_sites = set()
+def crawl_cosmetic(scrape_choices, nrpages):
+    cosmetic = CosmeticsCrawler('Cosmetics', nrpages)
+    sub_sites = {}
     if len(scrape_choices) == 0:
         sub_sites.add(site)
 #   for site in ['http://www.cosmeticsdesign.com/', 'http://www.cosmeticsdesign-europe.com/', 'http://www.cosmeticsdesign-asia.com/']:
-    for site in ['http://www.cosmeticsdesign.com/']:
+    for site_url in ['http://www.cosmeticsdesign.com/']:
         for scrape_choice in scrape_choices:
             if scrape_choice == 'product':
-                sub_sites.add(site+'/Product-Categories/Skin-Care')
-                sub_sites.add(site+'/Product-Categories/Hair-Care')
+                sub_sites['Skin-care'] = site_url + '/Product-Categories/Skin-Care'
+                sub_sites['Hair-care'] = site_url +'/Product-Categories/Hair-Care'
             if scrape_choice == 'market':
-                sub_sites.add(site+'Market-Trends')
-                sub_sites.add(site+'Brand-Innovation')
+                sub_sites['Market-Trends'] = site_url + '/Market-Trends'
+                sub_sites['Brand-Innovation']= site_url +'/Brand-Innovation'
 
-    for sub_site in sub_sites:
-        links = cosmetic.get_pagination_links(sub_site)
+    for sub_site, sub_site_url in sub_sites.items():
+        links = cosmetic.get_pagination_links(sub_site_url)
         for link in links:
-            bs = cosmetic.scrape(link)
+            bs = cosmetic.read_page(link)
             cosmetic.pages.add(link)
-            data = cosmetic.push_to_index(link, bs)
+            data = cosmetic.scrape_page_map(sub_site, link, bs)
             cosmetic.bulk_data.append(data)
 
-    #links = sub_sites
-    #while len(links) > 0 and count <50:
-    #    intlinks = cosmetic.get_pagination_links(link, bs)
-    #    newlinks = set()
-    #    for link in links:
-    #        bs = cosmetic.scrape(link)
-    #        cosmetic.pages.add(link)
-    #        intlinks = cosmetic.get_internal_links(link, bs)
-    #        intlinks = intlinks - cosmetic.pages
-    #        newlinks = newlinks.union(intlinks)
-    #        data = cosmetic.push_to_index(link, bs)
-    #        cosmetic.bulk_data.append(data)
-    #        count = count + 1
-    #        if count > 50:
-    #            break
-    #    links = newlinks
     bulk(models.client, actions=cosmetic.bulk_data, stats_only=True)
 
 #
 # FEEDLY
 #
-headers = {
-#   sjaak.waarts@gmail.com
-#   "Authorization" : "OAuth Az5SlrMMGO5owXJjGNpxDdf7B6tKdhJ_a9bmV-B7QG4pYhggBica6k0ONuE38l2PrpqjxU42UYoeO_QcV3feSBma6rAgT627orLQYo385hH_0A_iX3IyYWePPKJdpKEgl81eBUtw0tALOA-DeVdt4LVsynpHcBOLS4P1Z6Ll6473B4f6leXO3vMK-BFqUA8PM_Ny4JnHOI8vXJ_ErcR0ixDVeDOzER8:feedlydev"
-#   sjaak.waarts@gmail.com (expires on 2017-02-08)
-    "Authorization" : "AyArarRGBWzf6qc63KsI6lJO6VTr5_u-oAd17yp7gMlwIu2XGxqBTAlK6kPd8OGzquQYtRj32y3K51n-zkKO_MK-vjaXGXG8l32dRLb4arfkwhMhC3f_iIiN9v3_JsHwgjWvNN-nSi46JEpaNkMcAyNYyd_-T8448q8vuoZgU_j-UCRs4BKkGCIfhaoCFOUDX_y565fdOETLeqsZMmESePOHv-5f3Fo:feedlydev"
-#   Rebecca (expires on 2017-02-02)
-#   "Authorization" : "AwFFQrRDR0ALNVMpm0xQJ_Rp2BSuy_n7nNrsYmoAbAqIPCJsIZxggzBabTLVb0Qxtjrk8xMDepyA3gvuO3h3j2b5m45V9biYqBS6XBszpk6x-oa-mcWCAy1a5HvM3cg7V41fllELFUyqPpbMvFolhPmqJGAQsfKc28huj6R4U-cHS7Ted4sSLQmWUj83XHQebFegI3UlClUU-YEdA4bhGsBOwW3nBg:feedlydev"
-    }
 
 def crawl_feedly(from_date, rss_field):
     global headers
@@ -243,13 +409,8 @@ def crawl_feedly(from_date, rss_field):
     ms = s * 1000
     newerthan = "{:.0f}".format(ms)
     headers = {
-#       sjaak.waarts@gmail.com
-#       "Authorization" : "OAuth Az5SlrMMGO5owXJjGNpxDdf7B6tKdhJ_a9bmV-B7QG4pYhggBica6k0ONuE38l2PrpqjxU42UYoeO_QcV3feSBma6rAgT627orLQYo385hH_0A_iX3IyYWePPKJdpKEgl81eBUtw0tALOA-DeVdt4LVsynpHcBOLS4P1Z6Ll6473B4f6leXO3vMK-BFqUA8PM_Ny4JnHOI8vXJ_ErcR0ixDVeDOzER8:feedlydev"
-#       sjaak.waarts@gmail.com (expires on 2017-04-12)
-#       "Authorization" : "A2ScDrZV4o-6ZYKXifNVJHif7dsFhQrbkvCue6MrvbuKYcilmi5TbtMIl5IwATfpELY52INwNMZQ5vkqAGfwqQMUVV60iReBvH_lp-HXq1vGTmHb7Iow-d3evduu-De9yz3D-9z9z-DIffkeyQtVdwiONj4UBlk4sakgoE3Cx-_zVIfuiTnLRCyABxJS29acATrpRAmXthGfmBwIetk-moYNMna6tg:feedlydev"
-        "Authorization" : "Aw9M5rkU1gRrrvZJahGpxozQTzRhUxIflGX6leMC3cYUBO7UosO5A7fclErhJ3O3uTjWNMQ33nsE02viJjNeFx5jwhCRlLc036OpUkBqqc099cLtV7T2lEkyc5Wy153PV8iu2eOBclzuT1-Jpjwt3ZMhuHZGbd4QMDM4uxUMgaCERGQKAH4zeAEjORim_Be_ah99hPfqRdSqymzuH6axi0po9SIeu-M:feedlydev"
-#       Rebecca (expires on 2017-02-02)
-#       "Authorization" : "AwFFQrRDR0ALNVMpm0xQJ_Rp2BSuy_n7nNrsYmoAbAqIPCJsIZxggzBabTLVb0Qxtjrk8xMDepyA3gvuO3h3j2b5m45V9biYqBS6XBszpk6x-oa-mcWCAy1a5HvM3cg7V41fllELFUyqPpbMvFolhPmqJGAQsfKc28huj6R4U-cHS7Ted4sSLQmWUj83XHQebFegI3UlClUU-YEdA4bhGsBOwW3nBg:feedlydev"
+        #sjaak.waarts@gmail.com (expires on 2017-07-20)
+        "Authorization" : "A2JxorrfeTBQbMUsDIU3_zexSwY8191e3P9EvewYowjfbhKwOgHk84ErlXAWXpucZ_McfTDHLZN6yLxWqxgjWM8Upp1c-6Nb_RpZd0jWA9mJkVLN1JTETefaVNZtZqzTGTf8_qeT2ZE8z6Bf4LqLOUfQaQH2-jj8XIaxAyWMZ5BDRtfpgwVYrEEM2ii5KXnMJZxGNEvcqAV4Dke_subaM-wlnC8N63g:feedlydev"
         }
 
     params_streams = {
