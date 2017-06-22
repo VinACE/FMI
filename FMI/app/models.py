@@ -307,7 +307,7 @@ class PostMap(models.Model):
                 'subject'           : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'topline'           : {'type' : 'text'},
                 'source'            : {'type' : 'text'},
-                'article'           : {'type' : 'text', "fields" : { "raw": { "type":  "keyword" }}},
+                'article'           : {'type' : 'text'},
                 'average_rating'    : {'type' : 'float'},
                 'rating_count'      : {'type' : 'integer', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'num_comments_id'   : {'type' : 'integer', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
@@ -334,6 +334,12 @@ class PostMap(models.Model):
             else:
                 field_es_value = getattr(self, field_name)
         return field_es_value
+    def get_es_article(self, field_name):
+        list_es_value = getattr(self, field_name)
+        if len(list_es_value) > 32766:
+            list_es_value = list_es_value[:32766]
+        return list_es_value
+
 
 class PostSeekerView (seeker.SeekerView, workbooks.PostWorkbook):
     document = None

@@ -44,12 +44,27 @@ def molecules(ipc_field):
     print("molecules: get request: ", r.url)
     molecules_json = r.json()
 
+    params = {
+        "$protocol" : "Protocols/Web Services/RESTful/ipc_image",
+        "ipc_in"    : ipc_field,
+        }
+    url = "http://usubstsappv1.global.iff.com:9944/auth/launchjob"
+    r = requests.get(url, auth=(user, pswrd), params=params)
+    if r.status_code != 200:
+        print("molecules: get request failed for ipc_image", r.status_code)
+        return
+
+    print("molecules: get request: ", r.url)
+
+
     #imgdata = base64.b64decode(molecules_json['MOLECULE']) 
     #imgdata = molecules_json['MOLECULE'].decode("base64")
-    b64_string = molecules_json['MOLECULE']
-    b64_bytes = b64_string.encode()
-    imgdata = base64.decodebytes(b64_bytes) 
-    img_file = os.path.join(BASE_DIR, 'data/' + 'molecule.jpg')
+    #b64_string = molecules_json['MOLECULE']
+    #b64_bytes = b64_string.encode()
+    b64_bytes = r.content
+    imgdata = base64.decodebytes(b64_bytes)
+    imgdata = r.content
+    img_file = os.path.join(BASE_DIR, 'data/' + 'molecule.png')
     try:
         with open(img_file, 'wb') as f:
             f.write(imgdata)
