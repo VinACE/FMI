@@ -1062,6 +1062,7 @@ class SurveyWorkbook:
 scrape_li = []
 posts_df = DataFrame()
 search_keywords = {}
+molecules_d = {}
 
 scrape_q = queue.Queue()
 

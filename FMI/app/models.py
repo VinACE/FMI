@@ -1571,6 +1571,7 @@ class SurveySeekerView (seeker.SeekerView, workbooks.SurveyWorkbook):
              
 scrape_li = []
 posts_df = DataFrame()
+molecules_d = {}
 search_keywords = {}
 
 scrape_q = queue.Queue()

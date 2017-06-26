@@ -62,9 +62,14 @@ def r_and_d_view(request):
     if request.method == 'POST':
         form = r_and_d_form(request.POST)
         if form.is_valid():
-            ipc_field = form.cleaned_data['ipc_field']
-            molecules_d = r_and_d.molecules(ipc_field)
-            return render(request, 'app/r_and_dresults.html', {'molecules_d' : molecules_d } )
+            ipc_field = '00000000' + form.cleaned_data['ipc_field']
+            ipc_field = ipc_field[-6:]
+            molecule_d = r_and_d.molecules(ipc_field)
+            if molecule_d:
+                models.molecules_d[ipc_field] = molecule_d
+                return render(request, 'app/r_and_dresults.html', {'molecules_d' : models.molecules_d } )
+            else:
+                form.add_form_error("Molecule properties and/or image could not be read from R&D")
     else:
         form = r_and_d_form(initial={'ipc_field':'100154'})
 

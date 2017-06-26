@@ -11,29 +11,36 @@
   <h1>Molecules {{ title }} </h1>
 </div>
 
-
+{% load staticfiles %}
 <div class='row'>
     <div class="col-md-9">
         <div class="container">
             <div class='row'>
                 <div class="col-md-12">
-                    <h4>Facts</h4>
                     <table id="facts_table" class="tablesorter-blue">
                         <thead>
                             <tr>
-                                <th> Facet</th>
-                                <th> Question </th>
-                                <th> Answer </th>
-                                <th> Percentile </th>
+                                <th> IPC</th>
+                                <th> Diffusivity </th>
+                                <th> Bloom Index </th>
+                                <th> SSOT </th>
+                                <th> LOGP </th>
+                                <th> VP </th>
+                                <th> WS </th>
+                                <th> Image </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for fact, perc in facts_d.items %}
+                            {% for ipc, properties in molecules_d.items %}
                                 <tr>
-                                    <td>{{ fact.0 }}</td>
-                                    <td>{{ fact.2 }}</td>
-                                    <td>{{ fact.2 }}</td>
-                                    <td>{{ perc|floatformat:3 }}</td>
+                                    <td>{{ ipc }}</td>
+                                    <td>{{ properties.DIFFUSIVITY|floatformat:3 }}</td>
+                                    <td>{{ properties.BLOOM_INDEX|floatformat:3 }}</td>
+                                    <td>{{ properties.SSOT }}</td>
+                                    <td>{{ properties.LOGP|floatformat:3 }}</td>
+                                    <td>{{ properties.VP }}</td>
+                                    <td>{{ properties.WS }}</td>
+                                    <td> <img src="data:image/png;base64,{{ properties.ipc_image }}" width="200" height="200" alt= {{ ipc }} style="margin-top: 5px;"> </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -54,10 +61,8 @@
 
     {% load staticfiles %}
         <script src="{% static 'app/scripts/jquery.validate.min.js' %}"></script>
-        <script src="{% static 'app/scripts/crossfilter.min.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.27.8/js/jquery.tablesorter.widgets.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.0.0-beta.32/dc.js"></script>
 
 {% endblock %}
 

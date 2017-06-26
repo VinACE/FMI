@@ -18,30 +18,20 @@ import app.models as models
 
 
 def molecules(ipc_field):
-#http://usubstsappv1.global.iff.com:9944/auth/launchjob?$protocol=Protocols/Web%20Services/RESTful/test&ipc_in=
-
-#where you will add an IPC# after the equal sign.  Please use these credentials in the response header: 
-
-#USER=rd_iis_svc
-#PASS=Abs0lut5
-
     user = "global\\rd_iis_svc"
     pswrd = "Abs0lut5"
 
+    #url = "http://usubstsappv1.global.iff.com:9944/auth/launchjob?$protocol=Protocols/Web%20Services/RESTful/test&ipc_in=98663"
     params = {
         #"$protocol" : "Protocols/Web Services/RESTful/test",
         "$protocol" : "Protocols/Web Services/RESTful/ipc_properties",
         "ipc_in"    : ipc_field,
         }
     url = "http://usubstsappv1.global.iff.com:9944/auth/launchjob"
-    #url = "https://usubstsappv1.global.iff.com:9944/auth/launchjob"
     r = requests.get(url, auth=(user, pswrd), params=params)
-    #url = "http://usubstsappv1.global.iff.com:9944/auth/launchjob?$protocol=Protocols/Web%20Services/RESTful/test&ipc_in=98663"
     if r.status_code != 200:
-        print("molecules: get request failed ", r.status_code)
+        print("molecules: get request failed for ipc_properties ", r.status_code)
         return
-
-    print("molecules: get request: ", r.url)
     molecules_json = r.json()
 
     params = {
@@ -51,11 +41,8 @@ def molecules(ipc_field):
     url = "http://usubstsappv1.global.iff.com:9944/auth/launchjob"
     r = requests.get(url, auth=(user, pswrd), params=params)
     if r.status_code != 200:
-        print("molecules: get request failed for ipc_image", r.status_code)
+        print("molecules: get request failed for ipc_image ", r.status_code)
         return
-
-    print("molecules: get request: ", r.url)
-
 
     #imgdata = base64.b64decode(molecules_json['MOLECULE']) 
     #imgdata = molecules_json['MOLECULE'].decode("base64")
@@ -64,7 +51,9 @@ def molecules(ipc_field):
     b64_bytes = r.content
     imgdata = base64.decodebytes(b64_bytes)
     imgdata = r.content
-    img_file = os.path.join(BASE_DIR, 'data/' + 'molecule.png')
+    b64_imgdata = base64.b64encode(imgdata)
+    molecules_json['ipc_image'] = b64_imgdata
+    img_file = os.path.join(BASE_DIR, 'data/' + 'molecule_' + ipc_field + '.png')
     try:
         with open(img_file, 'wb') as f:
             f.write(imgdata)
@@ -72,6 +61,5 @@ def molecules(ipc_field):
         cwd = os.getcwd()
         print("molecules: working dirtory is: ", cwd)
 
-    molecules_d = {}
-    return molecules_d
+    return molecules_json
 
