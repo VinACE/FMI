@@ -115,12 +115,16 @@ class Column (object):
         except:
             highlight = []
 
+        # for each found hit, the url attribute is filled with the link pointing to the corresponding article
+        # it is possible to overwrite this url on field level (urlfields)
         if self.field in self.view.sumheader:
             url = result.url
         else:
             url = ""
         if self.field in self.view.urlfields:
             url = self.view.urlfields[self.field].format(value.replace(' ', '-').lower())
+            if url == "":
+                url = result['url']
         else:
             url = ""
 
@@ -666,9 +670,7 @@ class SeekerView (View):
                     facets[f] = self.request.GET.get(f.field+'_tile')
         return facets
 
-    def get_facets_keyword_data(self, initial=None, exclude=None):
-        if initial is None:
-            initial = {}
+    def get_facets_keyword_data(self, exclude=None):
         facets_keyword = collections.OrderedDict()
         for f in self.get_facets_keyword():
             if f.field != exclude:
@@ -679,11 +681,13 @@ class SeekerView (View):
                     if f.name + '_read' == self.request.GET['keyword_button']:
                         keywords_input = f.read_keywords
                 f.keywords_text = keywords_input.strip()
+                if f.keywords_text == '' and f.initial:
+                    f.keywords_text = f.initial
                 if f.keywords_text == '':
                     f.keywords_k = []
                 else:
                     f.keywords_k = f.keywords_text.split(',')
-                facets_keyword[f] = self.request.GET.getlist(f.field) or initial.get(f.field, [])
+                facets_keyword[f] = self.request.GET.getlist(f.field)
         return facets_keyword
 
     def get_search_fields(self, mapping=None, prefix=''):

@@ -9,10 +9,6 @@ class AppConfig (django.apps.AppConfig):
         import seeker
         import app.models as models
 
-        models.AccountDoc = seeker.mapping.document_from_model(models.Account, index="bank", using=models.client)
-        seeker.register(models.AccountDoc)
-        models.AccountSeekerView.document = models.AccountDoc
-
         models.PerfumeDoc = seeker.mapping.document_from_model(models.Perfume, index="review", using=models.client)
         seeker.register(models.PerfumeDoc)
         models.PerfumeSeekerView.document = models.PerfumeDoc

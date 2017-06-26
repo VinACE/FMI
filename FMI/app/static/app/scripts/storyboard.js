@@ -19,8 +19,6 @@ function draw_storyboard(storyboard, charts) {
         for (var rownr = 0; rownr < layout.length; rownr++) {
             var row = layout[rownr];
 
-
-
             var div_row = document.createElement("div");
             div_row.setAttribute("class", "row iff-margin-t15");
             dashboard_div.appendChild(div_row);

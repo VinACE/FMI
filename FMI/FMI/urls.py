@@ -66,8 +66,6 @@ urlpatterns = patterns('',
 
     url(r'^elastic/$', app.views.elastic_view, name='elastic'),
     url(r'^autocomplete/', app.views.autocomplete_view, name='autocomplete-view'),
-    url(r'^seeker/$', models.BookSeekerView.as_view(), name='seeker'),
-    url(r'^bank/$', models.AccountSeekerView.as_view(), name='bank'),
 
     url(r'^contact$', app.views.contact, name='contact'),
     url(r'^about', app.views.about, name='about'),

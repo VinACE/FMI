@@ -32,29 +32,6 @@ import app.survey
 from .forms import *
 
 
-#models.BookDoc = seeker.mapping.document_from_model(models.Book, index="seeker-tests", using=models.client)
-#seeker.register(models.BookDoc)
-#models.BookSeekerView.document = models.BookDoc
-
-#models.AccountDoc = seeker.mapping.document_from_model(models.Account, index="bank", using=models.client)
-#seeker.register(models.AccountDoc)
-#models.AccountSeekerView.document = models.AccountDoc
-
-#models.PerfumeDoc = seeker.mapping.document_from_model(models.Perfume, index="review", using=models.client)
-#seeker.register(models.PerfumeDoc)
-#models.PerfumeSeekerView.document = models.PerfumeDoc
-
-#models.PostDoc = seeker.mapping.document_from_model(models.Post, index="post", using=models.client)
-#seeker.register(models.PostDoc)
-#models.PostSeekerView.document = models.PostDoc
-
-#models.PageDoc = seeker.mapping.document_from_model(models.Page, index="page", using=models.client)
-#seeker.register(models.PageDoc)
-#models.PageSeekerView.document = models.PageDoc
-
-#models.FeedlyDoc = seeker.mapping.document_from_model(models.Feedly, index="feedly", using=models.client)
-#seeker.register(models.FeedlyDoc)
-#models.FeedlySeekerView.document = models.FeedlyDoc
 models.SurveySeekerView.decoder = survey.seekerview_answer_value_decode
 
 def home(request):

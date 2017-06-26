@@ -354,9 +354,11 @@ class KeywordFacet (TermsFacet):
     keywords_text = ''
     keywords_k = []
     read_keywords = ''
+    initial = ""
 
-    def __init__(self, field, input=None, **kwargs):
+    def __init__(self, field, input=None, initial=None, **kwargs):
         self.keywords_input = input
+        self.initial = initial
         super(KeywordFacet, self).__init__(field, **kwargs)
 
     #"aggs": {

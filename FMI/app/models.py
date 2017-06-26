@@ -9,6 +9,7 @@ from django.views.generic.base import TemplateView
 
 # Create your models here.
 import queue
+import collections
 import datetime
 import FMI.settings
 from pandas import DataFrame
@@ -22,66 +23,8 @@ import app.workbooks as workbooks
 
 from django.utils.encoding import python_2_unicode_compatible
 
-#class Author (models.Model):
-#    first_name = models.CharField(max_length=100)
-#    last_name = models.CharField(max_length=100)
-#    bio = models.TextField()
 
-#    def __str__(self):
-#        return '%s %s' % (self.first_name, self.last_name)
-
-#class Category (models.Model):
-#    name = models.CharField(max_length=100)
-
-#    def __str__(self):
-#        return self.name
-
-#class Book (models.Model):
-#    title = models.CharField(max_length=200)
-#    authors = models.ManyToManyField(Author, related_name='books', blank=True)
-#    category = models.ForeignKey(Category, related_name='books', null=True, blank=True)
-#    date_published = models.DateField(default=datetime.date.today)
-#    pages = models.IntegerField(default=0)
-
-#    def __str__(self):
-#        return self.title
-
-#class Magazine (models.Model):
-#    name = models.CharField(max_length=200)
-#    issue_date = models.DateField(default=datetime.date.today)
-
-#    def __str__(self):
-#        return self.name
-
-
-#from elasticsearch import Elasticsearch, RequestsHttpConnection
-#ES_CLIENT = Elasticsearch(
-#    ['http://127.0.0.1:9200/'],
-#    connection_class=RequestsHttpConnection
-#)
-
-#connections.create_connection(hosts=['localhost'])
-#connections.create_connection(hosts=['108.61.167.27'])
-#client = Elasticsearch(['108.61.167.27'])
 client = Elasticsearch(FMI.settings.ES_HOSTS)
-
-
-class Account(models.Model):
-    account_number = models.IntegerField()
-    address = models.CharField(max_length=200)
-    age = models.IntegerField()
-    balance = models.FloatField()
-    city = models.CharField(max_length=200)
-    email = models.CharField(max_length=200)
-    employer = models.CharField(max_length=30)
-    firstname = models.CharField(max_length=30)
-    lastname = models.CharField(max_length=30)
-    state = models.CharField(max_length=30)
-
-#class MagazineDoc(DocType):
-#    name = String()
-#    issue_date = Date()
-
 
 
 import django.db.models.options as options
@@ -89,29 +32,6 @@ options.DEFAULT_NAMES = options.DEFAULT_NAMES + (
     'es_index_name', 'es_type_name', 'es_mapping'
 )
 
-
-class Accord(models.Model):
-    accord = models.CharField(max_length=20)
-    votes = models.IntegerField()
-
-
-class BookSeekerView (seeker.SeekerView):
-    document = None
-    using = client
-    index = "seeker-tests"
-    facets = [
-        seeker.TermsFacet("category.raw.keyword", label = "Category"),
-        seeker.YearHistogram("date_published", label = "Published")
-        ]
-
-class AccountSeekerView (seeker.SeekerView):
-    document = None
-    using = client
-    index = "bank"
-    page_size = 30
-    facets = [
-        seeker.TermsFacet("state.keyword", label = "State"),
-        ]
 
 ###
 ### Fragrantica
@@ -250,10 +170,10 @@ class PerfumeSeekerView (seeker.SeekerView):
                 'label'   : "Keywords" },
             },
         }
-    dashboard_layout = {
-        'table1' : [["reviewed_keyword_line"], ["keyword_label_table"]],
-        'table2' : [["perfume_keyword_table", "keyword_pie"]]
-        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['table1'] = [["reviewed_keyword_line"], ["keyword_label_table"]]
+    dashboard_layout['table2'] = [["perfume_keyword_table", "keyword_pie"]]
+
     storyboard = [
         {'name' : 'initial',
          'layout'   : dashboard_layout,
@@ -356,7 +276,10 @@ class PostSeekerView (seeker.SeekerView, workbooks.PostWorkbook):
         ]
     facets_keyword = [
         seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
-        seeker.KeywordFacet("facet_corp", label = "Corporations", input="keywords_corp")
+        seeker.KeywordFacet("facet_cust", label = "Customers", input="keywords_cust",
+                            initial="unilever, procter & gamble, P&G, sc johnson, johnson & johnson, henkel"),
+        seeker.KeywordFacet("facet_comp", label = "Competitors", input="keywords_comp",
+                            initial="symrise, givaudan, firmenich, frutarom")
         ];
     display = [
         "post_category_id",
@@ -372,6 +295,9 @@ class PostSeekerView (seeker.SeekerView, workbooks.PostWorkbook):
     sumheader = [
         "title"
         ]
+    urlfields = {
+        "title" : ""
+        }
     SUMMARY_URL="https://iffconnect.iff.com/Fragrances/marketintelligence/Lists/Posts/ViewPost.aspx?ID={}"
 
     tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
@@ -451,8 +377,11 @@ class PageSeekerView (seeker.SeekerView):
         seeker.YearHistogram("posted_date", label = "Posted Year")
         ]
     facets_keyword = [
-        seeker.KeywordFacet("facet_keyword", label = "Keywords 1", input="keywords_k"),
-        seeker.KeywordFacet("facet_keyword_2", label = "Keywords 2", input="keywords_2")
+        seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
+        seeker.KeywordFacet("facet_cust", label = "Customers", input="keywords_cust",
+                            initial="unilever, procter & gamble, P&G, sc johnson, johnson & johnson, henkel"),
+        seeker.KeywordFacet("facet_comp", label = "Competitors", input="keywords_comp",
+                            initial="symrise, givaudan, firmenich, frutarom")
         ];
     display = [
         "posted_date",
@@ -466,11 +395,17 @@ class PageSeekerView (seeker.SeekerView):
     sumheader = [
         "title"
         ]
+    urlfields = {
+        "title" : ""
+        }
     SUMMARY_URL="{}"
+
+
+    tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
 
     # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
     # in the template this is translated into HTML tables, rows, cells and div elements
-    dashboard = {}
+    dashboard = collections.OrderedDict()
     dashboard_layout = {}
     storyboard = [
         {'name' : 'initial',
@@ -559,13 +494,16 @@ class FeedlySeekerView (seeker.SeekerView):
         ]
     facets_keyword = [
         seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
-        seeker.KeywordFacet("facet_corp", label = "Corporations", input="keywords_corp")
+        seeker.KeywordFacet("facet_cust", label = "Customers", input="keywords_cust",
+                            initial="unilever, procter & gamble, P&G, sc johnson, johnson & johnson, henkel"),
+        seeker.KeywordFacet("facet_comp", label = "Competitors", input="keywords_comp",
+                            initial="symrise, givaudan, firmenich, frutarom")
         ];
     display = [
         "published_date",
+        "title",
         "category",
         "feed",
-        "title",
         "feed_topics",
         "body_topics",
         ]
@@ -575,6 +513,9 @@ class FeedlySeekerView (seeker.SeekerView):
     sumheader = [
         "title"
         ]
+    urlfields = {
+        "title" : ""
+        }
     SUMMARY_URL="{}"
 
     tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
@@ -633,10 +574,10 @@ class FeedlySeekerView (seeker.SeekerView):
                 'label'   : "Keywords" },
             },
         }
-    dashboard_layout = {
-        'table1' : [["published_keyword_line"], ["keyword_feed_table"]],
-        'table2' : [["feed_keyword_table", "facet_feed_pie", "facet_keyword_pie"]]
-        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['rows1'] = [["published_keyword_line"], ["keyword_feed_table"]]
+    dashboard_layout['rows2'] = [["feed_keyword_table", "facet_feed_pie", "facet_keyword_pie"]]
+
     storyboard = [
         {'name' : 'initial',
          'layout'   : dashboard_layout,
@@ -831,7 +772,7 @@ class ScentemotionMap(models.Model):
         return field_es_value
 
 
-class ScentemotionSeekerView (seeker.SeekerView):
+class ScentemotionSeekerView (seeker.SeekerView, workbooks.ScentemotionWorkbook):
     document = None
     using = client
     index = "scentemotion"
@@ -894,219 +835,6 @@ class ScentemotionSeekerView (seeker.SeekerView):
       
     # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
     # in the template this is translated into HTML tables, rows, cells and div elements
-    dashboard = {
-        'region_olfactive_table' : {
-            'chart_type'  : "Table",
-            'chart_title' : "Region / Olfactive Ingr Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "region.keyword",
-                'label'   : "Region" },
-            'Y_facet'     : {
-                'field'   : "olfactive.keyword",
-                'label'   : "Olfactive" },
-            },
-        "olfactive_pie" : {
-            'chart_type': "PieChart",
-            'chart_title' : "Olfactive Ingr Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "olfactive.keyword",
-                'label'   : "Olfactive" },
-            },
-        "olfactive_col" : {
-            'chart_type': "ColumnChart",
-            'chart_title' : "Olfactive Ingr Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "olfactive.keyword",
-                'label'   : "Olfactive" },
-            },
-        "cand_mood_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Mood Top Candidates",
-            'chart_data'  : "hits",
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "mood",
-                'question': "Mood",
-                "answers" : ["Happy","Relaxed"],
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Mood"
-                },
-            'options'     : {
-                "seriesType" : 'bars',
-                "series"  : {2: {"type": 'line'}, 3: {"type": 'line'}}
-                },
-            },
-        "cand_smell_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Smell Top Candidates",
-            'chart_data'  : "hits",
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "smell",
-                'question': "Smell",
-                "answers" : ["Clean","Natural"],
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Mood"
-                },
-            'options'     : {
-                "seriesType" : 'bars',
-                "series"  : {2: {"type": 'line'}, 3: {"type": 'line'}}
-                },
-            },
-        "cand_intensity_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Intensity Top Candidates",
-            'chart_data'  : "hits",
-            'controls'    : ['CategoryFilter', 'NumberRangeFilter'],
-            'help'        : "Select Row for sorting, Select Column Header for filter",
-            'listener'    : {'select' : {'colsort': None, 'rowcolfilter': ["mood_cand_radar", "smell_cand_radar", "negative_cand_radar", "descriptor_cand_radar"]}},
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "intensity",
-                "q-mean"  : True,
-                'label'   : "Intensity" },
-            'options'     : {
-                "seriesType" : 'bars',
-                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
-                },
-            },
-        "mood_cand_radar" : {
-            'chart_type'  : "RadarChart",
-            'chart_title' : "Mood",
-            'chart_data'  : "hits",
-            'controls'    : ['CategoryFilter'],
-            'transpose'   : True,
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "mood",
-                'question': "Mood",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Mood"
-                },
-            'options'     : {
-                'width'   : 300,
-                'height'  : 300
-                },
-            },
-        "smell_cand_radar" : {
-            'chart_type'  : "RadarChart",
-            'chart_title' : "Smell",
-            'chart_data'  : "hits",
-            'controls'    : ['CategoryFilter'],
-            'transpose'   : True,
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "smell",
-                'question': "Smell",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Smell"
-                },
-            'options'     : {
-                'width'   : 300,
-                'height'  : 300
-                },
-            },
-        "negative_cand_radar" : {
-            'chart_type'  : "RadarChart",
-            'chart_title' : "Negative",
-            'chart_data'  : "hits",
-            'controls'    : ['CategoryFilter'],
-            'transpose'   : True,
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "negative",
-                'question': "Negative",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Negative"
-                },
-            'options'     : {
-                'width'   : 300,
-                'height'  : 300
-                },
-            },
-        "descriptor_cand_radar" : {
-            'chart_type'  : "RadarChart",
-            'chart_title' : "Descriptor",
-            'chart_data'  : "hits",
-            'controls'    : ['CategoryFilter'],
-            'transpose'   : True,
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "descriptor",
-                'question': "Descriptor",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Descriptor"
-                },
-            'options'     : {
-                'width'   : 300,
-                'height'  : 300
-                },
-            },
-        }
-    dashboard_olfactive = {
-        'rows' : [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]],
-        }
-    dashboard_candidates = {
-        'rows' : [["cand_mood_col"],["cand_smell_col"],["cand_intensity_col"]],
-        }
-    dashboard_profile = {
-        'columns' : [["cand_intensity_col"], ["mood_cand_radar", "smell_cand_radar"], ["negative_cand_radar", "descriptor_cand_radar"]],
-        }
-    storyboard = [
-        {'name' : 'Olfactive',
-         'layout'   : dashboard_olfactive,
-         'active'   : False,
-         },
-        {'name' : 'Candidates',
-         'layout'   : dashboard_candidates,
-         'active'   : True,
-         },
-        {'name' : 'Profile',
-         'layout'   : dashboard_profile,
-         'active'   : False,
-         },
-    ]
 
 
 ###
@@ -1391,7 +1119,7 @@ class StudiesMap(models.Model):
         return field_es_value
 
 
-class StudiesSeekerView (seeker.SeekerView):
+class StudiesSeekerView (seeker.SeekerView, workbooks.StudiesWorkbook):
     document = None
     using = client
     index = "studies"
@@ -1454,197 +1182,6 @@ class StudiesSeekerView (seeker.SeekerView):
     SUMMARY_URL="http://www.iff.com/smell/online-compendium#amber-xtreme"
 
     tabs = {'results_tab': '', 'summary_tab': 'hide', 'storyboard_tab': 'active', 'insights_tab': 'hide'}
-      
-    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
-    # in the template this is translated into HTML tables, rows, cells and div elements
-    dashboard = {
-        #'region_olfactive_table' : {
-        #    'chart_type'  : "Table",
-        #    'chart_title' : "Region / Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "region.keyword",
-        #        'label'   : "Region" },
-        #    'Y_facet'     : {
-        #        'field'   : "olfactive.keyword",
-        #        'label'   : "Olfactive" },
-        #    },
-        #"olfactive_pie" : {
-        #    'chart_type': "PieChart",
-        #    'chart_title' : "Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "olfactive.keyword",
-        #        'label'   : "Olfactive" },
-        #    },
-        #"olfactive_col" : {
-        #    'chart_type': "ColumnChart",
-        #    'chart_title' : "Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "olfactive.keyword",
-        #        'label'   : "Olfactive" },
-        #    },
-        "cand_emotion_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Emotion Top Candidates",
-            'chart_data'  : "hits",
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "emotion",
-                'question': "Emotion",
-                "answers" : ["Addictive","Classic", "Cheap"],
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Emotion"
-                },
-            'options'     : {
-            #      #title   : 'Monthly Coffee Production by Country',
-            #      #vAxis   : {title: 'Cups'},
-            #      #hAxis   : {title: 'Month'},
-                "seriesType" : 'bars',
-                "series"  : {3: {"type": 'line'}, 4: {"type": 'line'}}
-                },
-            },
-        "cand_freshness_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Freshness Top Candidates",
-            'chart_data'  : "hits",
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "freshness",
-                "metric"  : "prc",
-                "q-mean"  : True,
-                'label'   : "Freshness" },
-            'options'     : {
-                "seriesType" : 'bars',
-                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
-                },
-            },
-        "cand_hedonics_col" : {
-            'chart_type': "ComboChart",
-            'chart_title' : "Hedonics Top Candidates",
-            'chart_data'  : "hits",
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "hedonics",
-                'question': "Hedonics",
-                'metric'  : "prc",
-                "q-mean"  : True,
-                'label'   : "Hedonics"
-                },
-            'options'     : {
-                "seriesType" : 'bars',
-                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
-                },
-            },
-        "hedonics_cand_table" : {
-            'chart_type': "Table",
-            'chart_title' : "Topline",
-            'chart_data'  : "topline",
-            'controls'    : [],
-            'help'        : "Select Row for sorting, Select Column Header for filter",
-            'listener'    : {'sort' : ["suitable_stage_cand_bar", "suitable_stage_cand_radar"], 'select' : {'rowsort': None}},
-            'X_facet'     : {
-                'fields'  : {
-                    "hedonics" : {
-                            'lines'   : {"liking.keyword" : {'0-Mean':['mean'], '1-Excellent':[7], '2-Top2':[7,6], '3-Bottom2':[2,1]}},
-                        },
-                    },
-                },
-            'Y_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'options'     : {
-                'sort'    : 'event',
-                "allowHtml" : True,
-                'frozenColumns' : 2,
-                },
-            #'formatter'  : {
-            #    'NumberFormat' : {},
-            #    'setColumnProperties'   : {},
-            #    'setProperty'   : [],
-            #    },
-            },
-        "suitable_stage_cand_bar" : {
-            'chart_type': "BarChart",
-            'chart_title' : "Suitable Stage",
-            'chart_data'  : "hits",
-            'transpose'   : True,
-            'controls'    : ['CategoryFilter'],
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "suitable_stage",
-                'question': "Stage",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Stage"
-                },
-            },
-        "suitable_stage_cand_radar" : {
-            'chart_type': "RadarChart",
-            'chart_title' : "Suitable Stage",
-            'chart_data'  : "hits",
-            'transpose'   : True,
-            'controls'    : ['CategoryFilter'],
-            'X_facet'     : {
-                'field'   : "IPC",
-                'label'   : "Candidate",
-                'total'   : False
-                },
-            'Y_facet'     : {
-                'field'   : "suitable_stage",
-                'question': "Stage",
-                "answers" : [], # All
-                "metric"  : "prc",
-                "a-mean"  : True,
-                'label'   : "Stage"
-                },
-            },
-        }
-    dashboard_olfactive = {
-        'rows' : [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]],
-        }
-    dashboard_candidates = {
-        'rows' : [["cand_emotion_col"],["cand_freshness_col"],["cand_hedonics_col"]],
-        }
-    dashboard_profile = {
-        'columns' : [["hedonics_cand_table"], ["suitable_stage_cand_bar"],["suitable_stage_cand_radar"]],
-        }
-    storyboard = [
-        {'name' : 'Candidates',
-         'layout'   : dashboard_candidates,
-         'active'   : True,
-         },
-        {'name' : 'Profile',
-         'layout'   : dashboard_profile,
-         'active'   : False,
-         },
-        #{'name' : 'Olfactive',
-        # 'layout'   : dashboard_olfactive,
-        # 'active'   : False,
-        # },
-    ]
-
 
 ###
 ### Survey (CI)

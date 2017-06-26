@@ -9,6 +9,7 @@ from django.views.generic.base import TemplateView
 
 # Create your models here.
 import queue
+import collections
 import datetime
 import FMI.settings
 from pandas import DataFrame
@@ -40,17 +41,17 @@ class PostWorkbook:
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
-        #"subject_keyword_table" : {
-        #    'chart_type': "Table",
-        #    'chart_title' : "Subject / Keyword Doc Count",
-        #    'chart_data'  : "facet",
-        #    'X_facet'     : {
-        #        'field'   : "subject.keyword",
-        #        'label'   : "Subject" },
-        #    'Y_facet'     : {
-        #        'field'   : "facet_keyword",
-        #        'label'   : "Keywords" },
-        #    },
+        "subject_keyword_table" : {
+            'chart_type': "Table",
+            'chart_title' : "Subject / Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "subject.keyword",
+                'label'   : "Subject" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
         "facet_keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
@@ -59,13 +60,21 @@ class PostWorkbook:
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
-        "facet_coorp_pie" : {
+        "facet_cust_pie" : {
             'chart_type': "PieChart",
-            'chart_title' : "Corporation Doc Count",
+            'chart_title' : "Customers Doc Count",
             'chart_data'  : "facet",
             'X_facet'     : {
-                'field'   : "facet_corp",
-                'label'   : "Corporations" },
+                'field'   : "facet_cust",
+                'label'   : "Customers" },
+            },
+        "facet_comp_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Competitors Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_comp",
+                'label'   : "Competitors" },
             },
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
@@ -82,11 +91,10 @@ class PostWorkbook:
             },
         }
 
-    dashboard_layout = {
-        #'table1' : [["published_keyword_line"], ["subject_keyword_table"]
-        'table1' : [["published_keyword_line"]],
-        'table2' : [["category_keyword_table", "facet_keyword_pie", "facet_coorp_pie"]]
-        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['rows1'] = [["published_keyword_line"]]
+    dashboard_layout['rows2'] = [["facet_keyword_pie", "facet_cust_pie", "facet_comp_pie"]]
+    dashboard_layout['rows3'] = [["category_keyword_table", "subject_keyword_table"]]
 
     storyboard = [
         {'name' : 'initial',
@@ -94,6 +102,429 @@ class PostWorkbook:
          'active'   : True,
          }
     ] 
+
+    workbooks = {
+        "initial" : {
+            'charts'        : dashboard,
+            'storyboard'    : storyboard,
+            }
+        }
+
+class ScentemotionWorkbook:
+
+    dashboard = {
+        'region_olfactive_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Region / Olfactive Ingr Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "region.keyword",
+                'label'   : "Region" },
+            'Y_facet'     : {
+                'field'   : "olfactive.keyword",
+                'label'   : "Olfactive" },
+            },
+        "olfactive_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Olfactive Ingr Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "olfactive.keyword",
+                'label'   : "Olfactive" },
+            },
+        "olfactive_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Olfactive Ingr Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "olfactive.keyword",
+                'label'   : "Olfactive" },
+            },
+        "cand_mood_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Mood Top Candidates",
+            'chart_data'  : "hits",
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "mood",
+                'question': "Mood",
+                "answers" : ["Happy","Relaxed"],
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Mood"
+                },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {2: {"type": 'line'}, 3: {"type": 'line'}}
+                },
+            },
+        "cand_smell_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Smell Top Candidates",
+            'chart_data'  : "hits",
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "smell",
+                'question': "Smell",
+                "answers" : ["Clean","Natural"],
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Mood"
+                },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {2: {"type": 'line'}, 3: {"type": 'line'}}
+                },
+            },
+        "cand_intensity_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Intensity Top Candidates",
+            'chart_data'  : "hits",
+            'controls'    : ['CategoryFilter', 'NumberRangeFilter'],
+            'help'        : "Select Row for sorting, Select Column Header for filter",
+            'listener'    : {'select' : {'colsort': None, 'rowcolfilter': ["mood_cand_radar", "smell_cand_radar", "negative_cand_radar", "descriptor_cand_radar"]}},
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "intensity",
+                "q-mean"  : True,
+                'label'   : "Intensity" },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
+                },
+            },
+        "mood_cand_radar" : {
+            'chart_type'  : "RadarChart",
+            'chart_title' : "Mood",
+            'chart_data'  : "hits",
+            'controls'    : ['CategoryFilter'],
+            'transpose'   : True,
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "mood",
+                'question': "Mood",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Mood"
+                },
+            'options'     : {
+                'width'   : 300,
+                'height'  : 300
+                },
+            },
+        "smell_cand_radar" : {
+            'chart_type'  : "RadarChart",
+            'chart_title' : "Smell",
+            'chart_data'  : "hits",
+            'controls'    : ['CategoryFilter'],
+            'transpose'   : True,
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "smell",
+                'question': "Smell",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Smell"
+                },
+            'options'     : {
+                'width'   : 300,
+                'height'  : 300
+                },
+            },
+        "negative_cand_radar" : {
+            'chart_type'  : "RadarChart",
+            'chart_title' : "Negative",
+            'chart_data'  : "hits",
+            'controls'    : ['CategoryFilter'],
+            'transpose'   : True,
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "negative",
+                'question': "Negative",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Negative"
+                },
+            'options'     : {
+                'width'   : 300,
+                'height'  : 300
+                },
+            },
+        "descriptor_cand_radar" : {
+            'chart_type'  : "RadarChart",
+            'chart_title' : "Descriptor",
+            'chart_data'  : "hits",
+            'controls'    : ['CategoryFilter'],
+            'transpose'   : True,
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "descriptor",
+                'question': "Descriptor",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Descriptor"
+                },
+            'options'     : {
+                'width'   : 300,
+                'height'  : 300
+                },
+            },
+        }
+    dashboard_olfactive = collections.OrderedDict()
+    dashboard_olfactive['rows'] = [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]]
+
+    dashboard_candidates = collections.OrderedDict()
+    dashboard_candidates['rows'] = [["cand_mood_col"],["cand_smell_col"],["cand_intensity_col"]]
+
+    dashboard_profile = collections.OrderedDict()
+    dashboard_profile['columns'] = [["cand_intensity_col"], ["mood_cand_radar", "smell_cand_radar"], ["negative_cand_radar", "descriptor_cand_radar"]]
+
+    storyboard = [
+        {'name' : 'Olfactive',
+         'layout'   : dashboard_olfactive,
+         'active'   : False,
+         },
+        {'name' : 'Candidates',
+         'layout'   : dashboard_candidates,
+         'active'   : True,
+         },
+        {'name' : 'Profile',
+         'layout'   : dashboard_profile,
+         'active'   : False,
+         },
+    ]
+
+    workbooks = {
+        "initial" : {
+            'charts'        : dashboard,
+            'storyboard'    : storyboard,
+            }
+        }
+
+
+class StudiesWorkbook:
+
+    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
+    # in the template this is translated into HTML tables, rows, cells and div elements
+    dashboard = {
+        #'region_olfactive_table' : {
+        #    'chart_type'  : "Table",
+        #    'chart_title' : "Region / Olfactive Ingr Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "region.keyword",
+        #        'label'   : "Region" },
+        #    'Y_facet'     : {
+        #        'field'   : "olfactive.keyword",
+        #        'label'   : "Olfactive" },
+        #    },
+        #"olfactive_pie" : {
+        #    'chart_type': "PieChart",
+        #    'chart_title' : "Olfactive Ingr Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "olfactive.keyword",
+        #        'label'   : "Olfactive" },
+        #    },
+        #"olfactive_col" : {
+        #    'chart_type': "ColumnChart",
+        #    'chart_title' : "Olfactive Ingr Count",
+        #    'chart_data'  : "facet",
+        #    'X_facet'     : {
+        #        'field'   : "olfactive.keyword",
+        #        'label'   : "Olfactive" },
+        #    },
+        "cand_emotion_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Emotion Top Candidates",
+            'chart_data'  : "hits",
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "emotion",
+                'question': "Emotion",
+                "answers" : ["Addictive","Classic", "Cheap"],
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Emotion"
+                },
+            'options'     : {
+            #      #title   : 'Monthly Coffee Production by Country',
+            #      #vAxis   : {title: 'Cups'},
+            #      #hAxis   : {title: 'Month'},
+                "seriesType" : 'bars',
+                "series"  : {3: {"type": 'line'}, 4: {"type": 'line'}}
+                },
+            },
+        "cand_freshness_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Freshness Top Candidates",
+            'chart_data'  : "hits",
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "freshness",
+                "metric"  : "prc",
+                "q-mean"  : True,
+                'label'   : "Freshness" },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
+                },
+            },
+        "cand_hedonics_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Hedonics Top Candidates",
+            'chart_data'  : "hits",
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "hedonics",
+                'question': "Hedonics",
+                'metric'  : "prc",
+                "q-mean"  : True,
+                'label'   : "Hedonics"
+                },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
+                },
+            },
+        "hedonics_cand_table" : {
+            'chart_type': "Table",
+            'chart_title' : "Topline",
+            'chart_data'  : "topline",
+            'controls'    : [],
+            'help'        : "Select Row for sorting, Select Column Header for filter",
+            'listener'    : {'sort' : ["suitable_stage_cand_bar", "suitable_stage_cand_radar"], 'select' : {'rowsort': None}},
+            'X_facet'     : {
+                'fields'  : {
+                    "hedonics" : {
+                            'lines'   : {"liking.keyword" : {'0-Mean':['mean'], '1-Excellent':[7], '2-Top2':[7,6], '3-Bottom2':[2,1]}},
+                        },
+                    },
+                },
+            'Y_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'options'     : {
+                'sort'    : 'event',
+                "allowHtml" : True,
+                'frozenColumns' : 2,
+                },
+            #'formatter'  : {
+            #    'NumberFormat' : {},
+            #    'setColumnProperties'   : {},
+            #    'setProperty'   : [],
+            #    },
+            },
+        "suitable_stage_cand_bar" : {
+            'chart_type': "BarChart",
+            'chart_title' : "Suitable Stage",
+            'chart_data'  : "hits",
+            'transpose'   : True,
+            'controls'    : ['CategoryFilter'],
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "suitable_stage",
+                'question': "Stage",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Stage"
+                },
+            },
+        "suitable_stage_cand_radar" : {
+            'chart_type': "RadarChart",
+            'chart_title' : "Suitable Stage",
+            'chart_data'  : "hits",
+            'transpose'   : True,
+            'controls'    : ['CategoryFilter'],
+            'X_facet'     : {
+                'field'   : "IPC",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "suitable_stage",
+                'question': "Stage",
+                "answers" : [], # All
+                "metric"  : "prc",
+                "a-mean"  : True,
+                'label'   : "Stage"
+                },
+            },
+        }
+    dashboard_olfactive = collections.OrderedDict()
+    dashboard_olfactive['rows'] = [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]]
+
+    dashboard_candidates = collections.OrderedDict()
+    dashboard_candidates['rows'] = [["cand_emotion_col"],["cand_freshness_col"],["cand_hedonics_col"]]
+
+    dashboard_profile = collections.OrderedDict()
+    dashboard_profile['columns'] = [["hedonics_cand_table"], ["suitable_stage_cand_bar"],["suitable_stage_cand_radar"]]
+
+    storyboard = [
+        {'name' : 'Candidates',
+         'layout'   : dashboard_candidates,
+         'active'   : True,
+         },
+        {'name' : 'Profile',
+         'layout'   : dashboard_profile,
+         'active'   : False,
+         },
+        #{'name' : 'Olfactive',
+        # 'layout'   : dashboard_olfactive,
+        # 'active'   : False,
+        # },
+    ]
 
     workbooks = {
         "initial" : {
@@ -384,19 +815,19 @@ class SurveyWorkbook:
             },
         } 
 
-    dashboard_fresh_layout = {
-        'rows' : [["emotion_ans_col"],["suitable_stage_ans_col", "suitable_product_ans_col"]]
-        }
 
-    dashboard_fresh_hedonics = {
-        'rows' : [["liking_blindcode_col"],["freshness_blindcode_col"], ["cleanliness_blindcode_col"]]
-        }
-    dashboard_fresh_topline = {
-        'rows' : [["topline_liking_table"],["topline_freshness_table"],["cand_emotion_col"]]
-        }
-    dashboard_fresh_profile = {
-        'columns' : [["topline_liking_table"],["topline_liking_combo"],["cand_concept_radar", "cand_emotion_radar"],["cand_mood_radar"]]
-        }
+    dashboard_fresh_layout = collections.OrderedDict()
+    dashboard_fresh_layout['rows'] = [["emotion_ans_col"],["suitable_stage_ans_col", "suitable_product_ans_col"]]
+
+    dashboard_fresh_hedonics = collections.OrderedDict()
+    dashboard_fresh_hedonics['rows'] = [["liking_blindcode_col"],["freshness_blindcode_col"], ["cleanliness_blindcode_col"]]
+
+    dashboard_fresh_topline = collections.OrderedDict()
+    dashboard_fresh_topline['rows'] = [["topline_liking_table"],["topline_freshness_table"],["cand_emotion_col"]]
+
+    dashboard_fresh_profile = collections.OrderedDict()
+    dashboard_fresh_profile['columns'] = [["topline_liking_table"],["topline_liking_combo"],["cand_concept_radar", "cand_emotion_radar"],["cand_mood_radar"]]
+
 
     storyboard_fresh = [
         {'name'     : "Topline",
@@ -589,12 +1020,14 @@ class SurveyWorkbook:
             },
         }
 
-    dashboard_orange_hedonics = {
-        'rows' : [["liking_blindcode_col"],["strength_blindcode_col"]]
-        }
-    dashboard_orange_profile = {
-        'columns' : [["topline_liking_table"],["cand_affective_radar", "cand_behavioral_radar"],["cand_ballot_radar", "cand_descriptors_radar"]]
-        }
+    dashboard_orange_hedonics = collections.OrderedDict()
+    dashboard_orange_hedonics['rows'] = [["liking_blindcode_col"],["strength_blindcode_col"]]
+
+    dashboard_orange_profile = collections.OrderedDict()
+    dashboard_orange_profile['columns'] = [
+            ["topline_liking_table"],["cand_affective_radar", "cand_behavioral_radar"],
+            ["cand_ballot_radar", "cand_descriptors_radar"]
+        ]
 
     storyboard_orange = [
         {'name'     : "Hedonics",
