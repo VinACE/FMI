@@ -397,7 +397,6 @@ def crawl_cosmetic(scrape_choices, nrpages):
 def crawl_feedly(from_date, rss_field):
     global headers
 
-    bulk_data = []
     today = datetime.now()
     days = timedelta(days=31)
     yesterday = today - days
@@ -428,21 +427,33 @@ def crawl_feedly(from_date, rss_field):
     for feed in feeds:
         feed_id = feed['id']
         feed_title = feed['title'].encode("ascii", 'replace')
-        feed_category = feed['categories'][0]['label']
+        # the category label can contain the subset and category name
+        category_label = feed['categories'][0]['label']
+        label_split = category_label.split('-')
+        if len(label_split) > 1:
+            feed_subset = label_split[0].strip()
+            feed_category = label_split[1].strip()
+        else:
+            feed_subset = 'SI'
+            feed_category = label_split[0].strip()
         print("crawl_feedly: scraping feed category/title", feed_category, feed_title)
-        if rss_field == '' or feed_category == rss_field:
-            url = "http://cloud.feedly.com//v3/streams/contents"
+        if rss_field == '' or category_label == rss_field:
+            url = "http://cloud.feedly.com/v3/streams/contents"
             params_streams['streamId'] = feed_id
             r = requests.get(url, headers=headers, params=params_streams)
             stream = r.json()
             if 'items' in stream:
+                bulk_data = None
+                bulk_data = []
                 for entry in stream['items']:
                     feedlymap = models.FeedlyMap()
                     feedlymap.post_id = entry['id']
                     try:
                         feedlymap.published_date = datetime.fromtimestamp(entry['published']/1000)
                     except:
-                        feedlymap.published_date = datetime(2010, 1, 1, 00, 00, 00)
+                        last_year = datetime.now().year - 1
+                        feedlymap.published_date = datetime(last_year, 1, 1, 00, 00, 00)
+                    feedlymap.subset = feed_subset
                     feedlymap.category = feed_category
                     feedlymap.feed = feed_title
                     if 'topics' in feed:
@@ -463,8 +474,7 @@ def crawl_feedly(from_date, rss_field):
                     feedlymap.body = bs.get_text().encode("ascii", 'replace')
                     data = elastic.convert_for_bulk(feedlymap, 'update')
                     bulk_data.append(data)
-
-    bulk(models.client, actions=bulk_data, stats_only=True)
+                bulk(models.client, actions=bulk_data, stats_only=True)
 
 def export_opml_feedly(opml_filename):
     global headers
@@ -560,6 +570,53 @@ def crawl_studies_facts(survey_field, facts_d):
 
     bulk(models.client, actions=bulk_data, stats_only=True)
     pass
+
+def crawl_excel(excel_filename):
+    excel_file = 'data/' + excel_filename
+    excel_df = pd.read_csv(excel_file, sep=';', encoding='ISO-8859-1', low_memory=False)
+    excel_df.fillna(0, inplace=True)
+
+    indices_client = IndicesClient(models.client)
+    index_name = models.ExcelMap._meta.es_index_name
+    if indices_client.exists(index_name):
+        indices_client.delete(index=index_name)
+    indices_client.create(index=index_name)
+    indices_client.put_mapping(
+        doc_type=models.ExcelMap._meta.es_type_name,
+        body=models.ExcelMap._meta.es_mapping,
+        index=index_name
+    )
+
+    bulk_data = []
+    count = 0
+    total_count = 0
+    for key, row_s in excel_df.iterrows():
+        doc = models.ExcelMap()
+        doc.excelid = count
+        doc.aops = []
+        doc.role = row_s['Role']
+        doc.name = row_s['Name']
+        doc.link = row_s['Link']
+        doc.why = row_s['Why']
+        doc.how = row_s['How']
+        doc.what = row_s['What']
+        doc.who = row_s['Who']
+        doc.where = row_s['Where']
+        doc.country = row_s['Country']
+        doc.contacts = row_s['Contacts']
+        doc.company = row_s['Company']
+
+        data = elastic.convert_for_bulk(doc, 'update')
+        bulk_data.append(data)
+        count = count + 1
+        if count > 100:
+            bulk(models.client, actions=bulk_data, stats_only=True)
+            total_count = total_count + count
+            print("crawl_excel: written another batch, total written {0:d}".format(total_count))
+            bulk_data = []
+            count = 1
+
+    bulk(models.client, actions=bulk_data, stats_only=True)
 
 def crawl_scentemotion(cft_filename):
     ml_file = 'data/' + cft_filename

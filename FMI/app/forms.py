@@ -84,8 +84,9 @@ class crawl_form(forms.Form):
     product_field = forms.CharField(label='Product', max_length=40, required = False, initial = '', help_text='Index this product')
     username = forms.CharField(label="User (domain\\user)", max_length=254, widget=forms.TextInput({'class': 'form-control','placeholder': 'User name'}), required=False)
     password = forms.CharField(label="Password", widget=forms.PasswordInput({'class': 'form-control','placeholder':'Password'}), required=False)
-    cft_filename_field = forms.CharField(label='CFT file', max_length=40, required = False, initial = 'CFT Ing.csv')
-    ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'fresh and clean Survey test.csv')
+    cft_filename_field = forms.CharField(label='CFT file', max_length=80, required = False, initial = 'CFT Ing.csv')
+    ci_filename_field = forms.CharField(label='CI file', max_length=80, required = False, initial = 'fresh and clean - test.csv')
+    excel_filename_field = forms.CharField(label='Excel file (csv)', max_length=80, required = False, initial = 'Beyond Sensorial Ecosystem Stakeholders - Tabulated.csv')
     #ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'ChoiceModel FF USA.csv')
     def add_form_error(self, message):
         if not self._errors:

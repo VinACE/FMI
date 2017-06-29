@@ -272,6 +272,7 @@ def crawl_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             cft_filename = form.cleaned_data['cft_filename_field']
+            excel_filename = form.cleaned_data['excel_filename_field']
             ci_filename = form.cleaned_data['ci_filename_field']
             if from_date == None:
                 today = datetime.now()
@@ -287,6 +288,8 @@ def crawl_view(request):
             elif 'crawl_mi' in form.data:
                 if not market.index_posts(from_date, username, password):
                     form.add_form_error("Could not index category posts")
+            if 'crawl_excel' in form.data:
+                crawl.crawl_excel(excel_filename)
             if 'crawl_pi' in form.data:
                 if product_field == '':
                     form.add_form_error("Specify a product")

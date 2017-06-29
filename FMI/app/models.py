@@ -16,7 +16,7 @@ from pandas import DataFrame
 
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
-from elasticsearch_dsl import DocType, Date, Double, Long, Integer, Boolean
+from elasticsearch_dsl import DocType, Date, Boolean, Text, Nested, Keyword
 from elasticsearch_dsl.connections import connections
 import seeker
 import app.workbooks as workbooks
@@ -31,6 +31,111 @@ import django.db.models.options as options
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + (
     'es_index_name', 'es_type_name', 'es_mapping'
 )
+
+###
+### Excel
+###
+
+#
+# Based on the headers of an excel file, this ExcelDoc and ExcelSeekerView models are created.
+# During Crawl each row of the excel file is turned into a Document and stored in the 'excel' index
+# with doc_type the name of the excel file.
+# During Search the 'excel' index with the right doc_type is searched.
+#
+
+class Excel(models.Model):
+    aops = models.TextField()
+    role = models.TextField()
+    name = models.TextField()
+    link = models.TextField()
+    why = models.TextField()
+    how = models.TextField()
+    what = models.TextField()
+    who = models.TextField()
+    where = models.TextField()
+    country = models.TextField()
+    contacts = models.TextField()
+    company = models.TextField()
+
+
+class ExcelMap(models.Model):
+    excelid = models.IntegerField()
+    aops = []
+    role = models.TextField()
+    name = models.TextField()
+    link = models.TextField()
+    why = models.TextField()
+    how = models.TextField()
+    what = models.TextField()
+    who = models.TextField()
+    where = models.TextField()
+    country = models.TextField()
+    contacts = []
+    company = models.TextField()
+
+    class Meta:
+        es_index_name = 'excel'
+        es_type_name = 'excel'
+        es_mapping = {
+            'properties' : {
+                }
+            }
+
+    def es_repr(self):
+        data = {}
+        mapping = self._meta.es_mapping
+        data['_id'] = self.excelid
+        for field_name in mapping['properties'].keys():
+            data[field_name] = self.field_es_repr(field_name)
+        return data
+    def field_es_repr(self, field_name):
+        config = self._meta.es_mapping['properties'][field_name]
+        if hasattr(self, 'get_es_%s' % field_name):
+            field_es_value = getattr(self, 'get_es_%s' % field_name)()
+        else:
+            if config['type'] == 'object':
+                related_object = getattr(self, field_name)
+                field_es_value = {}
+                field_es_value['_id'] = related_object.pk
+                for prop in config['properties'].keys():
+                    field_es_value[prop] = getattr(related_object, prop)
+            else:
+                field_es_value = getattr(self, field_name)
+        return field_es_value
+
+
+class ExcelDoc(DocType):
+    aops = Nested(
+         properties = {
+             'aop': Text(fields={'raw': Keyword()}),
+             }
+         )
+    role = Text
+    name = Text
+    link = Text
+    why = Text
+    how = Text
+    what = Text
+    who = Text
+    where = Text
+    country = Text
+    contacts = Nested(
+        properties = {
+            'contact': Text(fields={'raw': Keyword()}),
+             }
+         )
+    company = Text
+
+class ExcelSeekerView (seeker.SeekerView):
+    document = None
+    using = client
+    index = "excel"
+    page_size = 30
+    facets = [
+        ]
+    facets_keyword = [seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k")];
+
+    tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
 
 
 ###
@@ -420,6 +525,7 @@ class PageSeekerView (seeker.SeekerView):
 
 class Feedly(models.Model):
     post_id = models.IntegerField()
+    subset = models.TextField()
     published_date = models.DateField()
     category = models.TextField()
     feed = models.TextField()
@@ -431,6 +537,7 @@ class Feedly(models.Model):
  
 class FeedlyMap(models.Model):
     post_id = models.IntegerField()
+    subset = models.TextField()
     published_date = models.DateField()
     category = models.TextField()
     feed = models.TextField()
@@ -446,6 +553,7 @@ class FeedlyMap(models.Model):
         es_mapping = {
             'properties' : {
                 'published_date'    : {'type' : 'date'},
+                'subset'            : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'category'          : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'feed'              : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
                 'feed_topics'       : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
@@ -487,6 +595,7 @@ class FeedlySeekerView (seeker.SeekerView):
     index = "feedly"
     page_size = 30
     facets = [
+        seeker.TermsFacet("subset.keyword", label = "Subset"),
         seeker.TermsFacet("category.keyword", label = "Category"),
         seeker.TermsFacet("feed.keyword", label = "Feed"),
         seeker.TermsFacet("feed_topics.keyword", label = "Topics"),
@@ -523,29 +632,29 @@ class FeedlySeekerView (seeker.SeekerView):
     # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
     # in the template this is translated into HTML tables, rows, cells and div elements
     dashboard = {
-        'feed_keyword_table' : {
+        'category_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
             'chart_data'  : "facet",
             'X_facet'     : {
-                'field'   : "feed.keyword",
-                'label'   : "Feed" },
+                'field'   : "category.keyword",
+                'label'   : "Category" },
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
-        "keyword_feed_table" : {
-            'chart_type': "Table",
-            'chart_title' : "Keyword / Category Doc Count",
+        'feed_keyword_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Feed / Keyword Doc Count",
             'chart_data'  : "facet",
             'X_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            'Y_facet'     : {
                 'field'   : "feed.keyword",
                 'label'   : "Feed" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
             },
-        "facet_keyword_pie" : {
+        "keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
             'chart_data'  : "facet",
@@ -553,30 +662,44 @@ class FeedlySeekerView (seeker.SeekerView):
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
             },
-        "facet_feed_pie" : {
+        "customer_pie" : {
             'chart_type': "PieChart",
-            'chart_title' : "Feed Doc Count",
+            'chart_title' : "Customer Doc Count",
             'chart_data'  : "facet",
             'X_facet'     : {
-                'field'   : "feed.keyword",
-                'label'   : "Feeds" },
+                'field'   : "facet_cust",
+                'label'   : "Customer" },
+            },
+        "competitor_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Competitor Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_comp",
+                'label'   : "Competitor" },
             },
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Year Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
-                'key'     : 'key_as_string'},
+                'key'     : 'key_as_string',
+                'total'   : False,
+                'type'    : 'date'},
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
+            'options'     : {
+                "hAxis"   : {'format': 'yy/MMM/d'},
+                },
             },
         }
     dashboard_layout = collections.OrderedDict()
-    dashboard_layout['rows1'] = [["published_keyword_line"], ["keyword_feed_table"]]
-    dashboard_layout['rows2'] = [["feed_keyword_table", "facet_feed_pie", "facet_keyword_pie"]]
+    dashboard_layout['rows1'] = [["published_keyword_line"], ["customer_pie", "competitor_pie", "keyword_pie"]]
+    dashboard_layout['rows2'] = [["category_keyword_table", "feed_keyword_table"]]
 
     storyboard = [
         {'name' : 'initial',

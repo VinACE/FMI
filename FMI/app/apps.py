@@ -9,6 +9,10 @@ class AppConfig (django.apps.AppConfig):
         import seeker
         import app.models as models
 
+        models.Excel2Doc = seeker.mapping.document_from_model(models.Excel, index="excel", using=models.client)
+        seeker.register(models.Excel2Doc)
+        models.ExcelSeekerView.document = models.Excel2Doc
+
         models.PerfumeDoc = seeker.mapping.document_from_model(models.Perfume, index="review", using=models.client)
         seeker.register(models.PerfumeDoc)
         models.PerfumeSeekerView.document = models.PerfumeDoc

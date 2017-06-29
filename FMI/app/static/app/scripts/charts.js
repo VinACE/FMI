@@ -323,11 +323,23 @@ function google_chart(chart_name, json_data) {
     google.charts.setOnLoadCallback(drawVisualization);
 
     function drawVisualization() {
+        // in case the X value is a date is still requires converting to a Date
+        var X_facet = json_data['X_facet']
+        if ("type" in X_facet) {
+            if (X_facet['type'] == 'date') {
+                for (var rix = 1; rix < json_data['data'].length; rix++) {
+                    var s = json_data['data'][rix][0];
+                    if (typeof s === 'string') {
+                        var d = new Date(s);
+                        json_data['data'][rix][0] = d
+                    }
+                }
+            }
+        }
         var data = google.visualization.arrayToDataTable(json_data['data']);
         var view = new google.visualization.DataView(data);
         var chart_type = json_data['chart_type'];
         var chart_title = json_data['chart_title'];
-        var X_facet = json_data['X_facet']
         var x_total = true
         //var y_axis = 1 // secondary axis = 1
         if ("total" in X_facet) {
@@ -469,6 +481,62 @@ function google_chart(chart_name, json_data) {
                             }
                         }
                     });
+                } else if (control == 'DateRangeFilter') {
+                    //var label = data.getValue(0, 0);
+                    var label = data.getColumnLabel(0);
+                    var control_wrapper = new google.visualization.ControlWrapper({
+                        'controlType': 'DateRangeFilter',
+                        'containerId': ctdivs[cix],
+                        'options': {
+                            'filterColumnIndex': 0,
+                            //'minValue': 0.0,
+                            //'maxValue': 10.0,
+                            'ui': {
+                                'orientation': 'horizontal',
+                                'label': label,
+                                //'unitIncrement': 0.1,
+                                //'blockIncrement' : 0.1,
+                                'step': 0.1,
+                                'ticks': 10,
+                                'showRangeValues': true,
+                            }
+                        }
+                    });
+                } else if (control == 'ChartRangeFilter') {
+                    //var label = data.getValue(0, 0);
+                    var label = data.getColumnLabel(0);
+                    var date_end = new Date();
+                    var date_begin = new Date(date_end.getFullYear()-1, 0, 1) 
+
+                    var control_wrapper = new google.visualization.ControlWrapper({
+                        'controlType': 'ChartRangeFilter',
+                        'containerId': ctdivs[cix],
+                        'options': {
+                            'filterColumnIndex': 0,
+                            //'minValue': 0.0,
+                            //'maxValue': 10.0,
+                            'ui': {
+                                'orientation': 'horizontal',
+                                'label': label,
+                                //'unitIncrement': 0.1,
+                                //'blockIncrement' : 0.1,
+                                'showRangeValues': true,
+                                chartOptions: {
+                                    height: 50,
+                                    hAxis: {
+                                        format: 'yy/MMM'
+                                    }
+                                }
+                            }
+                        },
+                        'state': {
+                            'range': {
+                                'start': date_begin,
+                                'end': date_end
+                            }
+                        }
+                    });
+                    //document.getElementById(ctdivs[cix]).style.height = "50px";
                 }
                 control_wrappers.push(control_wrapper);
             }
