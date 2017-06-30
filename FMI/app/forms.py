@@ -86,7 +86,7 @@ class crawl_form(forms.Form):
     password = forms.CharField(label="Password", widget=forms.PasswordInput({'class': 'form-control','placeholder':'Password'}), required=False)
     cft_filename_field = forms.CharField(label='CFT file', max_length=80, required = False, initial = 'CFT Ing.csv')
     ci_filename_field = forms.CharField(label='CI file', max_length=80, required = False, initial = 'fresh and clean - test.csv')
-    excel_filename_field = forms.CharField(label='Excel file (csv)', max_length=80, required = False, initial = 'Beyond Sensorial Ecosystem Stakeholders - Tabulated.csv')
+    excel_filename_field = forms.CharField(label='Excel file (csv)', max_length=80, required = False, initial = 'ecosystem.xlsx')
     #ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'ChoiceModel FF USA.csv')
     def add_form_error(self, message):
         if not self._errors:
@@ -96,7 +96,7 @@ class crawl_form(forms.Form):
         self._errors[NON_FIELD_ERRORS].append(message)
 
 class fmi_admin_form(forms.Form):
-    index_choices = (('pi', 'Product Intelligence'), ('mi', 'MI - Market Intelligence'), ('si_sites', 'SI - Sites'),
+    index_choices = (('excel', 'Excel Files'), ('pi', 'Product Intelligence'), ('mi', 'MI - Market Intelligence'), ('si_sites', 'SI - Sites'),
                      ('feedly', 'Feedly'), ('scentemotion', 'Scent Emotion'), ('studies', 'CI/SE Studies'), ('survey', 'CI Survey'))
     index_choices_field = forms.MultipleChoiceField(label='Web Site', choices=index_choices, widget=forms.CheckboxSelectMultiple, required=True)
     opml_filename_field = forms.CharField(label='OPML file', max_length=40, required = False, initial = '')

@@ -40,6 +40,15 @@ def put_settings(obj):
     indices_client.put_settings(index=index_name, body=kwargs)
     indices_client.open(index=index_name)
 
+# For excel only the index is created. The doc_types (mappings) are created
+# when an excel file is uploaded. The mapping matches the columns of the worksheet
+def create_index_excel():
+    indices_client = IndicesClient(models.client)
+    index_name = 'excel'
+    if indices_client.exists(index_name):
+        indices_client.delete(index=index_name)
+    indices_client.create(index=index_name)
+
 
 def create_index_pi():
 #   indices_client = IndicesClient(client=settings.ES_HOSTS)
@@ -134,7 +143,9 @@ def create_index_survey():
 
 def create_index_elastic(index_choices):
     for index_choice in index_choices:
-        if index_choice == 'pi':
+        if index_choice == 'excel':
+            create_index_excel()
+        elif index_choice == 'pi':
             create_index_pi()
         elif index_choice == 'mi':
             create_index_mi()

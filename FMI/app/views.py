@@ -129,6 +129,8 @@ def market_insight_view(request):
             return redirect('search_feedly')
         elif 'search_si_sites' in request.POST:
             return redirect('search_si_sites')
+        elif 'search_excel' in request.POST:
+            return redirect('search_excel')
     return render(request, 'app/market_insight.html', 
                   context_instance = RequestContext(request,
                                                     {'es_hosts' : FMI.settings.ES_HOSTS, 'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
@@ -289,7 +291,8 @@ def crawl_view(request):
                 if not market.index_posts(from_date, username, password):
                     form.add_form_error("Could not index category posts")
             if 'crawl_excel' in form.data:
-                crawl.crawl_excel(excel_filename)
+                if not crawl.crawl_excel(excel_filename):
+                    form.add_form_error("Could not retrieve or index excel file")
             if 'crawl_pi' in form.data:
                 if product_field == '':
                     form.add_form_error("Specify a product")

@@ -7,11 +7,13 @@ import glob, os
 import pickle
 import urllib
 import requests
+import json
 from urllib.parse import urlparse
 import re
 from requests_ntlm import HttpNtlmAuth
 from pandas import Series, DataFrame
 import pandas as pd
+import numpy as np
 from bs4 import BeautifulSoup
 
 from elasticsearch import Elasticsearch
@@ -23,7 +25,7 @@ import seeker
 import app.models as models
 import app.elastic as elastic
 import app.survey as survey
-
+from FMI.settings import BASE_DIR, ES_HOSTS
 
 si_sites = {
     'gci'   : {
@@ -572,51 +574,114 @@ def crawl_studies_facts(survey_field, facts_d):
     pass
 
 def crawl_excel(excel_filename):
-    excel_file = 'data/' + excel_filename
-    excel_df = pd.read_csv(excel_file, sep=';', encoding='ISO-8859-1', low_memory=False)
-    excel_df.fillna(0, inplace=True)
+    excel_file = os.path.join(BASE_DIR, 'data/' + excel_filename)
+    try:
+        mapping_df = pd.read_excel(excel_file, sheetname=1, header=0)
+    except:
+        cwd = os.getcwd()
+        print("crawl_excel: working dirtory is: ", cwd)
+        print("crawl_excel: excel_file: ", excel_file)
+        return False
 
-    indices_client = IndicesClient(models.client)
-    index_name = models.ExcelMap._meta.es_index_name
-    if indices_client.exists(index_name):
-        indices_client.delete(index=index_name)
-    indices_client.create(index=index_name)
-    indices_client.put_mapping(
-        doc_type=models.ExcelMap._meta.es_type_name,
-        body=models.ExcelMap._meta.es_mapping,
-        index=index_name
-    )
+    mapping_df.fillna("", inplace=True)
 
+    es_host = ES_HOSTS[0]
+    headers = {}
+    if 'http_auth' in es_host:
+        headers['http_auth'] = es_host['http_auth']
+    host = es_host['host']
+    index = "excel"
+    doc_type = "ecosystem"
+    url = "http://" + host + ":9200/" + index
+
+    # The idea is that each excel file ends up in its own mapping (doc_type).
+    # (re-)loading a workbook means deleting the existing content and mapping and
+    # (re-)create the new mapping with loading the content. However it is not
+    # possible anymore to delete a doc_type. For the time being the whole index will
+    # be deleted.
+
+    # delete and re-create excel index
+    r = requests.delete(url, headers=headers)
+    r = requests.put(url, headers=headers)
+    # create mapping in excel index
+    properties = {
+        'subset' : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+        }
+    for map_key, map_s in mapping_df.iterrows():
+        field = map_s['field']
+        if field == "":
+            continue
+        type = map_s['type']
+        if type == 'string':
+            properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+        elif type == 'date':
+            properties[field] = {'type' : 'date'}
+        elif type == 'integer':
+            properties[field] = {'type' : 'integer'}
+        elif type == 'text':
+            properties[field] = {'type' : 'text'}
+        elif type == 'list':
+            pass
+            #properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+            #properties[field] = { 'properties' :
+            #                     { field : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}}
+            #                    }
+
+    mapping = json.dumps({
+            'properties' : properties
+        })
+    r = requests.put(url + "/_mapping/" + doc_type, headers=headers, data=mapping)
+    ## store document
+    #data = json.dumps({
+    #    "aop" : ["Creative"],
+    #    "role" : "Creative Incubators",
+    #    "name" : "113Industries, US   Razi Imam",
+    #    "link" : "http://113industries.com/",
+    #    "why"  : "A scientific research and innovation company made up of scientists and entrepreneurs, who works with leading Fortune 500 companies to help them invent their next generation products based on Social Design-Driven Innovation process and ensure their economic viability by rapidly innovating new products",
+    #    "how"  : "Use the power of Big Data to analyze over 200,000 consumer conversations related to product consumption to generate an accurate profile of the consumers, their compensating behaviors and most of all their unarticulated needs.",
+    #    "what" : "Social Design-Driven Innovation project to Discover insights, compensating behaviors and unarticulated needs of consumers in relation to air care in the home and auto space in the United States and United Kingdom Open new markets with innovative new products, solutions, and services or business model improvements that will create differentiation to IFF current and potential customers",
+    #    "who" : "Razi Imam  razii@113industries.com",
+    #    "country" : "USA",
+    #    "contacts" : ["Razi Imam"],
+    #    "company" : "113 Industries"
+    #    })
+    #r = requests.put(url + "/" + doc_type + "/1", headers=headers, data=data)
+    # query excel
+    query = json.dumps({
+        "query": {
+            "match_all": {}
+            }
+        })
+    r = requests.get(url + "/" + doc_type + "/_search", headers=headers, data=query)
+    results = json.loads(r.text)
+
+    data_df = pd.read_excel(excel_file, sheetname=2, header=0)
+    data_df.fillna("", inplace=True)
     bulk_data = []
-    count = 0
+    count = 1
     total_count = 0
-    for key, row_s in excel_df.iterrows():
-        doc = models.ExcelMap()
-        doc.excelid = count
-        doc.aops = []
-        doc.role = row_s['Role']
-        doc.name = row_s['Name']
-        doc.link = row_s['Link']
-        doc.why = row_s['Why']
-        doc.how = row_s['How']
-        doc.what = row_s['What']
-        doc.who = row_s['Who']
-        doc.where = row_s['Where']
-        doc.country = row_s['Country']
-        doc.contacts = row_s['Contacts']
-        doc.company = row_s['Company']
-
-        data = elastic.convert_for_bulk(doc, 'update')
-        bulk_data.append(data)
+    for key, row_s in data_df.iterrows():
+        doc = None
+        doc = {}
+        doc['subset'] = doc_type
+        for map_key, map_s in mapping_df.iterrows():
+            field = map_s['field']
+            if field == "":
+                continue
+            column = map_s['column']
+            type = map_s['type']
+            if type == 'list':
+                if field not in doc:
+                    doc[field] = []
+                if row_s[column] != "":
+                    doc[field].append(row_s[column])
+            else:
+                doc[field] = row_s[column]
+        data = json.dumps(doc)
+        r = requests.put(url + "/" + doc_type + "/" + str(count), headers=headers, data=data)
         count = count + 1
-        if count > 100:
-            bulk(models.client, actions=bulk_data, stats_only=True)
-            total_count = total_count + count
-            print("crawl_excel: written another batch, total written {0:d}".format(total_count))
-            bulk_data = []
-            count = 1
+    return True
 
-    bulk(models.client, actions=bulk_data, stats_only=True)
 
 def crawl_scentemotion(cft_filename):
     ml_file = 'data/' + cft_filename

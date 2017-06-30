@@ -43,11 +43,13 @@ options.DEFAULT_NAMES = options.DEFAULT_NAMES + (
 # During Search the 'excel' index with the right doc_type is searched.
 #
 
-class Excel(models.Model):
-    aops = models.TextField()
+# Class name has to match the name of the mapping in ES (doc_type)
+class ecosystem(models.Model):
+    subset = models.TextField()
+    aop = models.TextField()
     role = models.TextField()
     name = models.TextField()
-    link = models.TextField()
+    url = models.TextField()
     why = models.TextField()
     how = models.TextField()
     what = models.TextField()
@@ -58,61 +60,16 @@ class Excel(models.Model):
     company = models.TextField()
 
 
-class ExcelMap(models.Model):
-    excelid = models.IntegerField()
-    aops = []
-    role = models.TextField()
-    name = models.TextField()
-    link = models.TextField()
-    why = models.TextField()
-    how = models.TextField()
-    what = models.TextField()
-    who = models.TextField()
-    where = models.TextField()
-    country = models.TextField()
-    contacts = []
-    company = models.TextField()
-
-    class Meta:
-        es_index_name = 'excel'
-        es_type_name = 'excel'
-        es_mapping = {
-            'properties' : {
-                }
-            }
-
-    def es_repr(self):
-        data = {}
-        mapping = self._meta.es_mapping
-        data['_id'] = self.excelid
-        for field_name in mapping['properties'].keys():
-            data[field_name] = self.field_es_repr(field_name)
-        return data
-    def field_es_repr(self, field_name):
-        config = self._meta.es_mapping['properties'][field_name]
-        if hasattr(self, 'get_es_%s' % field_name):
-            field_es_value = getattr(self, 'get_es_%s' % field_name)()
-        else:
-            if config['type'] == 'object':
-                related_object = getattr(self, field_name)
-                field_es_value = {}
-                field_es_value['_id'] = related_object.pk
-                for prop in config['properties'].keys():
-                    field_es_value[prop] = getattr(related_object, prop)
-            else:
-                field_es_value = getattr(self, field_name)
-        return field_es_value
-
-
 class ExcelDoc(DocType):
-    aops = Nested(
+    subset = Text
+    aop = Nested(
          properties = {
              'aop': Text(fields={'raw': Keyword()}),
              }
          )
     role = Text
     name = Text
-    link = Text
+    url = Text
     why = Text
     how = Text
     what = Text
@@ -132,11 +89,76 @@ class ExcelSeekerView (seeker.SeekerView):
     index = "excel"
     page_size = 30
     facets = [
+        seeker.TermsFacet("aop.keyword", label = "Area of Potential"),
+        seeker.TermsFacet("role.keyword", label = "Role"),
+        seeker.TermsFacet("country.keyword", label = "Country"),
+        seeker.TermsFacet("company.keyword", label = "company"),
         ]
     facets_keyword = [seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k")];
-
+    display = [
+        "company",
+        "aop",
+        "role",
+        "why",
+        "how",
+        "what",
+        ]
+    sort = []
+    summary = ['why', 'how', 'what']
+    sumheader = ['company']
+    SUMMARY_URL="{}"
+    urlfields = {
+        "company" : ""
+        }
     tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
 
+    dashboard = {
+        'company_keyword_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Company / Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "company.keyword",
+                'label'   : "Company" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        "aop_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Area of Potential",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "aop.keyword",
+                'label'   : "Area of Potential" },
+            },
+        "role_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Role",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "role.keyword",
+                'label'   : "Role" },
+            },
+        "keyword_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['table1'] = [["aop_pie", "keyword_pie"], ["role_col"]]
+    dashboard_layout['table2'] = [["company_keyword_table"]]
+
+    storyboard = [
+        {'name' : 'initial',
+         'layout'   : dashboard_layout,
+         'active'   : True,
+         }
+    ]
 
 ###
 ### Fragrantica
@@ -636,6 +658,7 @@ class FeedlySeekerView (seeker.SeekerView):
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "category.keyword",
                 'label'   : "Category" },

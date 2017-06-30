@@ -9,7 +9,7 @@ class AppConfig (django.apps.AppConfig):
         import seeker
         import app.models as models
 
-        models.Excel2Doc = seeker.mapping.document_from_model(models.Excel, index="excel", using=models.client)
+        models.Excel2Doc = seeker.mapping.document_from_model(models.ecosystem, index="excel", using=models.client)
         seeker.register(models.Excel2Doc)
         models.ExcelSeekerView.document = models.Excel2Doc
 

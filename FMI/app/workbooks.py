@@ -34,6 +34,7 @@ class PostWorkbook:
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "post_category_id.keyword",
                 'label'   : "Category" },
@@ -45,6 +46,7 @@ class PostWorkbook:
             'chart_type': "Table",
             'chart_title' : "Subject / Keyword Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "subject.keyword",
                 'label'   : "Subject" },
@@ -56,6 +58,7 @@ class PostWorkbook:
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -80,20 +83,25 @@ class PostWorkbook:
             'chart_type'  : "LineChart",
             'chart_title' : "Published Month Doc Count",
             'chart_data'  : "facet",
+            'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
                 'key'     : 'key_as_string',
-                'total'   : False},
+                'total'   : False,
+                'type'    : 'date'},
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
+            'options'     : {
+                "hAxis"   : {'format': 'yy/MMM'},
+                },
             },
         }
 
     dashboard_layout = collections.OrderedDict()
     dashboard_layout['rows1'] = [["published_keyword_line"]]
-    dashboard_layout['rows2'] = [["facet_keyword_pie", "facet_cust_pie", "facet_comp_pie"]]
+    dashboard_layout['rows2'] = [["facet_cust_pie", "facet_comp_pie", "facet_keyword_pie"]]
     dashboard_layout['rows3'] = [["category_keyword_table", "subject_keyword_table"]]
 
     storyboard = [
