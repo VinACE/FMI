@@ -11,6 +11,7 @@ var g_db;
 var g_options;
 var g_storyboard;
 var g_storyboard_ix;
+var g_storyboard_tab_activated;
 var g_stats_df;
 
 
@@ -417,6 +418,25 @@ $("#_filter").click(function () {
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
             input.value = tab;
+        }
+    }
+});
+
+// do a redraw in case the storyboard tab is shown the first time
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var ul = document.getElementById("tabs");
+    var items = ul.getElementsByTagName("li");
+    for (var i = 0; i < items.length; ++i) {
+        var li = items[i];
+        var c = li.className;
+        if (c == "active") {
+            var anchor = li.getElementsByTagName('a')[0];
+            var href = anchor.href;
+            var n = href.lastIndexOf("#");
+            var tab = href.substr(n, href.length - 1);
+            if (tab == "#storyboard_tab") {
+                draw_storyboard(g_storyboard[g_storyboard_ix], g_db)
+            }
         }
     }
 });

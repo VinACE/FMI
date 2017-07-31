@@ -410,8 +410,8 @@ def crawl_feedly(from_date, rss_field):
     ms = s * 1000
     newerthan = "{:.0f}".format(ms)
     headers = {
-        #sjaak.waarts@gmail.com (expires on 2017-07-20)
-        "Authorization" : "A2JxorrfeTBQbMUsDIU3_zexSwY8191e3P9EvewYowjfbhKwOgHk84ErlXAWXpucZ_McfTDHLZN6yLxWqxgjWM8Upp1c-6Nb_RpZd0jWA9mJkVLN1JTETefaVNZtZqzTGTf8_qeT2ZE8z6Bf4LqLOUfQaQH2-jj8XIaxAyWMZ5BDRtfpgwVYrEEM2ii5KXnMJZxGNEvcqAV4Dke_subaM-wlnC8N63g:feedlydev"
+        #sjaak.waarts@gmail.com (expires on 2017-08-30)
+        "Authorization" : "AzWWXryrLu4tHJg9o7z4eGa4NxqkZzuLNXttJov30WqWQlEOaQtP7WMKqU58Aa5Gw38y_eA9f81ALCUW7MBJaiCF0aZtDosP1Xzxjmh71-yIaF-wsp362XMyOViVHhBZ8rwubkpC-O6Fwq0iFo7Xtg33kKM5dHrlzZm0EAKuqfN6LKPr9V4CeX7ED3ViN77n3vfQL0RxDAxAzqkCRhKLW83Z_yFxvg:feedlydev"
         }
 
     params_streams = {
@@ -425,6 +425,8 @@ def crawl_feedly(from_date, rss_field):
     #r = requests.get(url, headers=headers)
     url = "http://cloud.feedly.com/v3/subscriptions"
     r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        return False
     feeds = r.json()
     for feed in feeds:
         feed_id = feed['id']
@@ -466,8 +468,12 @@ def crawl_feedly(from_date, rss_field):
                     if 'canonicalUrl' in entry:
                         feedlymap.url = entry['canonicalUrl']
                     else:
-                        n = entry['originId'].find('http')
-                        feedlymap.url = entry['originId'][n:]
+                        if 'originId' in entry:
+                            n = entry['originId'].find('http')
+                            feedlymap.url = entry['originId'][n:]
+                        elif 'origin' in entry:
+                            origin = entry['origin']
+                            feedlymap.url = origin['htmlUrl']
                     feedlymap.post_id = feedlymap.url
                     if 'summary' in entry:
                         bs = BeautifulSoup(entry['summary']['content'],  "lxml") # in case of RSS feed
@@ -477,6 +483,7 @@ def crawl_feedly(from_date, rss_field):
                     data = elastic.convert_for_bulk(feedlymap, 'update')
                     bulk_data.append(data)
                 bulk(models.client, actions=bulk_data, stats_only=True)
+    return True
 
 def export_opml_feedly(opml_filename):
     global headers

@@ -1233,7 +1233,7 @@ class SeekerView (View):
             pyfile = File(file)
             for line in pyfile:
                 keyword = line.rstrip('\n')
-                if keyword.count(' ') > 0:
+                if keyword.count(' ') > 0 and keyword[0] != '"':
                     keyword = '"' + keyword + '"'
                 if keywords_input == '':
                     keywords_input = keyword

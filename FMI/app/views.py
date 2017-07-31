@@ -306,7 +306,8 @@ def crawl_view(request):
                     if not product.index_product(index_choices, product_field):
                         form.add_form_error("Could not retrieve product data")
             if 'crawl_feedly' in form.data:
-                crawl.crawl_feedly(from_date, rss_field)
+                if not crawl.crawl_feedly(from_date, rss_field):
+                     form.add_form_error("Could not retrieve feedly data, expired")
             if 'crawl_scentemotion' in form.data:
                 crawl.crawl_scentemotion(cft_filename)
             answers = []
