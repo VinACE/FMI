@@ -42,12 +42,15 @@ def put_settings(obj):
 
 # For excel only the index is created. The doc_types (mappings) are created
 # when an excel file is uploaded. The mapping matches the columns of the worksheet
-def create_index_excel():
+def create_index_excel(excel_filename):
     indices_client = IndicesClient(models.client)
     index_name = 'excel'
+    if len(excel_filename):
+        doc_type = os.path.splitext(excel_filename)[0]
+        index_name = 'excel_' + doc_type
     if indices_client.exists(index_name):
         indices_client.delete(index=index_name)
-    indices_client.create(index=index_name)
+    #indices_client.create(index=index_name)
 
 
 def create_index_pi():
@@ -141,10 +144,10 @@ def create_index_survey():
     )
 
 
-def create_index_elastic(index_choices):
+def create_index_elastic(index_choices, excel_filename):
     for index_choice in index_choices:
         if index_choice == 'excel':
-            create_index_excel()
+            create_index_excel(excel_filename)
         elif index_choice == 'pi':
             create_index_pi()
         elif index_choice == 'mi':

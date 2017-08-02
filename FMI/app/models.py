@@ -59,31 +59,36 @@ class ecosystem(models.Model):
     contacts = models.TextField()
     company = models.TextField()
 
-
-class ExcelDoc(DocType):
-    subset = Text
-    aop = Nested(
-         properties = {
-             'aop': Text(fields={'raw': Keyword()}),
-             }
-         )
-    role = Text
-    name = Text
-    url = Text
-    why = Text
-    how = Text
-    what = Text
-    who = Text
-    where = Text
-    country = Text
-    contacts = Nested(
-        properties = {
-            'contact': Text(fields={'raw': Keyword()}),
-             }
-         )
-    company = Text
+class patents(models.Model):
+    category = models.TextField()
+    publication_link = models.TextField()
+    title = models.TextField()
+    title_DWPI = models.TextField()
+    url = models.TextField()
+    published_date = models.DateField()
+    assignee = models.TextField()
+    assignee_DWPI = models.TextField()
+    abstract = models.TextField()
 
 class ExcelSeekerView (seeker.SeekerView):
+    document = None
+    using = client
+    index = "excel"
+    page_size = 30
+    facets = [
+        ]
+    facets_keyword = [];
+    display = [
+        ]
+    sort = []
+    summary = []
+    sumheader = []
+    SUMMARY_URL="{}"
+    urlfields = {
+        }
+    tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
+
+class ExcelEcoSystemSeekerView (seeker.SeekerView, workbooks.ExcelEcoSystemWorkbook):
     document = None
     using = client
     index = "excel"
@@ -94,7 +99,7 @@ class ExcelSeekerView (seeker.SeekerView):
         seeker.TermsFacet("country.keyword", label = "Country"),
         seeker.TermsFacet("company.keyword", label = "company"),
         ]
-    facets_keyword = [seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k")];
+    facets_keyword = [seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k")]
     display = [
         "company",
         "aop",
@@ -112,53 +117,37 @@ class ExcelSeekerView (seeker.SeekerView):
         }
     tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
 
-    dashboard = {
-        'company_keyword_table' : {
-            'chart_type'  : "Table",
-            'chart_title' : "Company / Keyword Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "company.keyword",
-                'label'   : "Company" },
-            'Y_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            },
-        "aop_pie" : {
-            'chart_type': "PieChart",
-            'chart_title' : "Area of Potential",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "aop.keyword",
-                'label'   : "Area of Potential" },
-            },
-        "role_col" : {
-            'chart_type': "ColumnChart",
-            'chart_title' : "Role",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "role.keyword",
-                'label'   : "Role" },
-            },
-        "keyword_pie" : {
-            'chart_type': "PieChart",
-            'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
-            'X_facet'     : {
-                'field'   : "facet_keyword",
-                'label'   : "Keywords" },
-            },
-        }
-    dashboard_layout = collections.OrderedDict()
-    dashboard_layout['table1'] = [["aop_pie", "keyword_pie"], ["role_col"]]
-    dashboard_layout['table2'] = [["company_keyword_table"]]
 
-    storyboard = [
-        {'name' : 'initial',
-         'layout'   : dashboard_layout,
-         'active'   : True,
-         }
-    ]
+class ExcelPatentsSeekerView (seeker.SeekerView, workbooks.ExcelPatentsWorkbook):
+    document = None
+    using = client
+    index = "excel"
+    page_size = 30
+    facets = [
+        seeker.TermsFacet("category.keyword", label = "Category"),
+        seeker.DayHistogram("published_date", label = "Published"),
+        seeker.TermsFacet("assignee.keyword", label = "Assignee"),
+        ]
+    facets_keyword = [seeker.KeywordFacet("facet_keyword", label = "Keywords", input="keywords_k"),
+                      seeker.KeywordFacet("facet_comp", label = "Competitors", input="keywords_comp",
+                            initial="International Flavors & Fragrances, Symrise, Givaudan, Firmenich, Frutarom")]
+    display = [
+        "title",
+        "category",
+        "assignee",
+        "publication",
+        "published_date"
+        ]
+    sort = []
+    summary = ['title', 'abstract']
+    sumheader = ['title']
+    SUMMARY_URL="{}"
+    urlfields = {
+        "title" : "",
+        "publication" : ""
+        }
+    tabs = {'results_tab': 'active', 'summary_tab': '', 'storyboard_tab': '', 'insights_tab': 'hide'}
+
 
 ###
 ### Fragrantica

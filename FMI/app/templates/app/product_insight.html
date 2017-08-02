@@ -52,7 +52,7 @@
 					                <img class="card-image" src="{% static "app/media/r_and_d.jpg" %}">
 				                </div>
 			                <div class="info-card-back">
-				                <h3>R&D</h3>
+				                <h3>R&D Specs</h3>
 				                <p>
                                     For the specified IPCs, the molecule properties and image are retrieved from the R&D systems.
                                     This data is listed as a table.
@@ -62,16 +62,50 @@
                     </div>
                     <div class="col-md-7">
                         <p>
-                            Analyze the R&D sites
+                            Analyze the R&D molecules
                         </p>
                         <p>
-                            <a class="btn btn-primary" href="{% url 'r_and_d' %}">Research & Development &raquo;</a>
+                            <a class="btn btn-primary" href="{% url 'r_and_d' %}">R&D Molecules &raquo;</a>
                         </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-5 iff-dataset">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-5">
+		                <div class="info-card">
+				                <div class="info-card-front">
+					                <img class="card-image" src="{% static "app/media/patents.jpg" %}">
+				                </div>
+			                <div class="info-card-back">
+				                <h3>R&D Patents and Articles</h3>
+				                <p>
+                                    This dataset contains the results of the Peer Company patent and article review.
+                                    Thomson Innovation is used for the patents and Chemical Abstracts for the articles.
+				                </p>
+			                </div>
+		                </div>
+                    </div>
+                    <div class="col-md-7">
+                        <p>
+                            This dataset contains the results of the Peer Company patent and article review.
+                            Thomson Innovation is used for the patents and Chemical Abstracts for the articles.
+                            These patents and abstracts can be queried and analyzed using the Insight Platform. A query will list the found hits, the original web page of the found
+                            patents or abstract can be accessed by a click on the hyperlink (title).
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'patents' %}">R&D Patents &raquo;</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <div class="row">
         {% if form.errors %}

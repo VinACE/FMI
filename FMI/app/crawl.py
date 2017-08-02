@@ -4,11 +4,13 @@ from datetime import time
 from datetime import timedelta
 from django.core.files import File
 import glob, os
+import sys
 import pickle
 import urllib
 import requests
 import json
 from urllib.parse import urlparse
+from selenium import webdriver
 import re
 from requests_ntlm import HttpNtlmAuth
 from pandas import Series, DataFrame
@@ -35,6 +37,7 @@ si_sites = {
         },
     }
 
+driver = None
 
 class Crawler:
     site_name = ''
@@ -580,10 +583,40 @@ def crawl_studies_facts(survey_field, facts_d):
     bulk(models.client, actions=bulk_data, stats_only=True)
     pass
 
-def crawl_excel(excel_filename):
+
+def abstract(map_s, row_s):
+    global driver
+
+    if driver == None:
+        driver = webdriver.PhantomJS(executable_path='C:/Python34/phantomjs.exe')
+    publication = row_s['Publication Number']
+    url = row_s['url']
+    try:
+        #print("read_page: scraping url ", url)
+        #html = urllib.request.urlopen(url)
+        #bs = BeautifulSoup(html.read(), "lxml")
+        #[script.decompose() for script in bs("script")]
+        print("abstract: scraping publication", publication)
+        driver.get(url)
+    except:
+        print("abstract: could not open url ", url)
+    try:
+        abstract_tag = driver.find_element_by_id("PAT.ABE")
+        abstract_text = abstract_tag.text
+    except:
+        abstract_text = ""
+
+    return abstract_text
+        
+
+    
+
+def crawl_excel(excel_filename, excel_choices):
+    global driver
+
     excel_file = os.path.join(BASE_DIR, 'data/' + excel_filename)
     try:
-        mapping_df = pd.read_excel(excel_file, sheetname=1, header=0)
+        mapping_df = pd.read_excel(excel_file, sheetname="mapping", header=0)
     except:
         cwd = os.getcwd()
         print("crawl_excel: working dirtory is: ", cwd)
@@ -597,8 +630,8 @@ def crawl_excel(excel_filename):
     if 'http_auth' in es_host:
         headers['http_auth'] = es_host['http_auth']
     host = es_host['host']
-    index = "excel"
-    doc_type = "ecosystem"
+    doc_type = os.path.splitext(excel_filename)[0]
+    index = "excel_" + doc_type
     url = "http://" + host + ":9200/" + index
 
     # The idea is that each excel file ends up in its own mapping (doc_type).
@@ -608,36 +641,38 @@ def crawl_excel(excel_filename):
     # be deleted.
 
     # delete and re-create excel index
-    r = requests.delete(url, headers=headers)
-    r = requests.put(url, headers=headers)
-    # create mapping in excel index
-    properties = {
-        'subset' : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
-        }
-    for map_key, map_s in mapping_df.iterrows():
-        field = map_s['field']
-        if field == "":
-            continue
-        type = map_s['type']
-        if type == 'string':
-            properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
-        elif type == 'date':
-            properties[field] = {'type' : 'date'}
-        elif type == 'integer':
-            properties[field] = {'type' : 'integer'}
-        elif type == 'text':
-            properties[field] = {'type' : 'text'}
-        elif type == 'list':
-            pass
-            #properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
-            #properties[field] = { 'properties' :
-            #                     { field : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}}
-            #                    }
+    if 'recreate' in excel_choices:
+        r = requests.delete(url, headers=headers)
+        r = requests.put(url, headers=headers)
+        # create mapping in excel index
+        properties = {
+            'subset' : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+            }
+        for map_key, map_s in mapping_df.iterrows():
+            field = map_s['field']
+            if field == "":
+                continue
+            format = map_s['format']
+            type = map_s['type']
+            if type == 'string':
+                properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+            elif type == 'date':
+                properties[field] = {'type' : 'date'}
+            elif type == 'integer':
+                properties[field] = {'type' : 'integer'}
+            elif type == 'text':
+                properties[field] = {'type' : 'text'}
+            elif type == 'list':
+                pass
+                #properties[field] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+                #properties[field] = { 'properties' :
+                #                     { field : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}}
+                #                    }
 
-    mapping = json.dumps({
-            'properties' : properties
-        })
-    r = requests.put(url + "/_mapping/" + doc_type, headers=headers, data=mapping)
+        mapping = json.dumps({
+                'properties' : properties
+            })
+        r = requests.put(url + "/_mapping/" + doc_type, headers=headers, data=mapping)
     ## store document
     #data = json.dumps({
     #    "aop" : ["Creative"],
@@ -662,7 +697,7 @@ def crawl_excel(excel_filename):
     r = requests.get(url + "/" + doc_type + "/_search", headers=headers, data=query)
     results = json.loads(r.text)
 
-    data_df = pd.read_excel(excel_file, sheetname=2, header=0)
+    data_df = pd.read_excel(excel_file, sheetname="data", header=0)
     data_df.fillna("", inplace=True)
     bulk_data = []
     count = 1
@@ -675,17 +710,33 @@ def crawl_excel(excel_filename):
             field = map_s['field']
             if field == "":
                 continue
+            format = map_s['format']
             column = map_s['column']
             type = map_s['type']
-            if type == 'list':
-                if field not in doc:
-                    doc[field] = []
-                if row_s[column] != "":
-                    doc[field].append(row_s[column])
+            if format == 'script':
+                module = sys.modules[__name__]
+                if hasattr(module, field):
+                    doc[field] = getattr(module, field)(map_s, row_s)
             else:
-                doc[field] = row_s[column]
+                if type == 'list':
+                    if field not in doc:
+                        doc[field] = []
+                    if row_s[column] != "":
+                        if len(format) > 0:
+                            delimiter = format
+                            items = row_s[column].split(delimiter)
+                            for item in items:
+                                doc[field].append(item)
+                        else:
+                            doc[field].append(row_s[column])
+                else:
+                    doc[field] = row_s[column]
+        if 'id' in doc:
+            id = doc['id']
+        else:
+            id = str(count)
         data = json.dumps(doc)
-        r = requests.put(url + "/" + doc_type + "/" + str(count), headers=headers, data=data)
+        r = requests.put(url + "/" + doc_type + "/" + id, headers=headers, data=data)
         count = count + 1
     return True
 

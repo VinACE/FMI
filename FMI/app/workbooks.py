@@ -25,6 +25,127 @@ from django.utils.encoding import python_2_unicode_compatible
 # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
 # in the template this is translated into HTML tables, rows, cells and div elements  
 
+class ExcelEcoSystemWorkbook:
+    dashboard = {
+        'company_keyword_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Company / Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "company.keyword",
+                'label'   : "Company" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        "aop_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Area of Potential",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "aop.keyword",
+                'label'   : "Area of Potential" },
+            },
+        "role_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Role",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "role.keyword",
+                'label'   : "Role" },
+            },
+        "keyword_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['table1'] = [["aop_pie", "keyword_pie"], ["role_col"]]
+    dashboard_layout['table2'] = [["company_keyword_table"]]
+
+    storyboard = [
+        {'name' : 'initial',
+         'layout'   : dashboard_layout,
+         'active'   : True,
+         }
+    ]
+
+    workbooks = {
+        "initial" : {
+            'charts'        : dashboard,
+            'storyboard'    : storyboard,
+            }
+        }
+
+class ExcelPatentsWorkbook:
+    dashboard = {
+        'assignee_keyword_table' : {
+            'chart_type'  : "Table",
+            'chart_title' : "Assignee / Keyword Hits",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "assignee.keyword",
+                'label'   : "Assignee" },
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        "facet_comp_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Competitors Hits",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_comp",
+                'label'   : "Competitors" },
+            },
+        "published_keyword_line" : {
+            'chart_type'  : "LineChart",
+            'chart_title' : "Published Month Hits",
+            'chart_data'  : "facet",
+            'controls'    : ['ChartRangeFilter'],
+            'X_facet'     : {
+                'field'   : "published_date",
+                'label'   : "Published",
+                'key'     : 'key_as_string',
+                'total'   : False,
+                'type'    : 'date'},
+            'Y_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            'options'     : {
+                "hAxis"   : {'format': 'yy/MMM'},
+                },
+            },
+        "keyword_pie" : {
+            'chart_type': "PieChart",
+            'chart_title' : "Keyword Doc Count",
+            'chart_data'  : "facet",
+            'X_facet'     : {
+                'field'   : "facet_keyword",
+                'label'   : "Keywords" },
+            },
+        }
+    dashboard_layout = collections.OrderedDict()
+    dashboard_layout['table1'] = [["published_keyword_line"]]
+    dashboard_layout['table2'] = [["facet_comp_pie", "keyword_pie"], ["assignee_keyword_table"]]
+
+    storyboard = [
+        {'name' : 'initial',
+         'layout'   : dashboard_layout,
+         'active'   : True,
+         }
+    ]
+
+    workbooks = {
+        "initial" : {
+            'charts'        : dashboard,
+            'storyboard'    : storyboard,
+            }
+        }
 
 class PostWorkbook:
     # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts

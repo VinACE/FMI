@@ -45,6 +45,8 @@ def clean_input(input):
     input = re.sub('\n+', " ", input)       #replace nl with a space
     input = re.sub('\[[0-9]*\]', "", input) #discard citation marks
     input = re.sub(' +', " ", input)        #replace multiple spaces with a sigle space
+    regex = re.compile('[%s]' % re.escape(string.punctuation))
+    input = regex.sub(" ", input)           #replace punctuations with a sigle space
     input = bytes(input, "UTF-8")           #remove unicode characters
     input = input.decode("ascii", "ignore")
     input = input.split(' ')

@@ -11,6 +11,7 @@
     {% csrf_token %}
     <div class="row">
         <div class="col-md-4">
+            {{ form.excel_filename_field.label_tag }} {{ form.excel_filename_field }}
             {{ form.index_choices_field.label_tag }} {{ form.index_choices_field }}
         </div>
     </div>

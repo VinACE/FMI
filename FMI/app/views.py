@@ -76,6 +76,23 @@ def r_and_d_view(request):
     return render(request, 'app/r_and_d.html', {'form': form },
                   context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
 
+def patents(request):
+    """Renders the Patents page."""
+    # prepare search_excel with the right
+    models.ExcelDoc = seeker.mapping.document_from_model(models.patents, index="excel_patents", using=models.client)
+    seeker.register(models.ExcelDoc)
+    models.ExcelSeekerView.document = models.ExcelDoc
+    models.ExcelSeekerView.index = "excel_patents"
+    models.ExcelSeekerView.facets = models.ExcelPatentsSeekerView.facets
+    models.ExcelSeekerView.facets_keyword = models.ExcelPatentsSeekerView.facets_keyword
+    models.ExcelSeekerView.display = models.ExcelPatentsSeekerView.display
+    models.ExcelSeekerView.summary = models.ExcelPatentsSeekerView.summary
+    models.ExcelSeekerView.sumheader = models.ExcelPatentsSeekerView.sumheader
+    models.ExcelSeekerView.SUMMARY_URL = models.ExcelPatentsSeekerView.SUMMARY_URL
+    models.ExcelSeekerView.urlfields = models.ExcelPatentsSeekerView.urlfields
+    models.ExcelSeekerView.workbooks = models.ExcelPatentsSeekerView.workbooks
+    return redirect('search_excel')
+
 
 def scent_emotion_view(request):
     """Renders the scent emotion page."""
@@ -130,6 +147,22 @@ def market_insight_view(request):
         elif 'search_si_sites' in request.POST:
             return redirect('search_si_sites')
         elif 'search_excel' in request.POST:
+            # prepare search_excel with the right
+            models.ExcelDoc = seeker.mapping.document_from_model(models.ecosystem, index="excel_ecosystem", using=models.client)
+            seeker.register(models.ExcelDoc)
+            #models.ExcelEcoSystemSeekerView.document = models.ExcelDoc
+            #models.ExcelEcoSystemSeekerView.index = "excel_ecosystem"
+            #models.ExcelSeekerView = models.ExcelEcoSystemSeekerView
+            models.ExcelSeekerView.document = models.ExcelDoc
+            models.ExcelSeekerView.index = "excel_ecosystem"
+            models.ExcelSeekerView.facets = models.ExcelEcoSystemSeekerView.facets
+            models.ExcelSeekerView.facets_keyword = models.ExcelEcoSystemSeekerView.facets_keyword
+            models.ExcelSeekerView.display = models.ExcelEcoSystemSeekerView.display
+            models.ExcelSeekerView.summary = models.ExcelEcoSystemSeekerView.summary
+            models.ExcelSeekerView.sumheader = models.ExcelEcoSystemSeekerView.sumheader
+            models.ExcelSeekerView.SUMMARY_URL = models.ExcelEcoSystemSeekerView.SUMMARY_URL
+            models.ExcelSeekerView.urlfields = models.ExcelEcoSystemSeekerView.urlfields
+            models.ExcelSeekerView.workbooks = models.ExcelEcoSystemSeekerView.workbooks
             return redirect('search_excel')
     return render(request, 'app/market_insight.html', 
                   context_instance = RequestContext(request,
@@ -274,6 +307,7 @@ def crawl_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             cft_filename = form.cleaned_data['cft_filename_field']
+            excel_choices = form.cleaned_data['excel_choices_field']
             excel_filename = form.cleaned_data['excel_filename_field']
             ci_filename = form.cleaned_data['ci_filename_field']
             if from_date == None:
@@ -291,7 +325,7 @@ def crawl_view(request):
                 if not market.index_posts(from_date, username, password):
                     form.add_form_error("Could not index category posts")
             if 'crawl_excel' in form.data:
-                if not crawl.crawl_excel(excel_filename):
+                if not crawl.crawl_excel(excel_filename, excel_choices):
                     form.add_form_error("Could not retrieve or index excel file")
             if 'crawl_pi' in form.data:
                 if product_field == '':
@@ -328,7 +362,7 @@ def crawl_view(request):
                 pass
             return render(request, 'app/crawl.html', {'form': form, 'es_hosts' : FMI.settings.ES_HOSTS, 'scrape_li' : models.scrape_li } )
     else:
-        form = crawl_form(initial={'scrape_choices_field':['product', 'blog']})
+        form = crawl_form(initial={'scrape_choices_field':['product', 'blog'], 'excel_choices_field':['recreate']})
 
     return render(request, 'app/crawl.html', {'form': form, 'es_hosts' : FMI.settings.ES_HOSTS },
                   context_instance = RequestContext(request, {'message':'IFF - Insight Platform', 'year':datetime.now().year,} ))
@@ -339,10 +373,11 @@ def fmi_admin_view(request):
         form = fmi_admin_form(request.POST)
         if form.is_valid():
             index_choices = form.cleaned_data['index_choices_field']
+            excel_filename = form.cleaned_data['excel_filename_field']
             opml_filename = form.cleaned_data['opml_filename_field']
             keyword_filename = form.cleaned_data['keyword_filename_field']
             if 'index_elastic' in form.data:
-                fmi_admin.create_index_elastic(index_choices)
+                fmi_admin.create_index_elastic(index_choices, excel_filename)
             elif 'analyzer' in form.data:
                 fmi_admin.create_analyzer(index_choices)
             if 'index_azure' in form.data:
