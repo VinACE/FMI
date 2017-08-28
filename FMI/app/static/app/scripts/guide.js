@@ -86,7 +86,8 @@ function route_step(route_name, step_name) {
         var to = url.lastIndexOf('/');
         to = to == -1 ? url.length : to + 1;
         url = url.substring(0, to);
-        window.location.href = step['url'] + "&acountry.keyword=0&agender.keyword=0&aage.keyword=0";
+        var url = getBaseUrl() + "&acountry.keyword=0&agender.keyword=0&aage.keyword=0";
+        window.location.href = url;
     }
 }
 
@@ -506,6 +507,15 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+function getBaseUrl() {
+    var url = window.location.href;
+    //strip of the last part of the URL so it can be replaced by the destination url
+    var to = url.lastIndexOf('/');
+    to = to == -1 ? url.length : to;
+    url = url.substring(0, to);
+    return url;
+}
+
 function fill_params_facets_tiles(site_name, menu_name, view_name) {
     var params = {};
     params['view_name'] = view_name;
@@ -541,10 +551,10 @@ function search(site_name, menu_name, view_name) {
     //var params = {
     //    "q": keywords_q,
     //};
-    var params = fill_params_facets_tiles(site_name, menu_name, view_name);
-    var url = site_view['url'];
-    var keywords_q = "";
 
+    var params = fill_params_facets_tiles(site_name, menu_name, view_name);
+    var url = getBaseUrl() + site_view['url'];
+    var keywords_q = "";
 
     $.get(url, params, function (data, status) {
         var view_name = data['view_name'];
