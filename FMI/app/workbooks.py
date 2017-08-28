@@ -982,19 +982,25 @@ class SurveyWorkbook:
         ]
 
     dashboard_link = {
-        'topline_liking_table'  : dashboard_fresh['topline_liking_table'],
-        'liking_blindcode_col'  : dashboard_fresh['liking_blindcode_col'],
+        'liking_blindcode_col'      : dashboard_fresh['liking_blindcode_col'],
+        'topline_liking_table'      : dashboard_fresh['topline_liking_table'],
+        'freshness_blindcode_col'   : dashboard_fresh['freshness_blindcode_col'],
+        'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
         }
 
     storyboard_link = [
-        {'name'  : 'Topline',
-            'layout' : {'rows' : [['topline_liking_table']]},
-            'active' : True,
+        {'name'     : 'Topline',
+         'layout'   : {'rows' : [['liking_blindcode_col'], ['topline_liking_table']]},
+         'active'   : True,
         },
-        {'name'  : 'Hedonics',
-            'layout' : {'rows' : [['liking_blindcode_col']]},
-            'active' : True,
-        }
+        {'name'     : 'Hedonics',
+         'layout'   : {'rows' : [['liking_blindcode_col']]},
+         'active'   : True,
+        },
+        {'name'     : 'Topline',
+         'layout'   : {'rows' : [['freshness_blindcode_col'], ['topline_freshness_table']]},
+         'active'   : True,
+        },
         ]
 
     dashboard_orange = {

@@ -44,7 +44,7 @@ site_views = {
     'hedonics_overall' : {
         'type'  : 'charts',
         'descr' : "Hedonics Overall",
-        'url'   : '/search_survey?workbook=link&view_name=hedonics_overall',
+        'url'   : '/search_survey?workbook=link',
         'tiles' : [],
         'storyboard': [{'name'  : 'Topline',
                        'layout' : {'rows' : [['topline_liking_table']]},
@@ -53,10 +53,10 @@ site_views = {
     'hedonics_per_format' : {
         'type'  : 'charts',
         'descr' : "Hedonics Per Format",
-        'url'   : '/search_survey?workbook=link&view_name=hedonics_per_format&age.keyword_tile=on',
-        'tiles' : ['age.keyword'],
+        'url'   : '/search_survey?workbook=link',
+        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
         'storyboard': [{'name'  : 'Hedonics',
-                       'layout' : {'rows' : [['liking_blindcode_col']]},
+                        'layout': {'rows' : [['liking_blindcode_col'], ['topline_liking_table']]},
                        'active' : True,
                        }]},
     'driver_of_liking' : {
@@ -66,7 +66,12 @@ site_views = {
     'intensity' : {
         'type'  : 'charts',
         'descr' : "Intensiy",
-        'charts': ['cand_hedonics_col']},
+        'url'   : '/search_survey?workbook=link',
+        'tiles' : [],
+        'storyboard': [{'name'  : 'Topline',
+                        'layout': {'rows' : [['freshness_blindcode_col'], ['topline_freshness_table']]},
+                       'active' : True,
+                       }]},
     'fresh' : {
         'type'  : 'drivers',
         'descr' : "Fresh",
@@ -187,6 +192,10 @@ menu_items = {
         'type'  : 'data-selector',
         'step'  : ('route_sdm', 'gender_sel')
         },
+    'Age' : {
+        'type'  : 'data-selector',
+        'step'  : ('route_sdm', 'age_sel')
+        },
     'Fragrance Passport' : {
         'type'  : 'view-selector',
         'views' : ['portfolio-olfactive-map', 'fragrance-passport'],
@@ -223,7 +232,7 @@ menu_items = {
     }
 
 link_menu = {
-    'menu'  : ['Globe', 'Gender', 'Fragrance Passport', 'Washing Habits', 'Performance', 'Brands', 'Liking',
+    'menu'  : ['Globe', 'Gender', 'Age', 'Fragrance Passport', 'Washing Habits', 'Performance', 'Brands', 'Liking',
                'Freshness', 'Format Suitability', 'Benefits', 'Correlation', 'Top Line Tables'],
     'menu_items'    : menu_items
     }
@@ -405,7 +414,7 @@ def route_step(request, route_name, step_name):
     search = seekerview.document.search().index(index).using(using).extra(track_scores=True)
 
     stepnr = 0;
-    while step_name != route_steps[stepnr] and stepnr < len(route_steps):
+    while stepnr < len(route_steps):
         step = steps[route_steps[stepnr]]
         if step['type'] == 'selection':
             search = step_filter(search, facets, step)
@@ -441,7 +450,7 @@ def route_step(request, route_name, step_name):
     for facet in list(facets):
         stepix = 0;
         found = False
-        while stepix <= stepnr and stepix < len(route_steps):
+        while stepix < len(route_steps):
             step = steps[route_steps[stepix]]
             if step['type'] == 'selection':
                 if step['facet'] == facet.field:
