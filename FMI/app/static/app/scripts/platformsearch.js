@@ -14,6 +14,7 @@ function platform_search_onchange(select) {
     //    }
     //}
     var url = window.location.href;
+    //check on Local or Apache web server
     if (url[url.length - 1] != '/') { url = url + '/' }
     url = url + select.value;
     var input = document.getElementById("platform_search_q");

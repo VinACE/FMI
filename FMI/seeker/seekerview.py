@@ -971,6 +971,7 @@ class SeekerView (View):
         return s
 
     def get_workbook(self):
+        workbook = {}
         workbook_name = self.request.GET.get('workbook', '').strip()
         if workbook_name == '':
             workbook_name = 'initial'
@@ -989,6 +990,16 @@ class SeekerView (View):
                     self.dashboard = workbook['charts']
                 if 'storyboard' in workbook:
                     self.storyboard = workbook['storyboard']
+        return workbook
+
+    def set_workbook_filters(self, facets, workbook):
+        if 'filters'in workbook:
+            filters = workbook['filters']
+            for field, values in filters.items():
+                for facet in facets:
+                    if facet.field == field:
+                        facets[facet].extend(values)
+
 
     def render(self):
         #from app.models import SavedSearch
@@ -1016,10 +1027,11 @@ class SeekerView (View):
         #else:
         #    saved_searches = []
 
-        self.get_workbook()
+        workbook = self.get_workbook()
         keywords_q = self.get_keywords_q()
         facets = self.get_facet_data(initial=self.initial_facets if not self.request.is_ajax() else None)
         facets_keyword = self.get_facets_keyword_data()
+        self.set_workbook_filters(facets, workbook)
 
         search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
         search = self.get_aggr(search, self.dashboard)
@@ -1165,16 +1177,19 @@ class SeekerView (View):
             context.update(self.extra_context)
 
         if self.request.is_ajax():
+            view_name = self.request.GET.get('view_name', '')
             return JsonResponse({
+                'view_name' : view_name,
                 'querystring': context_querystring,
                 'page': page,
                 'sort': sort,
                 'saved_search_pk': saved_search.pk if saved_search else '',
                 #'table_html': loader.render_to_string(self.results_template, context, context_instance=RequestContext(self.request)),
-                'table_html': loader.render_to_string(self.results_template, context, context_instance=RequestContext(self.request)),
                 'facet_data': {facet.field: facet.data(results) for facet in self.get_facets()},
-                'aggs': json.dumps(aggr),
+                # 'aggs': json.dumps(aggr),
                 'dashboard': json.dumps(self.dashboard),
+                'tiles_select': json.dumps(tiles_select),
+                'tiles': tile_df.to_json(orient='records'),
             })
         else:
             return render(self.request, self.template_name, context)

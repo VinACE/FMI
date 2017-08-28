@@ -1,5 +1,75 @@
 ﻿
 
+.content-section {
+    height: calc(100% - 10px);
+    width: 100%;
+}
+
+.iff-box {
+  display: flex;
+  flex-flow: column;
+  /* height: 100%; */
+  width: 100%;
+}
+
+# select polymer-element with class iff-box-header and descents of class iffbox
+.iff-box .iff-box-header {
+  flex: 0 1 auto;
+  /* The above is shorthand for:
+  flex-grow: 0,
+  flex-shrink: 1,
+  flex-basis: auto
+  */
+}
+
+.iff-box .iff-box-content {
+  flex: 1 1 auto;
+}
+
+.iff-box .iff-box-footer {
+  flex: 0 1 20px;
+}
+
+
+.card-section {
+    padding: 2% 5%;
+    width: 80%;
+    float: left;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.vertical-menu {
+    width: 200px;
+}
+
+.vertical-menu a {
+    background-color: #eee;
+    color: black;
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+}
+
+.vertical-menu a:hover {
+    background-color: #ccc;
+}
+
+.vertical-menu a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.carousel-controls{
+ position:relative; 
+  width:300px;
+  margin:0 auto;
+}
+
+.carousel-indicators{
+   top:0px; 
+}
+
 .info-card {
     float: left;
 	margin: 10px;

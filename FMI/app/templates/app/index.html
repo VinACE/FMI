@@ -7,60 +7,62 @@
     <h1>IFF Insight Platform</h1>
     <p class="lead">Discover meaningful, creative and actionable Insights</p>
 </div>
-<div class="row">
-    <div class="col-md-4">
-        <h2>Product Insights</h2>
-        <p>
-            Find all you need to know about both IFF and market products from IFF applications such as 
-            ScentEmotions. Combine these data with articles and reviews on industry websites to reveal 
-            hidden insights and inspiration.</p>
-        <p><a class="btn btn-primary" href="{% url 'product_insight' %}">Product Insights &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Consumer Insights</h2>
-        <p>
-            Explore the central repository of IFF's CI results. Search norms, facts and past analyses 
-            with Keywords and Facets and see your results in graph-form and ranked lists.
-        </p>
-        <p><a class="btn btn-primary" href="{% url 'consumer_insight' %}">Consumer Insights &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Market Insights</h2>
-        <p>Define the subjects you want to follow and results from different news feed sites and the 
-           Market Intelligence site will automatically appear.</p>
-        <p><a class="btn btn-primary" href="{% url 'market_insight' %}">Market Insights &raquo;</a></p>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-4">
-        <h2>Scent Emotion</h2>
-        <p>
-            Use Scent Emotion for both the Creative and Marketing response to a fragrance brief. It helps you in
-            finding the right Ingredients and Fragrances to meet consumer demand. It does this by expressing
-            the sensorial associations of fragrances in terms of emotion, mood, color, texture.
-        </p>
-        <p>
-        <p><a class="btn btn-primary" href="{% url 'scent_emotion' %}">Scent Emotion &raquo;</a></p>
-        </p>
-    </div>
-    <div class="col-md-4">
-        <h2>Platform Admin</h2>
-        <p>
-            Crawl and Scrape the web sites to populate the platform with externa data.
-            Re-create a Index for certain web-site(s). Re-creating an index on the Elastic Search Engine means that the existing index, with all of its content,
-            is first deleted. Next the Index is created with a field for each facet that is defined for the connected site(s).
-        </p>
-        <p><a class="btn btn-primary" href="{% url 'home' %}">Platform Admin &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Platform Search</h2>
-        <input type="text" class="form-control" placeholder="Platform Search" name="platform_search_q" id="platform_search_q" value="{{ keywords_q }}" />
-        <div class="controls form-inline">
-        <label for="platform_search_select">Platform Search Results</label>
+<div class="iff-box-content">
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Product Insights</h2>
+            <p>
+                Find all you need to know about both IFF and market products from IFF applications such as 
+                ScentEmotions. Combine these data with articles and reviews on industry websites to reveal 
+                hidden insights and inspiration.</p>
+            <p><a class="btn btn-primary" href="{% url 'product_insight' %}">Product Insights &raquo;</a></p>
         </div>
-        <select name="platform_search_select" class="form-control facet-select" id="platform_search_select" multiple="multiple" onchange="platform_search_onchange(this)">
-            <option value="dataset"></option>
-        </select>
+        <div class="col-md-4">
+            <h2>Consumer Insights</h2>
+            <p>
+                Explore the central repository of IFF's CI results. Search norms, facts and past analyses 
+                with Keywords and Facets and see your results in graph-form and ranked lists.
+            </p>
+            <p><a class="btn btn-primary" href="{% url 'consumer_insight' %}">Consumer Insights &raquo;</a></p>
+        </div>
+        <div class="col-md-4">
+            <h2>Market Insights</h2>
+            <p>Define the subjects you want to follow and results from different news feed sites and the 
+               Market Intelligence site will automatically appear.</p>
+            <p><a class="btn btn-primary" href="{% url 'market_insight' %}">Market Insights &raquo;</a></p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Scent Emotion</h2>
+            <p>
+                Use Scent Emotion for both the Creative and Marketing response to a fragrance brief. It helps you in
+                finding the right Ingredients and Fragrances to meet consumer demand. It does this by expressing
+                the sensorial associations of fragrances in terms of emotion, mood, color, texture.
+            </p>
+            <p>
+            <p><a class="btn btn-primary" href="{% url 'scent_emotion' %}">Scent Emotion &raquo;</a></p>
+            </p>
+        </div>
+        <div class="col-md-4">
+            <h2>Platform Admin</h2>
+            <p>
+                Crawl and Scrape the web sites to populate the platform with externa data.
+                Re-create a Index for certain web-site(s). Re-creating an index on the Elastic Search Engine means that the existing index, with all of its content,
+                is first deleted. Next the Index is created with a field for each facet that is defined for the connected site(s).
+            </p>
+            <p><a class="btn btn-primary" href="{% url 'home' %}">Platform Admin &raquo;</a></p>
+        </div>
+        <div class="col-md-4">
+            <h2>Platform Search</h2>
+            <input type="text" class="form-control" placeholder="Platform Search" name="platform_search_q" id="platform_search_q" value="{{ keywords_q }}" />
+            <div class="controls form-inline">
+            <label for="platform_search_select">Platform Search Results</label>
+            </div>
+            <select name="platform_search_select" class="form-control facet-select" id="platform_search_select" multiple="multiple" onchange="platform_search_onchange(this)">
+                <option value="dataset"></option>
+            </select>
+        </div>
     </div>
 </div>
 

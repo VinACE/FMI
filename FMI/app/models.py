@@ -61,7 +61,7 @@ class ecosystem(models.Model):
 
 class patents(models.Model):
     category = models.TextField()
-    publication_link = models.TextField()
+    publication = models.TextField()
     title = models.TextField()
     title_DWPI = models.TextField()
     url = models.TextField()
@@ -359,7 +359,7 @@ class PostMap(models.Model):
     def field_es_repr(self, field_name):
         config = self._meta.es_mapping['properties'][field_name]
         if hasattr(self, 'get_es_%s' % field_name):
-            field_es_value = getattr(self, 'get_es_%s' % field_name)()
+            field_es_value = getattr(self, 'get_es_%s' % field_name)(field_name)
         else:
             if config['type'] == 'object':
                 related_object = getattr(self, field_name)

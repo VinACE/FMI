@@ -11,6 +11,10 @@ import requests
 import json
 from urllib.parse import urlparse
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 import re
 from requests_ntlm import HttpNtlmAuth
 from pandas import Series, DataFrame
@@ -588,7 +592,16 @@ def abstract(map_s, row_s):
     global driver
 
     if driver == None:
-        driver = webdriver.PhantomJS(executable_path='C:/Python34/phantomjs.exe')
+        options = []
+        options.append('--load-images=false')
+        options.append('--ignore-ssl-errors=true')
+        options.append('--ssl-protocol=any')
+        #driver = webdriver.PhantomJS(executable_path='C:/Python34/phantomjs.exe', service_args=options)
+        #driver = webdriver.PhantomJS(service_args=options)
+        driver = webdriver.Chrome()
+        driver.set_window_size(1120, 550)
+        driver.set_page_load_timeout(3) # seconds
+        driver.implicitly_wait(30) # seconds
     publication = row_s['Publication Number']
     url = row_s['url']
     try:
@@ -598,12 +611,25 @@ def abstract(map_s, row_s):
         #[script.decompose() for script in bs("script")]
         print("abstract: scraping publication", publication)
         driver.get(url)
+        print("abstract: driver.get", publication)
     except:
         print("abstract: could not open url ", url)
     try:
+        #time.sleep(3)
         abstract_tag = driver.find_element_by_id("PAT.ABE")
+        print("abstract: driver.find_element_by_id", publication)
+        print("abstract: abstract_tag.text", abstract_tag.text)
+        tries = 0
         abstract_text = abstract_tag.text
+        while len(abstract_text) == 0 and tries < 10000:
+            abstract_text = abstract_tag.text
+            tries = tries + 1
+        print("abstract: abstract_text", abstract_text)
+        print("abstract: TRIES", tries)
+        #delay = 3 # seconds
+        #abstract_tag = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.ID, "PAT.ABE")))
     except:
+        print("abstact: loading took too much time!")
         abstract_text = ""
 
     return abstract_text
@@ -736,8 +762,13 @@ def crawl_excel(excel_filename, excel_choices):
         else:
             id = str(count)
         data = json.dumps(doc)
+        print("crawl_excel: write excel line with id", id)
         r = requests.put(url + "/" + doc_type + "/" + id, headers=headers, data=data)
+        print("crawl_excel: written excel line with id", id)
         count = count + 1
+
+    #if driver != None:
+    #    driver.quit()
     return True
 
 

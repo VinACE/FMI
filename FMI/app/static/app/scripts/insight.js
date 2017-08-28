@@ -5,9 +5,9 @@
 // JQuery
 
 
-function fill_search_survey(survey) {
-    var input = document.getElementById("survey.keyword");
-    input.value = survey
+function fill_workbook(workbook_name) {
+    var input = document.getElementById("workbook");
+    input.value = workbook_name
 }
 
 

@@ -4,8 +4,8 @@
 
 {% load seeker %}
 
-<div class="page-header">
-  <h1>Guide {{ title }} <small>Select the route that leads to results</small></h1>
+<div class="page-header iff-box-header">
+  <h1>Guide {{ title }} <small>Select the Route or Site that leads to results</small></h1>
     <p>
         To find the right search results, this Guide will help in following the right route that leads to the results you are looking for.
         First select the route that matches the trail you want to follow. The route consists of a serie of selections and decisions that have
@@ -14,60 +14,143 @@
     </p>
 </div>
 
-<div class="container-fluid">
-    <form action="" method="get" class="form-horizontal" id="guide_form">
-        <div class="row">
-            <div class="col-md-4" style="padding-bottom:10px; padding-top:10px;">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="panel panel-primary">
-                            <div class="panel-body">
-                                <label for="sel1">Guide, select your Route:</label>
-                                <select name="route_select" class="form-control" id="route_select">
-                                </select>
-                                <input type="hidden" name="step_name" value="">
-                                <table class="table table-bordered table-condensed" id="route_definition_table"></table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="panel panel-primary">
-                            <div class="panel-body">
-                                <table>
-                                    {% for facet, selected in facets.items %}
-                                        <tr>
-                                            <td>
-                                                <div class="form-group">
-                                                    {% seeker_facet facet results selected %}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </table>
-                                <table id="decision_table">
-                                </table>
+<form action="" method="get" class="form-horizontal iff-box-content" id="guide_form">
+    <div style="display: flex">
+        <div style="flex: 0 1 15%; margin-right: 5px;">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label for="sel1">Select your Route:</label>
+                    <select name="route_select" class="form-control" id="route_select">
+                    </select>
+                    <input type="hidden" name="step_name" value="">
+                    <table class="table table-bordered table-condensed" id="route_definition_table"></table>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label for="sel2">Select your Site:</label>
+                    <select name="site_select" class="form-control" id="site_select">
+                    </select>
+                    <input type="hidden" name="menu_name" value="">
+                    <input type="hidden" name="view_name" value="">
+                    <div class="vertical-menu" id="site_menu">
+                </div>
+            </div>
+        </div>
+        </div>
+        <div style="flex: 0 1 15%; margin-right: 5px;">
+            <div class="panel panel-default iff-box-content">
+                <div class="panel-body">
+                    <table>
+                        {% for facet, selected in facets.items %}
+                            <tr>
+                                <td>
+                                    <div class="form-group">
+                                        {% seeker_facet facet results selected %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                    <table id="decision_table">
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div style="flex: 5 5 auto; padding-bottom:10px; padding-top:10px;">
+            <ul class="nav nav-tabs" id="tabs">
+                <li class="active"><a href="#filters_tab" data-toggle="tab">Filters</a></li>
+                <li class=""><a href="#site_menu_views_tab" data-toggle="tab">Views</a></li>
+                <li class=""><a href="#results_tab" data-toggle="tab">Results</a></li>
+                <li class=""><a href="#storyboard_tab" data-toggle="tab">Storyboard</a></li>
+            </ul>
+
+            <div class="tab-content" >
+                <div class="tab-pane active" id="filters_tab">
+                    <div class="panel panel-primary" style="min-height: 500px">
+                        <div class="panel-body">
+                            <button type="submit" name="guide_previous"  class="btn btn-primary">
+                                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Previous
+                            </button>
+                            <button type="submit" name="guide_next"  class="btn btn-primary">Next
+                                <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+                            </button>
+                            <div id="filterchart_div"></div>
+                            <div class="row">
+                                <div id="gallery_div"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-8" style="padding-bottom:10px; padding-top:10px;">
-                <div class="panel panel-primary">
-                    <div class="panel-body">
-                        <button type="submit" name="guide_previous"  class="btn btn-primary">
-                            <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Previous
-                        </button>
-                        <button type="submit" name="guide_next"  class="btn btn-primary">Next
-                            <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
-                        </button>
-                        <div id="dashboard_div"></div>
-                        <div id="gallery_div"></div>
+                <div class="tab-pane" id="site_menu_views_tab" style="min-height: 500px">
+                    <div class="panel panel-primary" style="min-height: 500px">
+                        <div class="panel-body" id="view_style_div">
+                            <div id="site_menu_views_div" style="display: flex; min-height: 500px"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="results_tab" style="min-height: 500px">
+                    <div class="panel panel-primary" style="min-height: 500px">
+                        <div class="panel-body" id="results_style_div">
+                            <div class="row">
+                                <div id="images_div"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div id="carousel_names_div"></div>
+                                </div>
+                                <div class="col-md-10">
+                                    <div id="carousel_div" class="carousel slide" data-ride="carousel">
+                                        <div class="carousel-controls">
+                                            <ol id="carousel_ol" class="carousel-indicators"></ol>
+                                            <!-- Left and right controls -->
+                                            <a class="left carousel-control" href="#carousel_div" data-slide="prev">
+                                                <span class="glyphicon glyphicon-chevron-left"></span>
+                                                <span class="sr-only">Previous</span>
+                                            </a>
+                                            <a class="right carousel-control" href="#carousel_div" data-slide="next">
+                                                <span class="glyphicon glyphicon-chevron-right"></span>
+                                                <span class="sr-only">Next</span>
+                                            </a>
+                                        </div>
+                                        <div id="carousel_slides_div" class="carousel-inner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="storyboard_tab">
+                    <p></p>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="sel1">Storyboard, select your Dashboard:</label>
+                                    <select name="storyboard" class="form-control" id="storyboard_select">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="sel1">Tile, select your Facet:</label>
+                                    <select name="tile_select" class="form-control" id="tile_select">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="container iff-padding-0" id="dashboard_div"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </form>
-</div>
+    </div>
+
+</form>
 
 
 {% endblock %}
@@ -83,7 +166,8 @@
         <script src="{% static 'app/scripts/guide.js' %}"></script>
 
 <script>
-    guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }}, {{ charts|safe }});
+    guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }});
+    site_route("{{site_name}}", "{{menu_name}}", "{{view_name}}", {{ sites|safe }}, {{ site_views|safe }});
 </script>
 
 {% endblock %}

@@ -5,8 +5,16 @@
 // JQuery
 
 var g_guide;
-var g_db;
 var g_options;
+var g_sites;
+var g_site_views;
+
+
+function tab_active(tab) {
+    var selector = "#tabs a[href='" + tab + "']";
+    $(selector).tab('show');
+    //$(selector).tabs("option", "active", 1);
+}
 
 
 function gallery_select(field, option, selsize) {
@@ -50,8 +58,10 @@ function route_step(route_name, step_name) {
 
     if (step['type'] == 'selection') {
         if (step['selection'][0] == 'graph') {
-            var storyboard_name = step['selection'][1];
-            draw_storyboard(g_guide['storyboard'][storyboard_name], g_db);
+            var dashboard = step['selection'][1];
+            var charts = step['selection'][2];
+            g_db = charts;
+            draw_dashboard(dashboard, charts, "filterchart_div");
         }
     }
     if (step['type'] == 'selection') {
@@ -71,7 +81,12 @@ function route_step(route_name, step_name) {
         }
     }
     if (step['type'] == 'destination') {
-        window.location.href = step['url'] + "?acountry.keyword=0&agender.keyword=0&aage.keyword=0";
+        var url = window.location.href;
+        //strip of the last part of the URL so it can be replaced by the destination url
+        var to = url.lastIndexOf('/');
+        to = to == -1 ? url.length : to + 1;
+        url = url.substring(0, to);
+        window.location.href = step['url'] + "&acountry.keyword=0&agender.keyword=0&aage.keyword=0";
     }
 }
 
@@ -142,7 +157,7 @@ function route_onchange() {
     table.innerHTML = "";
     document.getElementById("guide_form").submit();
 
-    //var facet = document.getElementById("db_facet_select").value;
+    //var facet = document.getElementById("tile_select").value;
     //var params = {
     //    "db_facet_selecion": facet
     //};
@@ -154,9 +169,8 @@ function route_onchange() {
 }
 
 
-function guide_route(route_name, step_name, guide, charts) {
+function guide_route(route_name, step_name, guide) {
     g_guide = guide;
-    g_db = charts;
 
     var select = document.getElementById("route_select");
     select.setAttribute("onChange", "route_onchange()");
@@ -183,4 +197,356 @@ function guide_route(route_name, step_name, guide, charts) {
         route_definition(route_name);
         route_step(route_name, step_name);
     }
+}
+
+
+function site_view_clear() {
+    var images_div = document.getElementById("images_div");
+    images_div.innerHTML = "";
+    var carousel_names_div = document.getElementById("carousel_names_div");
+    carousel_names_div.innerHTML = "";
+    var carousel_ol = document.getElementById("carousel_ol");
+    carousel_ol.innerHTML = "";
+    var carousel_slides_div = document.getElementById("carousel_slides_div");
+    //carousel_slides_div.innerHTML = "";
+    var nodes = carousel_slides_div.getElementsByTagName("div");
+    for (var i = 0, len = nodes.length; i != len; ++i) {
+        carousel_slides_div.removeChild(nodes[0]);
+    }
+}
+
+function site_view_image(site_name, menu_name, view_name) {
+    var site_view = g_site_views[view_name];
+    site_view_clear();
+    var image_src = encodeURI('/static/app/media/' + site_name + '/' + site_view['image']);
+    var images_div = document.getElementById("images_div");
+    var col_elm = document.createElement("col-md-12");
+    col_elm.innerHTML = "<img src='" + image_src +
+                             "' style='width: 90%; height: 90%;'/>" +
+                        "<br>" + site_view['descr']
+    images_div.appendChild(col_elm);
+
+    //var img_elm = document.createElement("img")
+    //img_elm.setAttribute("width", "90%");
+    //img_elm.setAttribute("height", "90%");
+    //img_elm.setAttribute("src", image_src);
+    //col_elm.appendChild(img_elm)
+    //var txt = document.createTextNode(site_view['descr']);
+    //col_elm.appendChild(txt)
+}
+
+
+function site_view_carousel(site_name, view_name, car_ix) {
+    var carousel_ol = document.getElementById("carousel_ol");
+    carousel_ol.innerHTML = "";
+    var carousel_slides_div = document.getElementById("carousel_slides_div");
+    carousel_slides_div.innerHTML = "";
+    var site_view = g_site_views[view_name];
+    var carousels = site_view['carousels'];
+    var carousel = carousels[car_ix];
+    var name = carousel[0];
+    var images = carousel[1];
+    for (var img_ix = 0; img_ix < images.length; img_ix++) {
+        var li_elm = document.createElement("li");
+        li_elm.setAttribute('data-target', '#carousel_div');
+        li_elm.setAttribute('data-slide-to', img_ix.toString());
+        var div_elm = document.createElement("div");
+        div_elm.setAttribute('class', 'carousel-inner');
+        var image_src = encodeURI('/static/app/media/' + site_name + '/' + images[img_ix]);
+        div_elm.innerHTML = "<img src='" + image_src + "' alt='" + images[img_ix] + "'/>"
+        if (img_ix == 0) {
+            li_elm.setAttribute('class', 'active');
+            div_elm.setAttribute('class', 'item active');
+        } else {
+            div_elm.setAttribute('class', 'item');
+        }
+        carousel_ol.appendChild(li_elm);
+        carousel_slides_div.appendChild(div_elm);
+    }
+}
+
+function site_view_carousels_select(site_name, view_name, car_ix) {
+    site_view_carousel(site_name, view_name, car_ix);
+}
+
+function site_view_carousels(site_name, menu_name, view_name) {
+    var site_view = g_site_views[view_name];
+    site_view_clear();
+    var carousel_names_div = document.getElementById("carousel_names_div");
+    var carousel_ol = document.getElementById("carousel_ol");
+    var carousel_slides_div = document.getElementById("carousel_slides_div");
+
+    var carousels = site_view['carousels'];
+    // the names of all carousels are shown at the left
+    for (var car_ix = 0; car_ix < carousels.length; car_ix++) {
+        var carousel = carousels[car_ix];
+        var name = carousel[0];
+        var div_elm = document.createElement("div");
+        div_elm.setAttribute('id', name);
+        div_elm.setAttribute("onclick", "site_view_carousels_select('" + site_name + "', '" +
+            view_name + "', " + car_ix.toString() + ")");
+        div_elm.innerHTML = name;
+        carousel_names_div.appendChild(div_elm);
+    }
+    // the images of the first carousel is shown at the right
+    site_view_carousel(site_name, view_name, 0);
+}
+
+function site_view_charts(site_name, menu_name, view_name) {
+    search(site_name, menu_name, view_name);
+}
+
+function site_view_show(site_name, menu_name, view_name) {
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var input = document.getElementsByName("view_name")[0];
+    input.value = view_name;
+    var views = menu_item['views'];
+    var site_view = g_site_views[view_name];
+    switch (site_view.type) {
+        case 'image':
+            tab_active('#results_tab');
+            site_view_image(site_name, menu_name, view_name)
+            break;
+        case 'carousels':
+            tab_active('#results_tab');
+            site_view_carousels(site_name, menu_name, view_name)
+            break;
+        case 'charts':
+            tab_active('#storyboard_tab');
+            site_view_charts(site_name, menu_name, view_name)
+            break;
+        default:
+            console.log('site_menu_select, unknown menu_item.type ' + menu_item.type);
+    }
+}
+
+function site_view_select(site_name, menu_name, view_name) {
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var views = menu_item['views'];
+    var site_view = g_site_views[view_name];
+    var input = document.getElementsByName("view_name")[0];
+    input.value = view_name;
+    document.getElementById("guide_form").submit();
+}
+
+
+function view_selector(site_name, menu_name) {
+    var site_menu_views_div = document.getElementById("site_menu_views_div");
+    site_menu_views_div.innerHTML = "";
+    var view_style_div = document.getElementById("view_style_div");
+
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var views = menu_item['views'];
+    tab_active('#site_menu_views_tab');
+    if ('style' in menu_item) {
+        var style = menu_item['style'];
+        view_style_div.setAttribute('style', style)
+    } else {
+        view_style_div.removeAttribute("style")
+    }
+
+    for (var view_ix = 0; view_ix < views.length; view_ix++) {
+        var view_name = views[view_ix];
+        var site_view = g_site_views[view_name];
+        //var a_elm = document.createElement("a");
+        //var href = window.location.href
+        //href = href.substring(0, href.search('guide'))
+        //href = href + 'guide?site_select=' + site_name + "&menu_name=" + menu_name + "&view_name=" + view_name
+        //a_elm.setAttribute("href", encodeURI(href));
+        //a_elm.setAttribute("onclick", "site_view_select('" + site_name + "', '" + menu_name + "', '" + view_name + "')");
+        //col_elm.appendChild(a_elm);
+        var div_elm = document.createElement("div");
+        div_elm.setAttribute("onclick", "site_view_select('" + site_name + "', '" + menu_name + "', '" + view_name + "')");
+        div_elm.setAttribute("flex", "1 1 auto");
+        var image_src = '/static/app/media/' + site_name + '/' + view_name + '.jpg';
+        div_elm.innerHTML = "<div class='info-card'>" +
+                            "<div class='info-card-front'><img class='card-image' src='" + image_src +"'></div>" +
+                            "<div class='info-card-back'><h3>" + site_view['descr'] + "</h3></div>" +
+                            site_view['descr'] +
+                        "</div>"
+        site_menu_views_div.appendChild(div_elm)
+    }
+}
+
+function site_menu_show(site_name, menu_name) {
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var input = document.getElementsByName("menu_name")[0];
+    input.value = menu_name;
+    switch (menu_item.type) {
+        case 'data-selector':
+            var route_name = menu_item['step'][0];
+            var step_name = menu_item['step'][1];
+            tab_active('#filters_tab');
+            route_step(route_name, step_name);
+            break;
+        case 'view-selector':
+            view_selector(site_name, menu_name);
+            break;
+        case 'site-view':
+            break;
+        default:
+            console.log('site_menu_select, unknown menu_item.type ' + menu_item.type);
+    }
+}
+
+function site_menu_select(site_name, menu_name) {
+    //console.log(menu_name);
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var input = document.getElementsByName("menu_name")[0];
+    input.value = menu_name;
+    var input = document.getElementsByName("view_name")[0];
+    input.value = '';
+    switch (menu_item.type) {
+        case 'data-selector':
+            var route_name = menu_item['step'][0];
+            var step_name = menu_item['step'][1];
+            document.getElementById("guide_form").submit();
+            break;
+        case 'view-selector':
+            view_selector(site_name, menu_name);
+            break;
+        case 'site-view':
+            break;
+        default:
+            console.log('site_menu_select, unknown menu_item.type ' + menu_item.type);
+    }
+}
+
+function site_show(site_name) {
+    var site_menu_elm = document.getElementById("site_menu");
+    var menu = g_sites[site_name].site_menu.menu;
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+
+    for (var menu_ix = 0; menu_ix < menu.length; menu_ix++) {
+        var menu_name = menu[menu_ix];
+        var menu_item = menu_items[menu_name];
+        var glyph = ""
+        switch (menu_item.type) {
+            case 'data-selector':
+                glyph = '<span class="glyphicon glyphicon-filter"></span>'
+                break;
+            case 'view-selector':
+            case 'site-view':
+            default:
+                glyph = '<span class="glyphicon glyphicon-sunglasses"></span>'
+        }
+        var a_elm = document.createElement("a");
+        a_elm.innerHTML = glyph + menu_name;
+        a_elm.setAttribute("onclick", "site_menu_select('" + site_name + "', '" + menu_name + "')");
+        site_menu_elm.appendChild(a_elm)
+    }
+}
+
+function site_onchange() {
+    var site_name = document.getElementById("site_select").value;
+    var site_menu_elm = document.getElementById("site_menu");
+    site_menu_elm.innerHTML = "";
+    var input = document.getElementsByName("menu_name")[0];
+    input.value = '';
+    var input = document.getElementsByName("view_name")[0];
+    input.value = '';
+    document.getElementById("guide_form").submit();
+}
+
+
+// site_route is called by guide.html on load
+// 1. It loads the site_select dropdown box
+// 2. In case a site_name is already selected, that site is set to active and is shown
+// 3. When also a menu_name is specified, that site menu is also shown
+// 4. In case also a view_name is specified for a view_selected menu item, that view is shown
+function site_route(site_name, menu_name, view_name, sites, site_views) {
+    g_sites = sites;
+    g_site_views = site_views;
+
+    var select = document.getElementById("site_select");
+    select.setAttribute("onChange", "site_onchange()");
+    // remove any existing options
+    var option = document.createElement("option");
+    option.setAttribute("value", "");
+    option.text = "Select a site";
+    if (site_name == "") {
+        option.setAttribute('selected', true);
+    }
+    select.appendChild(option);
+    for (var site_key in sites) {
+        var option = document.createElement("option");
+        option.setAttribute("value", site_key);
+        option.text = sites[site_key].descr;
+        if (site_name == site_key) {
+            option.setAttribute('selected', true);
+        }
+        select.appendChild(option);
+    }
+
+    if (site_name != "") {
+        site_show(site_name);
+        if (menu_name != "") {
+            site_menu_show(site_name, menu_name);
+            if (view_name != "") {
+                site_view_show(site_name, menu_name, view_name);
+            }
+        }
+    }
+}
+
+function getParameterByName(name, url) {
+    if (!url) {
+        url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+function get_facets(site_name, menu_name, view_name) {
+    var params = {};
+    var menu = g_sites[site_name].site_menu.menu;
+    var menu_items = g_sites[site_name].site_menu.menu_items;
+
+    for (var menu_ix = 0; menu_ix < menu.length; menu_ix++) {
+        var menu_name = menu[menu_ix];
+        var menu_item = menu_items[menu_name];
+        if (menu_item.type == 'data-selector') {
+            var route_name = menu_item['step'][0];
+            var step_name = menu_item['step'][1];
+            var step = g_guide['steps'][step_name];
+            var facet_field = step['facet'];
+            var facet_field_filters = getParameterByName(facet_field);
+            if (facet_field_filters != '' && facet_field_filters != null) {
+                params[facet_field] = facet_field_filters;
+            }
+        }
+    }
+    return params;
+}
+
+function search(site_name, menu_name, view_name) {
+    var site_view = g_site_views[view_name];
+    //var params = {
+    //    "q": keywords_q,
+    //};
+    var params = get_facets(site_name, menu_name, view_name);
+    var url = site_view['url'];
+    var keywords_q = "";
+
+
+    $.get(url, params, function (data, status) {
+        var view_name = data['view_name'];
+        var site_view = g_site_views[view_name];
+        var storyboard = site_view['storyboard'];
+        var charts = JSON.parse(data['dashboard']);
+        var tiles_select = JSON.parse(data['tiles_select']);
+        var tiles = JSON.parse(data['tiles']);
+        //draw_dashboard(storyboard[0], charts, "dashboard_div");
+        draw_storyboard(storyboard, charts);
+        fill_tiles(tiles_select, tiles);
+    });
 }

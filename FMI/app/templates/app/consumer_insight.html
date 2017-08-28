@@ -9,7 +9,7 @@
 {% load staticfiles %}
 <form action="" method="post" class="form-horizontal">
     {% csrf_token %}
-    <input type="hidden" id="survey.keyword" name="survey.keyword"value="">
+    <input type="hidden" id="workbook" name="workbook"value="test">
     <div class="row">
         <div class="col-md-5 iff-dataset">
             <div class="container-fluid">
@@ -32,7 +32,7 @@
                             Analyze the Fresh and Clean study.
                         </p>
                         <p>
-                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_search_survey('fresh and clean')">Fresh and Clean
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('fresh and clean')">Fresh and Clean
                                 <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
                             </button>
                         </p>
@@ -61,7 +61,7 @@
                             Analyze the Orange Beverages study
                         </p>
                         <p>
-                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_search_survey('orange beverages')">Orange Beverages
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('orange beverages')">Orange Beverages
                                 <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
                             </button>
                         </p>

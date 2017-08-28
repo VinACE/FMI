@@ -172,14 +172,16 @@ def guide_view(request):
     """Renders the guide page."""
     route_name = ''
     step_name = ''
+    site_name = ''
+    menu_name = ''
+    view_name = ''
     results = {}
     facets = {}
     if request.method == 'GET':
-        if 'route_select' in request.GET:
-            route_name = request.GET['route_select']
-        if 'step_name' in request.GET:
-            step_name = request.GET['step_name']
-        if (route_name != ""):
+        route_name = request.GET.get('route_select', '')
+        site_name = request.GET.get('site_select', '')
+        if route_name != '':
+            step_name = request.GET.get('step_name', '')
             route_steps = guide.routes[route_name][1]
             step_ix = 0
             # new route selected, start with the first step of this route
@@ -204,6 +206,13 @@ def guide_view(request):
             else:      
                 # destination reached, determine step_name                     
                 step_name = guide.route_dest(request, route_name, step_name)
+        else:
+            if site_name != '':
+                menu_name = request.GET.get('menu_name', '')
+                view_name = request.GET.get('view_name', '')
+                if site_name != '':
+                    results, facets = guide.site_menu(request, site_name, menu_name, view_name)
+
 
     context = {
             'route_name': route_name,
@@ -211,7 +220,11 @@ def guide_view(request):
             'guide'     : json.dumps(guide.guide),
             'facets'    : facets,
             'results'   : results,
-            'charts'    : json.dumps(guide.charts),
+            'site_name' : site_name,
+            'menu_name' : menu_name,
+            'view_name' : view_name,
+            'sites'     : json.dumps(guide.sites),
+            'site_views': json.dumps(guide.site_views)
         }
 
     return render(request, 'app/guide.html', context )
@@ -258,10 +271,10 @@ def consumer_insight_view(request):
             #seekerview.request = request
             #return seekerview.render()
             #url = reverse('search_survey', args=(), kwargs={'survey.keyword': '2015'})
-            if 'survey.keyword' in request.POST:
+            if 'workbook' in request.POST:
                 kwargs={
-                    'workbook'      : request.POST['survey.keyword'],
-                    'survey.keyword': request.POST['survey.keyword'],
+                    'workbook'      : request.POST['workbook'],
+                    #'survey.keyword': request.POST['survey.keyword'],
                     }
             else:
                 kwargs={}

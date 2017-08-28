@@ -32,15 +32,15 @@
                 <label class="sr-only" for="q">{% trans "Search" %}</label>
                 <input type="text" class="form-control" placeholder="{% trans "Search" %}" name="q" id="q" value="{{ keywords_q }}" autofocus="autofocus" />
             </div>
-            <div class="container">
+            <div class="container-fluid">
                 <script>g_facetcounter = 0;</script>
                 {% for facet, selected in facets.items %}
                     {% if facet.visible_pos > 0 %}
                         <script>
                             if (g_facetcounter % 2 == 0) {
-                                document.write('<div class="row"><div class="col-md-6 iff-padding-0">');
+                                document.write('<div class="row"><div class="col-md-6">');
                             } else {
-                                document.write('<div class="col-md-6 iff-padding-l6">');
+                                document.write('<div class="col-md-6">');
                             }
                         </script>
                         <div class="form-group">

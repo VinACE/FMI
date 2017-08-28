@@ -981,6 +981,22 @@ class SurveyWorkbook:
         #},
         ]
 
+    dashboard_link = {
+        'topline_liking_table'  : dashboard_fresh['topline_liking_table'],
+        'liking_blindcode_col'  : dashboard_fresh['liking_blindcode_col'],
+        }
+
+    storyboard_link = [
+        {'name'  : 'Topline',
+            'layout' : {'rows' : [['topline_liking_table']]},
+            'active' : True,
+        },
+        {'name'  : 'Hedonics',
+            'layout' : {'rows' : [['liking_blindcode_col']]},
+            'active' : True,
+        }
+        ]
+
     dashboard_orange = {
         "liking_blindcode_col" : {
             'chart_type': "Table",
@@ -1176,6 +1192,15 @@ class SurveyWorkbook:
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
             'charts'        : dashboard_fresh,
             'storyboard'    : storyboard_fresh,
+            'filters'       : {'survey.keyword' : ["fresh and clean"]}
+            },
+        "link" : {
+            'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
+            'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
+                               "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
+            'charts'        : dashboard_link,
+            'storyboard'    : storyboard_link,
+            'filters'       : {'survey.keyword' : ["fresh and clean"]}
             },
         "orange beverages" : {
             'display'       : ["gender", "age", 'brand', "blindcode", "liking"],
@@ -1183,6 +1208,7 @@ class SurveyWorkbook:
                                "hedonics", "affective", "ballot", "behavioral", "physical"],
             'charts'        : dashboard_orange,
             'storyboard'    : storyboard_orange,
+            'filters'       : {'survey.keyword' : ["orange beverages"]}
             },
     }
 

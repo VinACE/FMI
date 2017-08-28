@@ -14,6 +14,229 @@ import app.models as models
 import app.survey as survey
 
 
+# A site consists of tree of menu items pointing to a site item.
+# A site item can be a data selecter: 
+
+site_views = {
+    'portfolio-olfactive-map' : {
+        'type'  : 'image',
+        'descr' : "Portfolio Olfactive Map",
+        'image' : "PORTFOLIO OLFACTIVE MAP_FABRIC CLEANING.jpg"},
+    'fragrance-passport' : {
+        'type'  : 'carousels',
+        'descr' : "Fragrance Pasport",
+        'carousels' : [
+            ("Aragon", ["ARAGON INFORMATION.jpg", "ARAGON PERFORMANCE.jpg", "ARAGON THEME.jpg"]),
+            ("Blue Legend", ["BLUE LEGEND INFORMATION.jpg", "BLUE LEGEND PERFORMANCE.jpg", "BLUE LEGEND THEME.jpg"]),
+            ]},
+    'fabric_conditioners' : {
+        'type'  : 'facets_image',
+        'descr' : "Fabric Conditioners",
+        'facets': ['country', 'brand']},
+    'powder_detergents' : {
+        'type'  : 'facets_image',
+        'descr' : "Powder Detergents",
+        'facets': ['country', 'brand']},
+    'liquid_detergents' : {
+        'type'  : 'facets_image',
+        'descr' : "Liquid Detergents",
+        'facets': ['country', 'brand']},
+    'hedonics_overall' : {
+        'type'  : 'charts',
+        'descr' : "Hedonics Overall",
+        'url'   : '/search_survey?workbook=link&view_name=hedonics_overall',
+        'tiles' : [],
+        'storyboard': [{'name'  : 'Topline',
+                       'layout' : {'rows' : [['topline_liking_table']]},
+                       'active' : True,
+                       }]},
+    'hedonics_per_format' : {
+        'type'  : 'charts',
+        'descr' : "Hedonics Per Format",
+        'url'   : '/search_survey?workbook=link&view_name=hedonics_per_format&age.keyword_tile=on',
+        'tiles' : ['age.keyword'],
+        'storyboard': [{'name'  : 'Hedonics',
+                       'layout' : {'rows' : [['liking_blindcode_col']]},
+                       'active' : True,
+                       }]},
+    'driver_of_liking' : {
+        'type'  : 'charts',
+        'descr' : "Driver of Liking",
+        'charts': ['cand_hedonics_col']},
+    'intensity' : {
+        'type'  : 'charts',
+        'descr' : "Intensiy",
+        'charts': ['cand_hedonics_col']},
+    'fresh' : {
+        'type'  : 'drivers',
+        'descr' : "Fresh",
+        'drivers': ['freshness', 'method']},
+    'superior_fresh' : {
+        'type'  : 'drivers',
+        'descr' : "Superior Fresh",
+        'drivers': ['freshness''method']},
+    'clean' : {
+        'type'  : 'drivers',
+        'descr' : "Clean",
+        'drivers': ['cleanness''method']},
+    'long_lasting' : {
+        'type'  : 'drivers',
+        'descr' : "Long Lasting",
+        'drivers': ['lastingness''method']},
+    'cluster' : {
+        'type'  : 'cluster',
+        'descr' : "Cluster",
+        'drivers': ['lastingness''method']},
+    'fresh_sensorial_revitalizing' : {
+        'type'  : 'charts',
+        'descr' : "Freshness Model Sensorial And Revitalizing",
+        'charts': ['sensorial_freshness_bar', 'revitalizing_freshness_bar']},
+    'fresh_essential_confident' : {
+        'type'  : 'charts',
+        'descr' : "Freshness Model Essential And Confident",
+        'charts': ['essential_freshness_bar', 'confident_freshness_bar']},
+    'newness' : {
+        'type'  : 'quadrant',
+        'descr' : "Newness Model",
+        'quadrants':[('Cult', 'complex/familair'), ('Intrigue', 'complex/unfamilair'),
+                     ('Legend','simple/familair'), ('Broad Appeal''simple/unfamilair')],
+        'facets': ['uniqueness', 'complexity']},
+    'most_often_users' : {
+        'type'  : 'top-n',
+        'descr' : "Most Often Users",
+        'n'     : "8",
+        'tile'  : 'format',
+        'facets': ['freshness''superior', 'cleanness', 'lastingness']},
+    'chart' : {
+        'type'  : 'charts',
+        'descr' : "Chart",
+        'charts': ['ness_line']},
+    'summary' : {
+        'type'  : 'image',
+        'descr' : "Portfolio Olfactive Map",
+        'image' : ""},
+    'format_total' : {
+        'type'  : 'tiled_chart',
+        'descr' : "Total",
+        'tile'  : 'format',
+        'chart' : 'cand_hedonics_col'},
+    'format_brand' : {
+        'type'  : 'top-n',
+        'descr' : "Brand",
+        'n'     : "5",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'format_split' : {
+        'type'  : 'top-n',
+        'descr' : "User Split",
+        'n'     : "5",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'perfume_driven' : {
+        'type'  : 'top-n',
+        'descr' : "Perfume Driven",
+        'n'     : "4",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'sensitive_care' : {
+        'type'  : 'top-n',
+        'descr' : "Sensitive Care",
+        'n'     : "4",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'functionailty' : {
+        'type'  : 'top-n',
+        'descr' : "Functionailty",
+        'n'     : "4",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'extra_benefits' : {
+        'type'  : 'top-n',
+        'descr' : "Extra_Benefits",
+        'n'     : "4",
+        'tiles' : ['method', 'suitability', 'brand'],
+        'facets': ['candidates']},
+    'cross_fabrics' : {
+        'type'  : 'metric_chart',
+        'descr' : "Cross Fabrics",
+        'metrics': ['hedonics', 'freshness', 'cleanness', 'lastingness'],
+        'chart' : 'globe_chart'},
+    'fabric_conditioner' : {
+        'type'  : 'metric_chart',
+        'descr' : "Fabric Conditioner",
+        'metrics': ['hedonics', 'freshness', 'cleanness', 'lastingness'],
+        'chart' : 'globe_chart'},
+    'detergents' : {
+        'type'  : 'metric_chart',
+        'descr' : "Detergents",
+        'metrics': ['hedonics', 'freshness', 'cleanness', 'lastingness'],
+        'chart' : 'globe_chart'},
+    'topline_tables' : {
+        'type'  : 'metric_chart',
+        'descr' : "Top Line Tables",
+        'metrics': ['hedonics', 'freshness', 'cleanness', 'lastingness'],
+        'chart' : 'globe_chart'},
+    }
+
+menu_items = {
+    'Globe' : {
+        'type'  : 'data-selector',
+        'step'  : ('route_sdm', 'country_sel')
+        },
+    'Gender' : {
+        'type'  : 'data-selector',
+        'step'  : ('route_sdm', 'gender_sel')
+        },
+    'Fragrance Passport' : {
+        'type'  : 'view-selector',
+        'views' : ['portfolio-olfactive-map', 'fragrance-passport'],
+        'style' :  "background-image: url('/static/app/media/link/correlation.jpg'); background-size: cover;"},
+    'Washing Habits' : {
+        'type'  : 'wip'},
+    'Performance' : {
+        'type'  : 'wip'},
+    'Brands' : {
+        'type'  : 'view-selector',
+        'views' : ['fabric_conditioners', 'powder_detergents', 'liquid_detergents'],
+        'style' :  "background-image: url('/static/app/media/link/correlation.jpg'); background-size: cover;"},
+    'Liking' : {
+        'type'  : 'view-selector',
+        'views' : ['hedonics_overall', 'hedonics_per_format', 'intensity', 'driver_of_liking'],
+        'style' :  "background-image: url('/static/app/media/link/likingbg.jpg'); background-size: cover;"},
+    'Freshness' : {
+        'type'  : 'view-selector',
+        'views' : ['fresh', 'superior_fresh', 'clean', 'long_lasting', 'cluster',
+                   'fresh_sensorial_revitalizing', 'fresh_essential_confident',
+                   'newness', 'most_often_users', 'chart', 'summary']},
+    'Format Suitability' : {
+        'type'  : 'view-selector',
+        'views' : ['format_total', 'format_brand', 'format_split']},
+    'Benefits' : {
+        'type'  : 'view-selector',
+        'views' : ['perfume_driven', 'sensitive_care', 'functionailty', 'extra benefits']},
+    'Correlation' : {
+        'type'  : 'view-selector',
+        'views' : ['cross_fabrics', 'fabric_conditioner', 'detergents']},
+    'Top Line Tables' : {
+        'type'  : 'site_view',
+        'view'  : 'topline_tables'},
+    }
+
+link_menu = {
+    'menu'  : ['Globe', 'Gender', 'Fragrance Passport', 'Washing Habits', 'Performance', 'Brands', 'Liking',
+               'Freshness', 'Format Suitability', 'Benefits', 'Correlation', 'Top Line Tables'],
+    'menu_items'    : menu_items
+    }
+
+
+sites = {
+    'Link' : {
+        'type'  : 'site',
+        'descr' : 'LiNK',
+        'site_menu': link_menu
+        }
+    }
+
 # A guide consists of routes and a route consists of steps. A route leads to the destination.
 # A step is selection or decision that has to be made to lead to the end resulst.
 
@@ -64,7 +287,7 @@ steps = {
     'country_sel' : {
         'type'      : 'selection',
         'facet'     : 'country.keyword',
-        'selection' : ('graph', 'country_sel'),
+        'selection' : ('graph', storyboard['country_sel'], charts),
         'selsize'   : '0-n',
         },
     'gender_sel' : {
@@ -85,19 +308,29 @@ steps = {
         'selection' : ('gallery', dataset_gallery),
         'selsize'   : '1',
         'decisionstep' : {
-            'CI Survey' : 'survey_profile_dest', 'SE Studies': 'studies_profile_dest', 'SDM' : 'SDM_storyboard_dest'}
+            'Fresh and Clean'   : 'fresh_and_clean_profile_dest',
+            'Orange Beverages'  : 'orange_bevarages_profile_dest',
+            'SE Studies'        : 'studies_profile_dest',
+            'SDM'               : 'SDM_storyboard_dest'}
+        },
+    'fresh_and_clean_profile_dest'   : {
+        'type'      : 'destination',
+        'url'       : '/search_survey?workbook=fresh+and+clean&survey.keyword=fresh+and+clean',
+        'seeker'    : 'SurveySeekerView',
+        'tab'       : 'storyboard',
+        'dashboard' : 'profile',
+        },
+    'orange_bevarages_profile_dest'   : {
+        'type'      : 'destination',
+        'url'       : '/search_survey?workbook=orange+beverages&survey.keyword=orange+beverages',
+        'seeker'    : 'SurveySeekerView',
+        'tab'       : 'storyboard',
+        'dashboard' : 'profile',
         },
     'studies_profile_dest'   : {
         'type'      : 'destination',
         'url'       : '/search_studies',
         'seeker'    : 'StudiesSeekerView',
-        'tab'       : 'storyboard',
-        'dashboard' : 'profile',
-        },
-    'survey_profile_dest'   : {
-        'type'      : 'destination',
-        'url'       : '/search_survey',
-        'seeker'    : 'SurveySeekerView',
         'tab'       : 'storyboard',
         'dashboard' : 'profile',
         },
@@ -113,8 +346,10 @@ steps = {
 routes = {
     'route_sdm' : ('SurveySeekerView',
                   ['country_sel', 'gender_sel', 'age_sel', 'dataset_dec']),
-    'route_ci' : ('SurveySeekerView',
-                   ['survey_profile_dest']),
+    'route_ci_fresh' : ('SurveySeekerView',
+                   ['fresh_and_clean_profile_dest']),
+    'route_ci_oranges' : ('SurveySeekerView',
+                   ['orange_bevarages_profile_dest']),
     }
 
 route2seeker = {
@@ -184,9 +419,8 @@ def route_step(request, route_name, step_name):
         results = search.execute(ignore_cache=True)
         route_charts = {}
         if step['selection'][0] == 'graph':
-            storyboard_name = step['selection'][1]
-            dashboard = storyboard[storyboard_name]['layout']
-            for key, map in dashboard.items():
+            dashboard_layout = step['selection'][1]['layout']
+            for key, map in dashboard_layout.items():
                 for row in map:
                     for chart_name in row:
                         chart = charts[chart_name]
@@ -230,4 +464,26 @@ def route_dest(request, route_name, step_name):
     return step_name
 
 
+# prepare the data for the selected menu for the site
+def site_menu(request, site_name, menu_name, view_name):
+    results = {}
+    facets = {}
+    site = sites[site_name]
+    site_menu = site['site_menu']
+    menu_items = site_menu['menu_items']
+    for name, item in menu_items.items():
+        menu_item = menu_items[name]
+        if menu_item['type'] == 'data-selector':
+            route_name = menu_item['step'][0];
+            step_name = menu_item['step'][1];
+            results, facets = route_step(request, route_name, step_name);
+        elif menu_item['type'] == 'view-selector':
+            if view_name != '':
+                pass
+        elif menu_item['type'] == 'site-view':
+            pass
+        else:
+            pass
+
+    return results, facets
 
