@@ -1105,8 +1105,9 @@ class SeekerView (View):
             tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results_tile)
             seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df)
         else:
-            tile_df = pd.DataFrame()
-            tiles_select = {}
+            # fake facet for creating tile_df
+            #facets_tile[seeker.TermsFacet("All", label = "All")] = 'on'
+            tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results)
             seeker.models.stats_df = pd.DataFrame()
             seeker.models.corr_df = pd.DataFrame()
 
@@ -1190,6 +1191,8 @@ class SeekerView (View):
                 'dashboard': json.dumps(self.dashboard),
                 'tiles_select': json.dumps(tiles_select),
                 'tiles': tile_df.to_json(orient='records'),
+                'stats_df' : seeker.models.stats_df.to_json(orient='records'),
+                'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             })
         else:
             return render(self.request, self.template_name, context)

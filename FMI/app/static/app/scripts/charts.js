@@ -279,17 +279,18 @@ function filterGoogleChart(chart_name, chart_name2) {
     var setrows = setRowsChart(chart_name, chart_name2);
     if (!transpose) {
         g_db[chart_name2].view.setRows(setrows);
-        g_db[chart_name2].chart_wrapper.draw();
+        //g_db[chart_name2].chart_wrapper.draw();
     } else {
-        g_db[chart_name2].chart_wrapper.setDataTable(g_db[chart_name2].data);
+        //g_db[chart_name2].chart_wrapper.setDataTable(g_db[chart_name2].datatable);
         g_db[chart_name2].view.setColumns(setrows);
-        g_db[chart_name2].chart_wrapper.setView(g_db[chart_name2].view.toJSON());
-        g_db[chart_name2].chart_wrapper.draw();
-        for (var cix = 0; cix < g_db[chart_name2].control_wrappers.length; cix++) {
-            g_db[chart_name2].google_db.bind(g_db[chart_name2].control_wrappers[cix], g_db[chart_name2].chart_wrapper);
-        }
-        g_db[chart_name2].google_db.draw(g_db[chart_name2].data);
+        //g_db[chart_name2].chart_wrapper.setView(g_db[chart_name2].view.toJSON());
+        //g_db[chart_name2].chart_wrapper.draw();
+        //for (var cix = 0; cix < g_db[chart_name2].control_wrappers.length; cix++) {
+        //    g_db[chart_name2].google_db.bind(g_db[chart_name2].control_wrappers[cix], g_db[chart_name2].chart_wrapper);
+        //}
+        //g_db[chart_name2].google_db.draw(g_db[chart_name2].data);
     }
+    g_db[chart_name2].google_db.draw(g_db[chart_name2].view);
 }
 
 function filterChart(chart_name, chart_name2) {
@@ -578,6 +579,7 @@ function google_chart(chart_name, json_data) {
                                     var columnIndex = item.column;
                                     var rowIndex = item.row;
                                     for (var action in listen) {
+                                        var sort_arg = listen[action];
                                         if (action == 'rowsort' && rowIndex != null && columnIndex == null) {
                                             var rowlabel = dt.getValue(rowIndex, 0);
                                             var sortAscending = false;
@@ -588,14 +590,20 @@ function google_chart(chart_name, json_data) {
                                             var setcols = sortColumns(g_db[chart_name].datatable, rowIndex, 2, sortAscending);
                                             g_db[chart_name].view.setColumns(setcols);
                                             // make view effective for not topline???
-                                            g_db[chart_name].chart_wrapper.setView(g_db[chart_name].view.toJSON());
-                                            g_db[chart_name].chart_wrapper.draw();
                                             for (var cix = 0; cix < g_db[chart_name].control_wrappers.length; cix++) {
                                                 g_db[chart_name].google_db.bind(g_db[chart_name].control_wrappers[cix], g_db[chart_name].chart_wrapper);
                                             }
-                                            g_db[chart_name].google_db.draw(g_db[chart_name].data);
+                                            if (g_db[chart_name].google_db != null) {
+                                                g_db[chart_name].google_db.draw(g_db[chart_name].view);
+                                            } else {
+                                                g_db[chart_name].chart_wrapper.setView(g_db[chart_name].view.toJSON());
+                                                g_db[chart_name].chart_wrapper.draw();
+                                            }
                                         }
                                         if (action == 'colsort' && rowIndex == null && columnIndex != null) {
+                                            if (sort_arg == 'categories') {
+                                                columnIndex = 0;
+                                            }
                                             var columnlabel = dt.getColumnLabel(columnIndex);
                                             var sortAscending = false;
                                             if (columnlabel in g_db[chart_name].sortrows) {
@@ -604,7 +612,13 @@ function google_chart(chart_name, json_data) {
                                             g_db[chart_name].sortrows[columnlabel] = sortAscending;
                                             var setrows = g_db[chart_name].datatable.getSortedRows({ 'column': columnIndex, 'desc': !sortAscending });
                                             g_db[chart_name].view.setRows(setrows);
-                                            g_db[chart_name].chart_wrapper.draw();
+                                            //g_db[chart_name].chart_wrapper.draw();
+                                            if (g_db[chart_name].google_db != null) {
+                                                g_db[chart_name].google_db.draw(g_db[chart_name].view);
+                                            } else {
+                                                g_db[chart_name].chart_wrapper.setView(g_db[chart_name].view.toJSON());
+                                                g_db[chart_name].chart_wrapper.draw();
+                                            }
                                         }
                                         if (action == 'rowcolfilter' && rowIndex != null && columnIndex != null) {
                                             var rowlabel = dt.getValue(rowIndex, 0);

@@ -820,10 +820,22 @@ class SurveyWorkbook:
                 "axis"    : 0,
                 'label'   : "Answer" },
             },
+        "liking_ans_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Likig Resp Count",
+            'chart_data'  : "facet",
+            'help'        : "Select Legend for sorting Categories",
+            'listener'    : {'select' : {'colsort': 'categories'}},
+            'X_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Liking/Hedonics",
+                },
+            },
         "emotion_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Emotion Resp Count",
             'chart_data'  : "facet",
+            'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
                 'field'   : "emotion",
                 'total'   : False,
@@ -833,6 +845,31 @@ class SurveyWorkbook:
                 "axis"    : 0,
                 'label'   : "Answer" },
             },
+
+        "liking_emotion_corr_table" : {
+            'chart_type'  : "Table",
+            'chart_title' : "Liking / Emotion Correlation",
+            'chart_data'  : "correlation",
+            'base'        : ["liking_ans_col", "emotion_ans_col"],
+            'controls'    : ['CategoryFilter'],
+            'listener'    : {'select' : {'rowsort': None}},
+            'X_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Liking/Hedonics",
+                },
+            'Y_facet'     : {
+                'field'   : "emotion",
+                'label'   : "Emotion"
+                },
+            'options'     : {
+                "allowHtml" : True,
+                'frozenColumns' : 2,
+                },
+            'formatter'  : {
+                'setProperty'   : [],
+                },
+            },
+
         #"country_map" : {
         #    'chart_type': "GeoMap",
         #    'chart_title' : "Country Resp Count",
@@ -986,6 +1023,8 @@ class SurveyWorkbook:
         'topline_liking_table'      : dashboard_fresh['topline_liking_table'],
         'freshness_blindcode_col'   : dashboard_fresh['freshness_blindcode_col'],
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
+        'liking_ans_col'            : dashboard_fresh['liking_ans_col'],
+        'emotion_ans_col'           : dashboard_fresh['emotion_ans_col'],
         }
 
     storyboard_link = [
@@ -1001,6 +1040,10 @@ class SurveyWorkbook:
          'layout'   : {'rows' : [['freshness_blindcode_col'], ['topline_freshness_table']]},
          'active'   : True,
         },
+        {'name'     : 'Driver Liking',
+         'layout'   : {'rows' : [['liking_ans_col'], ['emotion_ans_col']]},
+         'active'   : True,
+        }
         ]
 
     dashboard_orange = {

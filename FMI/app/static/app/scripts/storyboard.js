@@ -73,6 +73,9 @@ function tile_select_onchange() {
                     data[datarownr][0] = "";
                 }
                 var dt = google.visualization.arrayToDataTable(data, false);
+                var view = new google.visualization.DataView(dt);
+                g_db[chart_name].datatable = dt;
+                g_db[chart_name].view = view;
                 // only redraw for the active storyboard
                 if (g_db[chart_name].google_db != 'undefined') {
                     g_db[chart_name].google_db.draw(dt, g_options);

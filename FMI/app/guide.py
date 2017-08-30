@@ -62,7 +62,12 @@ site_views = {
     'driver_of_liking' : {
         'type'  : 'charts',
         'descr' : "Driver of Liking",
-        'charts': ['cand_hedonics_col']},
+        'url'   : '/search_survey?workbook=link',
+        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
+        'storyboard': [{'name'  : 'Driver Liking',
+                        'layout': {'rows' : [['liking_ans_col'], ['emotion_ans_col']]},
+                       'active' : True,
+                       }]},
     'intensity' : {
         'type'  : 'charts',
         'descr' : "Intensiy",
@@ -88,7 +93,7 @@ site_views = {
         'type'  : 'drivers',
         'descr' : "Long Lasting",
         'drivers': ['lastingness''method']},
-    'cluster' : {
+    'fresh_cluster' : {
         'type'  : 'cluster',
         'descr' : "Cluster",
         'drivers': ['lastingness''method']},
@@ -100,7 +105,7 @@ site_views = {
         'type'  : 'charts',
         'descr' : "Freshness Model Essential And Confident",
         'charts': ['essential_freshness_bar', 'confident_freshness_bar']},
-    'newness' : {
+    'newness_model' : {
         'type'  : 'quadrant',
         'descr' : "Newness Model",
         'quadrants':[('Cult', 'complex/familair'), ('Intrigue', 'complex/unfamilair'),
@@ -112,14 +117,26 @@ site_views = {
         'n'     : "8",
         'tile'  : 'format',
         'facets': ['freshness''superior', 'cleanness', 'lastingness']},
-    'chart' : {
+    'fresh_chart' : {
         'type'  : 'charts',
         'descr' : "Chart",
         'charts': ['ness_line']},
-    'summary' : {
-        'type'  : 'image',
-        'descr' : "Portfolio Olfactive Map",
-        'image' : ""},
+    'fresh_summary' : {
+        'type'  : 'carousels',
+        'descr' : "Country Summary",
+        'carousels' : [
+            ("Brazil", ["fresh_summary_Brazil.png"]),
+            ("China", ["fresh_summary_China.png"]),
+            ("India", ["fresh_summary_India.png"]),
+            ("Indonesia", ["fresh_summary_Indonesia.png"]),
+            ("Nigeria", ["fresh_summary_Nigeria.png"]),
+            ("Brazil", ["fresh_summary_Brazil.png"]),
+            ("SouthAfrica", ["fresh_summary_SouthAfrica.png"]),
+            ("Thailand", ["fresh_summary_Thailand.png"]),
+            ("Turkey", ["fresh_summary_Turkey.png"]),
+            ("UK", ["fresh_summary_UK.png"]),
+            ("Vietnam", ["fresh_summary_Vietnam.png"]),
+            ]},
     'format_total' : {
         'type'  : 'tiled_chart',
         'descr' : "Total",
@@ -214,9 +231,10 @@ menu_items = {
         'style' :  "background-image: url('/static/app/media/link/likingbg.jpg'); background-size: cover;"},
     'Freshness' : {
         'type'  : 'view-selector',
-        'views' : ['fresh', 'superior_fresh', 'clean', 'long_lasting', 'cluster',
+        'views' : ['fresh', 'superior_fresh', 'clean', 'long_lasting', 'fresh_cluster',
                    'fresh_sensorial_revitalizing', 'fresh_essential_confident',
-                   'newness', 'most_often_users', 'chart', 'summary']},
+                   'newness_model', 'most_often_users', 'fresh_chart', 'fresh_summary'],
+        'style' :  "background-image: url('/static/app/media/link/freshnessbg.jpg'); background-size: cover;"},
     'Format Suitability' : {
         'type'  : 'view-selector',
         'views' : ['format_total', 'format_brand', 'format_split']},

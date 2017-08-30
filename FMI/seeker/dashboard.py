@@ -28,7 +28,6 @@ from scipy.stats import norm
 import seeker.seekerview
 import seeker.models
 
-
 def stats(tile_df):
     facets = tile_df['facet_tile']
     f_index = np.unique(facets).tolist()
@@ -75,6 +74,107 @@ def stats(tile_df):
 
 
 def tile(seekerview, facets_tile, charts, results_tile):
+    tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
+    tiles_select = {};
+    rownr = 0
+    for chart_name, chart in charts.items():
+        chart_data = chart.db_chart['chart_data']
+        if chart_data == 'topline':
+            continue
+        if chart_data == 'topline_base':
+            continue
+        if chart_data == 'hits':
+            continue
+        if chart_data == 'aggr':
+            continue
+
+        X_facet = chart.db_chart['X_facet']
+        question_field = X_facet['field']
+        answer_field = ''
+        single = False
+        nested = False
+        if 'Y_facet' not in chart.db_chart:
+            Y_facet = None
+            single = True
+        else:
+            Y_facet = chart.db_chart['Y_facet']
+            if Y_facet['field'] == "answer":
+                nested = True
+                answer_field = 'answer'
+            answer_field = Y_facet['field']
+        question_field = question_field.replace('.', '_')
+        answer_field = answer_field.replace('.', '_')
+
+        if len(facets_tile) == 0:
+            facets_tile = [seeker.TermsFacet("All", label = "All")]
+        for facet_tile in facets_tile:
+            if facet_tile.label != "All":
+                tiles_select[facet_tile.label] = []
+                agg_name = facet_tile.name + '_' + chart_name
+                if agg_name in results_tile.aggregations:
+                    # this also converts AttrDict and AttrList to dict and list types !!
+                    tile_aggr = results_tile.aggregations[agg_name].to_dict()
+                    tiles = tile_aggr['buckets']
+                else:
+                    tiles = []
+            else:
+                agg_name = question_field
+                if agg_name in results_tile.aggregations:
+                    # this also converts AttrDict and AttrList to dict and list types !!
+                    tile = results_tile.aggregations.to_dict()
+                    tiles = [tile]
+            for ti in range(0, len(tiles)):
+                tile = tiles[ti]
+                if facet_tile.label != "All":
+                    facet_tile_value = tile['key']
+                    if facet_tile_value not in tiles_select[facet_tile.label]:
+                        tiles_select[facet_tile.label].append(facet_tile_value)
+                else:
+                    facet_tile_value = 'All'
+                if nested:
+                    questions = tile[question_field]['question']['buckets']
+                else:
+                    questions = tile[question_field]['buckets']
+                if type(questions) == AttrList or type(questions) == list:
+                    for qi in range(0, len(questions)):
+                        question = questions[qi]
+                        question_value = question[X_facet['key']]
+                        question_count = question[X_facet['metric']]
+                        if type(question_value) == int:
+                            question_value = "{0:d}".format(question_value)
+                        tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, "Total", question_count]
+                        rownr = rownr + 1
+                        if not single and answer_field in question:
+                            answers = question[answer_field]['buckets']
+                            if type(answers) == dict:
+                                for answer_value in answers:
+                                    count = answers[answer_value]['doc_count']
+                                    tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, answer_value, count]
+                                    rownr = rownr + 1
+                            else:
+                                for ai in range(0, len(answers)):
+                                    answer = answers[ai]
+                                    answer_value = answer['key']
+                                    if type(answer_value) == int:
+                                        answer_value = "{0:d}".format(answer_value)
+                                    count = answer['doc_count']
+                                    tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, answer_value, count]
+                                    rownr = rownr + 1
+                        else:
+                            count = question['doc_count']
+                            answer_value = question_value
+                            tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, answer_value, count]
+                            rownr = rownr + 1
+                if type(questions) == AttrDict or type(questions) == dict:
+                    for question_value, answer in questions.items():
+                        if single:
+                            count = answer['doc_count']
+                            tile_df.loc[rownr] = [facet_tile_value, chart_name, question_field, question_value, "Total", count]
+                            rownr = rownr + 1
+    return tile_df, tiles_select 
+
+
+def tile_obsolete(seekerview, facets_tile, charts, results_tile):
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
     tiles_select = {};
     rownr = 0

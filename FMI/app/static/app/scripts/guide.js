@@ -154,10 +154,10 @@ function route_definition(route_name) {
 
 function route_onchange() {
     var route_name = document.getElementById("route_select").value;
-    var table = document.getElementById("route_definition_table");
-    table.innerHTML = "";
     document.getElementById("guide_form").submit();
 
+    //var table = document.getElementById("route_definition_table");
+    //table.innerHTML = "";
     //var facet = document.getElementById("tile_select").value;
     //var params = {
     //    "db_facet_selecion": facet
@@ -195,7 +195,7 @@ function guide_route(route_name, step_name, guide) {
     }
 
     if (route_name != "") {
-        route_definition(route_name);
+        //route_definition(route_name);
         route_step(route_name, step_name);
     }
 }
@@ -237,7 +237,7 @@ function site_view_image(site_name, menu_name, view_name) {
 }
 
 
-function site_view_carousel(site_name, view_name, car_ix) {
+function site_view_carousel(site_name, view_name, car_name, car_ix) {
     var carousel_ol = document.getElementById("carousel_ol");
     carousel_ol.innerHTML = "";
     var carousel_slides_div = document.getElementById("carousel_slides_div");
@@ -245,7 +245,6 @@ function site_view_carousel(site_name, view_name, car_ix) {
     var site_view = g_site_views[view_name];
     var carousels = site_view['carousels'];
     var carousel = carousels[car_ix];
-    var name = carousel[0];
     var images = carousel[1];
     for (var img_ix = 0; img_ix < images.length; img_ix++) {
         var li_elm = document.createElement("li");
@@ -264,10 +263,12 @@ function site_view_carousel(site_name, view_name, car_ix) {
         carousel_ol.appendChild(li_elm);
         carousel_slides_div.appendChild(div_elm);
     }
+    $('#carousel_names_div .carousel-selected').removeClass('carousel-selected');
+    $('#carousel_names_div #' + car_ix.toString()).addClass('carousel-selected');
 }
 
-function site_view_carousels_select(site_name, view_name, car_ix) {
-    site_view_carousel(site_name, view_name, car_ix);
+function site_view_carousels_select(site_name, view_name, car_name, car_ix) {
+    site_view_carousel(site_name, view_name, car_name, car_ix);
 }
 
 function site_view_carousels(site_name, menu_name, view_name) {
@@ -281,16 +282,16 @@ function site_view_carousels(site_name, menu_name, view_name) {
     // the names of all carousels are shown at the left
     for (var car_ix = 0; car_ix < carousels.length; car_ix++) {
         var carousel = carousels[car_ix];
-        var name = carousel[0];
+        var car_name = carousel[0];
         var div_elm = document.createElement("div");
-        div_elm.setAttribute('id', name);
+        div_elm.setAttribute('id', car_ix.toString());
         div_elm.setAttribute("onclick", "site_view_carousels_select('" + site_name + "', '" +
-            view_name + "', " + car_ix.toString() + ")");
-        div_elm.innerHTML = name;
+            view_name + "', '" + car_name + "', " + car_ix.toString() + ")");
+        div_elm.innerHTML = car_name;
         carousel_names_div.appendChild(div_elm);
     }
     // the images of the first carousel is shown at the right
-    site_view_carousel(site_name, view_name, 0);
+    site_view_carousel(site_name, view_name, carousels[0][0], 0);
 }
 
 function site_view_charts(site_name, menu_name, view_name) {
@@ -563,7 +564,8 @@ function search(site_name, menu_name, view_name) {
         var charts = JSON.parse(data['dashboard']);
         var tiles_select = JSON.parse(data['tiles_select']);
         var tiles = JSON.parse(data['tiles']);
-        //draw_dashboard(storyboard[0], charts, "dashboard_div");
+        //var stats_df = JSON.parse(data['stats_df']);
+        //var corr_df = JSON.parse(data['corr_df']);
         draw_storyboard(storyboard, charts);
         fill_tiles(tiles_select, tiles);
     });

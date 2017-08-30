@@ -5,6 +5,11 @@
     width: 100%;
 }
 
+.carousel-selected {
+    color: white;
+    background-color: #083c9d;
+}
+
 .iff-box {
   display: flex;
   flex-flow: column;
