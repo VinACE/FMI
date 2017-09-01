@@ -1103,10 +1103,8 @@ class SeekerView (View):
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
             tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results_tile)
-            seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df)
+            seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df, self.dashboard)
         else:
-            # fake facet for creating tile_df
-            #facets_tile[seeker.TermsFacet("All", label = "All")] = 'on'
             tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results)
             seeker.models.stats_df = pd.DataFrame()
             seeker.models.corr_df = pd.DataFrame()
@@ -1127,6 +1125,8 @@ class SeekerView (View):
             chart_data = chart.db_chart['chart_data']
             if chart_data == 'topline_base':
                 chart.bind_topline_base(results.hits, facets_keyword, base_chart=self.dashboard[chart.db_chart['base']])
+            if chart_data == 'correlation':
+                chart.bind_correlation(seeker.models.stats_df, seeker.models.corr_df)
 
 
 #       tablechart = seeker.dashboard.Chart("category_keyword_table", dashboard)

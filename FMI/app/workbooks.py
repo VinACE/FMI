@@ -854,12 +854,12 @@ class SurveyWorkbook:
             'controls'    : ['CategoryFilter'],
             'listener'    : {'select' : {'rowsort': None}},
             'X_facet'     : {
-                'field'   : "liking.keyword",
-                'label'   : "Liking/Hedonics",
+                'field'   : ['question', 'answer', 'value', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
+                'label'   : ['question', 'answer', 'value', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
                 },
             'Y_facet'     : {
-                'field'   : "emotion",
-                'label'   : "Emotion"
+                'field'   : "quastion/answer",
+                'label'   : "Q & A"
                 },
             'options'     : {
                 "allowHtml" : True,
@@ -1025,6 +1025,7 @@ class SurveyWorkbook:
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
         'liking_ans_col'            : dashboard_fresh['liking_ans_col'],
         'emotion_ans_col'           : dashboard_fresh['emotion_ans_col'],
+        'liking_emotion_corr_table' : dashboard_fresh['liking_emotion_corr_table'],
         }
 
     storyboard_link = [
@@ -1041,7 +1042,7 @@ class SurveyWorkbook:
          'active'   : True,
         },
         {'name'     : 'Driver Liking',
-         'layout'   : {'rows' : [['liking_ans_col'], ['emotion_ans_col']]},
+         'layout'   : {'rows' : [['liking_ans_col'], ['emotion_ans_col'], ['liking_emotion_corr_table']]},
          'active'   : True,
         }
         ]

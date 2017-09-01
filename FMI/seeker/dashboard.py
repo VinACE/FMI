@@ -28,29 +28,43 @@ from scipy.stats import norm
 import seeker.seekerview
 import seeker.models
 
-def stats(tile_df):
+
+def stats(tile_df, dashboard):
+    #questions = tile_df['q_field']
+    stats_df = pd.DataFrame()
+    corr_df = pd.DataFrame()
+
     facets = tile_df['facet_tile']
     f_index = np.unique(facets).tolist()
-    questions = tile_df['q_field']
-    questions = np.unique(questions)
+    chart_names = []
     q_columns = []
     a_columns = []
     av_columns = []
-    for question in questions:
-        answers = tile_df[tile_df['q_field'] == question]['x_field']
-        answers = np.unique(answers).tolist()
-        for answer in answers:
-            answer_values = tile_df[(tile_df['q_field'] == question) & (tile_df['x_field'] == answer)]['y_field']
-            answer_values = np.unique(answer_values).tolist()
-            for answer_value in answer_values:
-                q_columns.append(question)
-                a_columns.append(answer)
-                av_columns.append(answer_value)
+    for chart_name, db_chart in dashboard.items():
+        if db_chart['chart_data'] != "correlation":
+            continue
+        for base_chart_name in db_chart['base']:
+            chart_names.append(base_chart_name)
+            base_chart = dashboard[base_chart_name]
+            question = base_chart['X_facet']['field']
+            question = question.replace('.', '_')
+            answers = tile_df[tile_df['chart_name'] == base_chart_name]['x_field']
+            answers = np.unique(answers).tolist()
+            for answer in answers:
+                answer_values = tile_df[(tile_df['chart_name'] == base_chart_name) & (tile_df['x_field'] == answer)]['y_field']
+                answer_values = np.unique(answer_values).tolist()
+                for answer_value in answer_values:
+                    q_columns.append(question)
+                    a_columns.append(answer)
+                    av_columns.append(answer_value)
+    if len(q_columns) == 0:
+        return stats_df, corr_df
 
     qav_columns = pd.MultiIndex.from_arrays([q_columns, a_columns, av_columns], names=['questions', 'answers', 'values'])
     qa_columns = pd.MultiIndex.from_arrays([q_columns, a_columns], names=['questions', 'answers'])
     seeker.models.fqav_df = pd.DataFrame(0.0, columns=qav_columns, index=f_index)
-    for facet, facet_df in tile_df.groupby(tile_df['facet_tile']):
+    msk = [(chart_name in chart_names) for chart_name in tile_df['chart_name']]
+    for facet, facet_df in tile_df.groupby(tile_df[msk]['facet_tile']):
         for idx, facet_s in facet_df.iterrows():
             f = facet_s['facet_tile']
             q = facet_s['q_field']
@@ -67,9 +81,6 @@ def stats(tile_df):
         corr_df['question'] = [t[0] for t in corr_df.index]
         corr_df['answer'] = [t[1] for t in corr_df.index]
         corr_df['value'] = [t[2] for t in corr_df.index]
-    else:
-        stats_df = pd.DataFrame()
-        corr_df = pd.DataFrame()
     return stats_df, corr_df
 
 
@@ -86,6 +97,8 @@ def tile(seekerview, facets_tile, charts, results_tile):
         if chart_data == 'hits':
             continue
         if chart_data == 'aggr':
+            continue
+        if chart_data == 'correlation':
             continue
 
         X_facet = chart.db_chart['X_facet']
@@ -108,6 +121,7 @@ def tile(seekerview, facets_tile, charts, results_tile):
         if len(facets_tile) == 0:
             facets_tile = [seeker.TermsFacet("All", label = "All")]
         for facet_tile in facets_tile:
+            tiles = []
             if facet_tile.label != "All":
                 tiles_select[facet_tile.label] = []
                 agg_name = facet_tile.name + '_' + chart_name
@@ -115,8 +129,6 @@ def tile(seekerview, facets_tile, charts, results_tile):
                     # this also converts AttrDict and AttrList to dict and list types !!
                     tile_aggr = results_tile.aggregations[agg_name].to_dict()
                     tiles = tile_aggr['buckets']
-                else:
-                    tiles = []
             else:
                 agg_name = question_field
                 if agg_name in results_tile.aggregations:
@@ -932,6 +944,16 @@ class Chart(object):
         self.db_chart['data'].append(dt_columns)
         for ix, row in dt.iterrows():
             self.db_chart['data'].append(row.tolist())
+
+    def bind_correlation(self, stats_df, corr_df):
+        # the data will be loaded in google_chart format, this means columns.
+        # First column(s) are the categories followed by the metric columns
+        self.db_chart['data'] = None
+        self.db_chart['data'] = []
+        X_facet = self.db_chart['X_facet']
+        X_field = X_facet['field']
+        for stat_metric in X_field:
+            self.db_chart['data'].append(stats_df[stat_metric].tolist())
 
 
     def json(self):

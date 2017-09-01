@@ -564,7 +564,7 @@ function search(site_name, menu_name, view_name) {
         var charts = JSON.parse(data['dashboard']);
         var tiles_select = JSON.parse(data['tiles_select']);
         var tiles = JSON.parse(data['tiles']);
-        //var stats_df = JSON.parse(data['stats_df']);
+        var stats_df = JSON.parse(data['stats_df']);
         //var corr_df = JSON.parse(data['corr_df']);
         draw_storyboard(storyboard, charts);
         fill_tiles(tiles_select, tiles);

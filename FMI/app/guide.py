@@ -65,7 +65,7 @@ site_views = {
         'url'   : '/search_survey?workbook=link',
         'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
         'storyboard': [{'name'  : 'Driver Liking',
-                        'layout': {'rows' : [['liking_ans_col'], ['emotion_ans_col']]},
+                        'layout': {'rows' : [['liking_ans_col'], ['emotion_ans_col'], ['liking_emotion_corr_table']]},
                        'active' : True,
                        }]},
     'intensity' : {
