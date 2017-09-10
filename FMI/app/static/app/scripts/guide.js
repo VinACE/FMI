@@ -61,7 +61,7 @@ function route_step(route_name, step_name) {
             var dashboard = step['selection'][1];
             var charts = step['selection'][2];
             g_db = charts;
-            draw_dashboard(dashboard, charts, "filterchart_div");
+            draw_dashboard(dashboard, charts, "All", "filterchart_div");
         }
     }
     if (step['type'] == 'selection') {
@@ -519,9 +519,14 @@ function getBaseUrl() {
 
 function fill_params_facets_tiles(site_name, menu_name, view_name) {
     var params = {};
-    params['view_name'] = view_name;
+
     var menu = g_sites[site_name].site_menu.menu;
     var menu_items = g_sites[site_name].site_menu.menu_items;
+    var menu_item = menu_items[menu_name];
+    var views = menu_item['views'];
+    var site_view = g_site_views[view_name];
+    params['view_name'] = view_name;
+    params['dashboard_name'] = site_view['dashboard_name'];
 
     for (var menu_ix = 0; menu_ix < menu.length; menu_ix++) {
         var menu_name = menu[menu_ix];
@@ -559,14 +564,16 @@ function search(site_name, menu_name, view_name) {
 
     $.get(url, params, function (data, status) {
         var view_name = data['view_name'];
+        var dashboard_name = data['dashboard_name'];
         var site_view = g_site_views[view_name];
-        var storyboard = site_view['storyboard'];
+        //var storyboard = site_view['storyboard'];
+        var storyboard = JSON.parse(data['storyboard']);
         var charts = JSON.parse(data['dashboard']);
         var tiles_select = JSON.parse(data['tiles_select']);
-        var tiles = JSON.parse(data['tiles']);
+        var tiles_d = JSON.parse(data['tiles_d']);
         var stats_df = JSON.parse(data['stats_df']);
         //var corr_df = JSON.parse(data['corr_df']);
-        draw_storyboard(storyboard, charts);
-        fill_tiles(tiles_select, tiles);
+        draw_storyboard(storyboard, dashboard_name, charts);
+        fill_tiles(tiles_select, tiles_d);
     });
 }

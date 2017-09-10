@@ -34,13 +34,13 @@ editor_map = {
 # next <p> for the section (relevavnce, topline, source, article>
 # for each section an <ul> listing the items
 # only for article two sub-sections; <div class="itemIntroText"> and <div class="itemFullText"
-def scrape_body(title, body):
+def scrape_body(mi_post, body):
     bs = BeautifulSoup(body, 'lxml')
-    relevance = ''
-    subject = ''
-    topline = ''
-    source = ''
-    article = body
+    mi_post.relevance = ''
+    mi_post.subject = ''
+    mi_post.topline = ''
+    mi_post.source = ''
+    mi_post.article = body
     p_tags = bs.find_all("p")
     for p in p_tags:
         topic = p.get_text()
@@ -51,22 +51,21 @@ def scrape_body(title, body):
                 for li_tag in ul_tag.findAll("li"):
                     list.append(li_tag.text)
             if "RELEVANCE:" in topic:
-                relevance = list
-                s = relevance[0]
-                subject = s[:s.find(' - ')+1].strip()
+                mi_post.relevance = list
+                s = mi_post.relevance[0]
+                mi_post.subject = s[:s.find(' - ')+1].strip()
             elif "TOPLINE:" in topic:
-                topline = list
+                mi_post.topline = list
             elif "SOURCE:" in topic:
-                source = list
+                mi_post.source = list
             elif "ARTICLE:" in topic:
                 tags = p.find_next_siblings()
-                article = ''
+                mi_post.article = ''
                 for tag in tags:
-                    article = article + tag.get_text()
+                    mi_post.article = mi_post.article + tag.get_text()
         except:
-            print("scrape body failed for topic: ", topic, " ", title)
+            print("scrape body failed for id, title: ", mi_post.post_id, mi_post.title)
 
-    return relevance, subject, topline, source, article
 
 
 def push_posts_to_index():
@@ -89,7 +88,8 @@ def push_posts_to_index():
         else:
             mi_post.post_category_id = post_category_id
         mi_post.title           = sp_post.title.encode("ascii", 'replace')
-        mi_post.relevance, mi_post.subject, mi_post.topline, mi_post.source, mi_post.article = scrape_body(mi_post.title, sp_post.body.encode("ascii", 'replace'))
+        #mi_post.relevance, mi_post.subject, mi_post.topline, mi_post.source, mi_post.article = scrape_body(mi_post.title, sp_post.body.encode("ascii", 'replace'))
+        scrape_body(mi_post, sp_post.body.encode("ascii", 'replace'))
         try:
             mi_post.average_rating  = float(sp_post.average_rating)
             mi_post.rating_count    = int(sp_post.rating_count)

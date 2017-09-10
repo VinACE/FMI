@@ -46,8 +46,8 @@
 
 <script>
 
-    draw_storyboard({{ storyboard|safe }}, {{ dashboard|safe }});
-    fill_tiles({{ tiles_select|safe }}, {{ tiles|safe }} );
+    fill_tiles({{ tiles_select|safe }}, {{ tiles_d|safe }} );
+    draw_storyboard({{ storyboard|safe }}, "{{dashboard_name}}", {{ dashboard|safe }});
     facts_norms( {{ stats_df|safe}}  );
 
 //    google_chart('category_keyword_table_div',  {{ dashboard.category_keyword_table|safe }});

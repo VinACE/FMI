@@ -87,7 +87,7 @@ class crawl_form(forms.Form):
     cft_filename_field = forms.CharField(label='CFT file', max_length=80, required = False, initial = 'CFT Ing.csv')
     ci_filename_field = forms.CharField(label='CI file', max_length=80, required = False, initial = 'fresh and clean - test.csv')
     excel_choices = (('recreate', 'Re-Create'), ('reload', 'Re-Load'), ('incrload', 'Incremental-Load'))
-    excel_choices_field = forms.MultipleChoiceField(label='Load Mode', choices=excel_choices, required=True)
+    excel_choices_field = forms.MultipleChoiceField(label='Load Mode', choices=excel_choices, required=False)
     excel_filename_field = forms.CharField(label='Excel file (xlsx)', max_length=80, required = False, initial = 'patents.xlsm')
     #ci_filename_field = forms.CharField(label='CI file', max_length=40, required = False, initial = 'ChoiceModel FF USA.csv')
     def add_form_error(self, message):

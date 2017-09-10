@@ -27,11 +27,15 @@ function tab_active() {
 }
 
 
-function get_workbook() {
-    var input = document.getElementsByName("workbook")[0];
+function get_workbook_dashboard_names() {
+    var input = document.getElementsByName("workbook_name")[0];
     var query = window.location.search;
-    var workbook_name = getParameterByName("workbook");
+    var workbook_name = getParameterByName("workbook_name");
     input.value = workbook_name;
+    var input = document.getElementsByName("dashboard_name")[0];
+    var query = window.location.search;
+    var dashboard_name = getParameterByName("dashboard_name");
+    input.value = dashboard_name;
 }
 
 
@@ -163,6 +167,7 @@ function facts_norms(stats_df) {
 //});
 
 $("#_reset").click(function () {
+    var url = "?q=";
     var input = document.getElementsByName("tab")[0];
     var ul = document.getElementById("tabs");
     var items = ul.getElementsByTagName("li");
@@ -175,11 +180,19 @@ $("#_reset").click(function () {
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
             input.value = tab;
-            var workbook_name = getParameterByName("workbook");
-            document.getElementById("_reset").href = "?q=&tab=" + encodeURIComponent(tab)
-                + "&workbook=" + encodeURIComponent(workbook_name)
+            var url = url + "&tab=" + encodeURIComponent(tab)
         }
     }
+    var workbook_name = getParameterByName("workbook_name");
+    if (workbook_name != null) {
+        url = url + "&workbook_name=" + encodeURIComponent(workbook_name);
+    }
+    var input = document.getElementsByName("dashboard_name")[0];
+    var dashboard_name = input.value;
+    if (dashboard_name != null) {
+        url = url + "&dashboard_name=" + encodeURIComponent(dashboard_name);
+    }
+    document.getElementById("_reset").href = url;
 });
 
 
@@ -214,7 +227,7 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
             if (tab == "#storyboard_tab") {
-                draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "dashboard_div")
+                draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
             }
         }
     }
@@ -284,7 +297,7 @@ $(document).ready(function () {
 
 
 tab_active();
-get_workbook();
+get_workbook_dashboard_names();
 
 
 

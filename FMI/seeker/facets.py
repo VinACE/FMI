@@ -1,5 +1,6 @@
 ﻿from django.conf import settings
 from elasticsearch_dsl import Search, A, Q
+from collections import OrderedDict
 import functools
 import operator
 from .mapping import DEFAULT_ANALYZER
@@ -9,17 +10,23 @@ class Facet (object):
     label = None
     visible_pos = 1
     keywords_input = 'keywords_k'
+    search_fields = None
 
     template = getattr(settings, 'SEEKER_DEFAULT_FACET_TEMPLATE', 'app/seeker/facets/terms.html')
 
     def __init__(self, field, label=None, name=None, description=None, template=None, visible_pos = 1, **kwargs):
         self.field = field
         self.label = label or self.field.replace('_', ' ').replace('.raw', '').replace('.', ' ').capitalize()
-        self.name = (name or self.field).replace('.raw', '').replace('.', '_')
+        #self.name = (name or self.field).replace('.raw', '').replace('.', '_')
+        self.name = (name or self.field).replace('.raw', '')
         self.template = template or self.template
         self.description = description
         self.visible_pos = visible_pos
         self.kwargs = kwargs
+
+    # required by KeywordFacet for its filter search
+    def set_search_fields(self, search_fields):
+        self.search_fields = search_fields
 
     def aggr(self, **extra):
         params = {}
@@ -70,13 +77,21 @@ class Facet (object):
                 #print("Facet.data failed, no aggregations")
             return {}
 
-    def get_key(self, bucket):
-        return bucket.get('key')
+    #def get_key(self, bucket):
+    #    return bucket.get('key')
 
-    def buckets(self, response):
-        for b in self.data(response).get('buckets', []):
-            yield self.get_key(b), b.get('doc_count')
+    def get_metric(self, bucket):
+        return bucket['doc_count']
 
+    def buckets(self, aggregations):
+        #for b in self.data(response).get('buckets', []):
+        #    yield self.get_key(b), b.get('doc_count')
+        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['buckets']})
+        return buckets
+
+    def valbuckets(self, bucket):
+        valbuckets = OrderedDict({"Total" : bucket})
+        return valbuckets
 
 class TermsFacet (Facet):
 
@@ -93,20 +108,6 @@ class TermsFacet (Facet):
         params.update(self.kwargs)
         params.update(extra)
         return A('terms', **params)
-
-#"aggs": {
-#"blindcode": {
-#    "reverse_nested": {},
-#    "aggs": {
-#    "blindcode": {
-#        "terms": {
-#        "field": "blindcode.keyword"
-#        }
-#    }
-#    }
-#}
-#}
-
 
     # use apply for aggregation (facet, chart, tile)
     def apply(self, search, agg_name, aggs_stack, **extra):
@@ -169,6 +170,10 @@ class TermsFacet (Facet):
         elif len(values) == 1:
             return search.filter('term', **{self.field: values[0]})
         return search
+
+    def buckets(self, aggregations):
+        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['buckets']})
+        return buckets
 
 class NestedFacet (TermsFacet):
     template = 'app/seeker/facets/nestedterms.html'
@@ -234,6 +239,7 @@ class NestedFacet (TermsFacet):
             sub_agg_name = agg_name
         aggs_stack[agg_name].append('val')
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
 
@@ -264,6 +270,9 @@ class NestedFacet (TermsFacet):
 
     def sort(self):
         return self.sort_nested_filter
+
+    def get_metric(self, bucket):
+        return bucket['prc']
 
 
 class OptionFacet (TermsFacet):
@@ -322,6 +331,7 @@ class OptionFacet (TermsFacet):
         aggs_stack[agg_name].append('question')
         aggs_stack[agg_name].append('answer')
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
     def filter(self, search, values):
@@ -347,6 +357,14 @@ class OptionFacet (TermsFacet):
 
     def sort(self):
         return self.sort_nested_filter
+
+    def buckets(self, aggregations):
+        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['question']['buckets']})
+        return buckets
+
+    def valbuckets(self, bucket):
+        valbuckets = OrderedDict({subbucket['key'] : subbucket for subbucket in bucket['answer']['buckets']})
+        return valbuckets
 
 class KeywordFacet (TermsFacet):
     template = 'app/seeker/facets/keyword.html'
@@ -399,6 +417,9 @@ class KeywordFacet (TermsFacet):
 
     # use apply for aggregation (facet, chart, tile)
     def apply(self, search, agg_name, aggs_stack, **extra):
+        # in case no keywords specified, just return the original search
+        if len(self.keywords_k) == 0:
+            return search
         if agg_name in aggs_stack:
             aggs_tail = search.aggs[agg_name]
             for sub_agg_name in aggs_stack[agg_name][1:]:
@@ -409,7 +430,13 @@ class KeywordFacet (TermsFacet):
             aggs_tail = search
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
+        if extra == {}:
+            body_kf = {}
+            for kf in self.keywords_k:
+                body_kf[kf] = {'multi_match' : {'query': kf, 'analyzer': DEFAULT_ANALYZER, 'fields': self.search_fields}}
+            extra['filters']=body_kf
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
     def data(self, response):
@@ -425,6 +452,12 @@ class KeywordFacet (TermsFacet):
                 #print("KeywordFacet.data failed, no aggregations")
             return {'keyword': 'Enter your keywords'}
 
+    def buckets(self, aggregations):
+        buckets = OrderedDict()
+        for keyword, bucket in aggregations['buckets'].to_dict().items():
+            bucket['key'] = keyword
+            buckets[keyword] = bucket
+        return buckets
 
 class GlobalTermsFacet (TermsFacet):
 
@@ -432,6 +465,7 @@ class GlobalTermsFacet (TermsFacet):
         top = A('global')
         top[self.field] = self._get_aggregation(**extra)
         search.aggs[self.field] = top
+        d = search.to_dict()
         return search
 
     def data(self, response):
@@ -466,6 +500,7 @@ class YearHistogram (Facet):
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
     def filter(self, search, values):
@@ -484,6 +519,15 @@ class YearHistogram (Facet):
 
     def get_key(self, bucket):
         return bucket.get('key_as_string')
+
+    def buckets(self, aggregations):
+        buckets = OrderedDict()
+        # use string format as key and overwrite the key attribute as well
+        for bucket in aggregations['buckets']:
+            key = bucket['key_as_string']
+            bucket['key'] = key
+            buckets[key] = bucket
+        return buckets
 
 class MonthHistogram (Facet):
     template = 'app/seeker/facets/year_histogram.html'
@@ -512,6 +556,7 @@ class MonthHistogram (Facet):
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
     def filter(self, search, values):
@@ -530,6 +575,15 @@ class MonthHistogram (Facet):
 
     def get_key(self, bucket):
         return bucket.get('key_as_string')
+
+    def buckets(self, aggregations):
+        buckets = OrderedDict()
+        # use string format as key and overwrite the key attribute as well
+        for bucket in aggregations['buckets']:
+            key = bucket['key_as_string']
+            bucket['key'] = key
+            buckets[key] = bucket
+        return buckets
 
 class DayHistogram (Facet):
     template = 'app/seeker/facets/year_histogram.html'
@@ -558,6 +612,7 @@ class DayHistogram (Facet):
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
         aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        d = search.to_dict()
         return search
 
     def filter(self, search, values):
@@ -577,6 +632,16 @@ class DayHistogram (Facet):
     def get_key(self, bucket):
         return bucket.get('key_as_string')
 
+    def buckets(self, aggregations):
+        buckets = OrderedDict()
+        # use string format as key and overwrite the key attribute as well
+        for bucket in aggregations['buckets']:
+            key = bucket['key_as_string']
+            bucket['key'] = key
+            buckets[key] = bucket
+        return buckets
+
+
 class RangeFilter (Facet):
     template = 'app/seeker/facets/range.html'
 
@@ -593,6 +658,7 @@ class RangeFilter (Facet):
         params.update(self.kwargs)
         params.update(extra)
         search.aggs[self.name] = A('histogram', **params)
+        d = search.to_dict()
         return search
 
     def filter(self, search, values):

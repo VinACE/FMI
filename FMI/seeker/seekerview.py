@@ -610,17 +610,6 @@ class SeekerView (View):
             keywords_k = keywords_k.split(',')
         return keywords_k
 
-    def get_facets(self):
-        facet_l = []
-        for facet in self.facets:
-            facet.visible_pos = int(float(self.request.GET.get('a'+facet.field, "{0:d}".format(facet.visible_pos))))
-            facet_l.append(facet)
-        facet_l.sort(key=lambda f: f.visible_pos)
-        return facet_l
-
-    def get_facets_keyword(self):
-        return list(self.facets_keyword) if self.facets_keyword else []
-
     def get_display(self):
         """
         Returns a list of display field names. If the user has selected display fields, those are used, otherwise
@@ -642,6 +631,21 @@ class SeekerView (View):
             return saved_search_vals[0]
         return None
 
+    def get_facets(self):
+        facet_l = []
+        for facet in self.facets:
+            facet.visible_pos = int(float(self.request.GET.get('a'+facet.field, "{0:d}".format(facet.visible_pos))))
+            facet_l.append(facet)
+        facet_l.sort(key=lambda f: f.visible_pos)
+        return facet_l
+
+    def get_facets_keyword(self):
+        facet_l = []
+        for facet in self.facets_keyword:
+            facet.set_search_fields(self.get_search_fields())
+            facet_l.append(facet)
+        return facet_l
+
     def get_facet_data(self, initial=None, exclude=None):
         if initial is None:
             initial = {}
@@ -650,14 +654,6 @@ class SeekerView (View):
             if f.field != exclude:
                 facets[f] = self.request.GET.getlist(f.field) or initial.get(f.field, [])
         return facets
-
-    def get_storyboard(self):
-        storyboard_ix = self.request.GET.get('storyboard', '0')
-        storyboard_ix = int(float(storyboard_ix))
-        for ix in range(0, len(self.storyboard)):
-            self.storyboard[ix]['active'] = False
-        self.storyboard[storyboard_ix]['active'] = True
-        return storyboard_ix
 
     def get_facet_tile(self, initial=None, exclude=None):
         if initial is None:
@@ -689,6 +685,17 @@ class SeekerView (View):
                     f.keywords_k = f.keywords_text.split(',')
                 facets_keyword[f] = self.request.GET.getlist(f.field)
         return facets_keyword
+
+    def get_facet_by_field_name(self, field_name):
+        if field_name != 'answer':
+            for facet in self.facets:
+                if facet.field == field_name:
+                    return facet
+            for facet in self.facets_keyword:
+                if facet.field == field_name:
+                    return facet
+            print("get_facet_by_field_name: facet not found, field_name ", field_name)
+        return None
 
     def get_search_fields(self, mapping=None, prefix=''):
         if self.search:
@@ -816,49 +823,32 @@ class SeekerView (View):
         for chart_name, chart in dashboard.items():
             if chart['chart_data'] != "aggr":
                 continue
-            single = False
-            nested = False
             X_facet = chart['X_facet']
-            for facet in self.facets:
-                if facet.field == X_facet['field']:
-                    xfacet = facet
-                    break
-            if 'question' in X_facet:
-                nested= True
+            xfacet = self.get_facet_by_field_name(X_facet['field'])
             if 'Y_facet' not in chart:
-                single = True
+                yfacet = None
             else:
                 Y_facet = chart['Y_facet']
-                for facet in self.facets:
-                    if facet.field == Y_facet['field']:
-                        yfacet = facet
-                        break
-                if 'question' in Y_facet:
-                    nested= True
-            if single:
+                yfacet = self.get_facet_by_field_name(Y_facet['field'])
+            if yfacet == None:
                 xfacet.apply(s, chart_name, self.aggs_stack)
-            elif nested:
-                #xfacet.apply_tile_nested(s, chart_name, yfacet.nestedfield)
-                xfacet.apply(s, chart_name, self.aggs_stack)
-                yfacet.apply(s, chart_name, self.aggs_stack)
             else:
-                #extra = {facet.name : yfacet.aggr()}
-                #xfacet.apply_tile(s, chart_name, xfacet.field, None, aggs=extra)
                 xfacet.apply(s, chart_name, self.aggs_stack)
                 yfacet.apply(s, chart_name, self.aggs_stack)
         return s
 
-    def get_tile_aggr(self, s, facet_tile, keywords_q=None, facets=None, facets_keyword=None, dashboard=None, aggregate=False):
+    def get_tile_search(self, s, facet_tile, keywords_q=None, facets=None, facets_keyword=None, dashboard=None):
         #s = s.params(search_type="count")
         #The next charts can occur:
         # - 1) facet*facet, 2) facet*facet_keyword, 3) facet
         # - 4) facet_keyword*facet_keyword (NOT SUPPORTED), 5) facet_keyword*facet, 6) facet_keyword
+        # All deep level aggregation replaced by chart_data == aggr. Only 3 and 6 remain for facet and facet_keyword
         if keywords_q:
             s = self.get_search_query_type(s, keywords_q)
         if facets:
             for facet, values in facets.items():
                 s = facet.filter(s, values)
-                if aggregate or seeker.dashboard.facet_aggregate(facet, dashboard):
+                if seeker.dashboard.facet_aggregate(facet, dashboard):
                     subaggr = False
                     body_kf = {}
                     if facets_keyword:
@@ -925,7 +915,6 @@ class SeekerView (View):
                                 facet_tile.apply(s, agg_name, self.aggs_stack)
                                 facet.apply(s, agg_name, self.aggs_stack)
 
-
         if facets_keyword:
             for facet_keyword, values_keywords_k in facets_keyword.items():
                 for value_keywords_k in values_keywords_k:
@@ -970,11 +959,37 @@ class SeekerView (View):
 
         return s
 
-    def get_workbook(self):
+    def get_tile_aggr(self, s, facet_tile, dashboard=None):
+        for chart_name, chart in dashboard.items():
+            if chart['chart_data'] != "aggr":
+                continue
+            X_facet = chart['X_facet']
+            xfacet = self.get_facet_by_field_name(X_facet['field'])
+            if 'Y_facet' not in chart:
+                yfacet = None
+            else:
+                Y_facet = chart['Y_facet']
+                yfacet = self.get_facet_by_field_name(Y_facet['field'])
+            agg_name = facet_tile.name+'_'+chart_name
+            if yfacet == None:
+                facet_tile.apply(s, agg_name, self.aggs_stack)
+                xfacet.apply(s, agg_name, self.aggs_stack)
+            else:
+                facet_tile.apply(s, agg_name, self.aggs_stack)
+                xfacet.apply(s, agg_name, self.aggs_stack)
+                yfacet.apply(s, agg_name, self.aggs_stack)
+        return s
+
+    # the storyboard (self.storyboard) and charts (self.dashboard) of the specified workbook_name are set
+    # in case also a dashboard_name is specified and that workbook runs in pull mode, only the charts and base-charts
+    # of that dashboard are set (self.dashboard).
+    # The workbook and dashboard objects of the specified workbook_name and dashboard_name are returned.
+    def get_workbook_dashboard_names(self):
         workbook = {}
-        workbook_name = self.request.GET.get('workbook', '').strip()
+        workbook_name = self.request.GET.get('workbook_name', '').strip()
         if workbook_name == '':
             workbook_name = 'initial'
+        dashboard_data = 'push'
         if hasattr(self, 'workbooks'):
             if workbook_name in self.workbooks:
                 workbook = self.workbooks[workbook_name]
@@ -990,7 +1005,34 @@ class SeekerView (View):
                     self.dashboard = workbook['charts']
                 if 'storyboard' in workbook:
                     self.storyboard = workbook['storyboard']
-        return workbook
+                if 'dashboard_data' in workbook:
+                    dashboard_data = workbook['dashboard_data']
+        dashboard = None
+        dashboard_name = self.request.GET.get('dashboard_name', '').strip()
+        for db in self.storyboard:
+            if dashboard_name != '':
+                if db['name'] == dashboard_name:
+                    dashboard = db
+                    break
+            else:
+                if db['active'] == True:
+                    dashboard = db
+                    break;
+        if workbook_name != '' and dashboard_name != '' and dashboard_data == 'pull':
+            self.dashboard = {};
+            for layout_name, layout in dashboard['layout'].items():
+                for row in layout:
+                    for chart_name in row:
+                        chart = workbook['charts'][chart_name]
+                        self.dashboard[chart_name] = chart
+                        if 'base' in chart:
+                            if type(chart['base']) == list:
+                                for base_chart_name in chart['base']:
+                                    self.dashboard[base_chart_name] = workbook['charts'][base_chart_name]
+                            else:
+                                base_chart_name = chart['base']
+                                self.dashboard[base_chart_name] = workbook['charts'][base_chart_name]
+        return workbook, dashboard
 
     def set_workbook_filters(self, facets, workbook):
         if 'filters'in workbook:
@@ -1027,7 +1069,7 @@ class SeekerView (View):
         #else:
         #    saved_searches = []
 
-        workbook = self.get_workbook()
+        workbook, dashboard = self.get_workbook_dashboard_names()
         keywords_q = self.get_keywords_q()
         facets = self.get_facet_data(initial=self.initial_facets if not self.request.is_ajax() else None)
         facets_keyword = self.get_facets_keyword_data()
@@ -1036,18 +1078,6 @@ class SeekerView (View):
         search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
         search = self.get_aggr(search, self.dashboard)
         columns = self.get_columns()
-
-        #s = models.BookDoc.search()
-        #s = s.query("match_all")
-        #books = s.execute()
-        #for book in books:
-        #    print(book.meta.score, book.authors)
-
-        #s = search
-        #s = s.query("match_all")
-        #books = s.execute()
-        #for book in books:
-        #    print(book.meta.score, book.authors)
 
         # Make sure we sanitize the sort fields.
         sort_fields = []
@@ -1087,36 +1117,39 @@ class SeekerView (View):
         # convert dashboard definition into Chart objects
         charts = {}
         for chart_name, chart in self.dashboard.items():
-            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.decoder)
+            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.get_facet_by_field_name, self.decoder)
 
-        storyboard_ix = self.get_storyboard()
-        facets_tile = self.get_facet_tile(initial=self.initial_facets if not self.request.is_ajax() else None)
         results_tile = None
         tile_df = None
         tile_df = pd.DataFrame()
+        tiles_d = {}
         tiles_select = {}
         stats_df = {}
         corr_df = {}
+
+        tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, None, charts, results.aggregations)
+        seeker.models.stats_df = pd.DataFrame()
+        seeker.models.corr_df = pd.DataFrame()
+
+        facets_tile = self.get_facet_tile(initial=self.initial_facets if not self.request.is_ajax() else None)
+
         if len(facets_tile) > 0:
             search_tile = self.get_empty_search()
             for facet_tile in facets_tile:
-                search_tile = self.get_tile_aggr(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
+                search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
+                search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results_tile)
+            tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, facets_tile, charts, results_tile.aggregations)
             seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df, self.dashboard)
-        else:
-            tile_df, tiles_select = seeker.dashboard.tile(self, facets_tile, charts, results)
-            seeker.models.stats_df = pd.DataFrame()
-            seeker.models.corr_df = pd.DataFrame()
 
         for chart_name, chart in charts.items():
             chart_data = chart.db_chart['chart_data']
             if chart_data == 'facet':
                 chart.bind_facet(results.aggregations)
             if chart_data == 'aggr':
-                chart.bind_aggr(results.aggregations)
+                chart.bind_aggr(chart_name, results.aggregations)
             elif chart_data == 'tiles':
-                chart.bind_aggr(results_tile.aggregations)
+                chart.bind_aggr(chart_name, results_tile.aggregations)
             elif chart_data == 'hits':
                 chart.bind_hits(results.hits, facets_keyword)
             elif chart_data == 'topline':
@@ -1152,10 +1185,11 @@ class SeekerView (View):
             'form_action': self.request.path,
             'results': results,
             'tiles_select': json.dumps(tiles_select),
-            'tiles': tile_df.to_json(orient='records'),
+            'tiles_d': json.dumps(tiles_d),
             'stats_df' : seeker.models.stats_df.to_json(orient='records'),
             'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             'storyboard' : json.dumps(self.storyboard),
+            'dashboard_name' : dashboard['name'],
             'dashboard': json.dumps(self.dashboard),
             'tabs' : self.tabs,
             'page': page,
@@ -1184,13 +1218,13 @@ class SeekerView (View):
                 'querystring': context_querystring,
                 'page': page,
                 'sort': sort,
-                'saved_search_pk': saved_search.pk if saved_search else '',
-                #'table_html': loader.render_to_string(self.results_template, context, context_instance=RequestContext(self.request)),
                 'facet_data': {facet.field: facet.data(results) for facet in self.get_facets()},
                 # 'aggs': json.dumps(aggr),
+                'storyboard' : json.dumps(self.storyboard),
+                'dashboard_name' : dashboard['name'],
                 'dashboard': json.dumps(self.dashboard),
                 'tiles_select': json.dumps(tiles_select),
-                'tiles': tile_df.to_json(orient='records'),
+                'tiles_d': json.dumps(tiles_d),
                 'stats_df' : seeker.models.stats_df.to_json(orient='records'),
                 'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             })

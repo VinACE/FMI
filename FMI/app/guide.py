@@ -12,10 +12,13 @@ import elasticsearch_dsl as dsl
 
 import app.models as models
 import app.survey as survey
+import app.workbooks as workbooks
 
 
 # A site consists of tree of menu items pointing to a site item.
 # A site item can be a data selecter: 
+
+storyboard_link = workbooks.SurveyWorkbook.storyboard_link
 
 site_views = {
     'portfolio-olfactive-map' : {
@@ -44,39 +47,27 @@ site_views = {
     'hedonics_overall' : {
         'type'  : 'charts',
         'descr' : "Hedonics Overall",
-        'url'   : '/search_survey?workbook=link',
+        'url'   : '/search_survey?workbook_name=link',
         'tiles' : [],
-        'storyboard': [{'name'  : 'Topline',
-                       'layout' : {'rows' : [['topline_liking_table']]},
-                       'active' : True,
-                       }]},
+        'dashboard_name' : 'Topline'},
     'hedonics_per_format' : {
         'type'  : 'charts',
         'descr' : "Hedonics Per Format",
-        'url'   : '/search_survey?workbook=link',
+        'url'   : '/search_survey?workbook_name=link',
         'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
-        'storyboard': [{'name'  : 'Hedonics',
-                        'layout': {'rows' : [['liking_blindcode_col'], ['topline_liking_table']]},
-                       'active' : True,
-                       }]},
+        'dashboard_name' : 'Hedonics'},
     'driver_of_liking' : {
         'type'  : 'charts',
         'descr' : "Driver of Liking",
-        'url'   : '/search_survey?workbook=link',
+        'url'   : '/search_survey?workbook_name=link',
         'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
-        'storyboard': [{'name'  : 'Driver Liking',
-                        'layout': {'rows' : [['liking_ans_col'], ['emotion_ans_col'], ['liking_emotion_corr_table']]},
-                       'active' : True,
-                       }]},
+        'dashboard_name' : 'Driver Liking'},
     'intensity' : {
         'type'  : 'charts',
         'descr' : "Intensiy",
-        'url'   : '/search_survey?workbook=link',
+        'url'   : '/search_survey?workbook_name=link',
         'tiles' : [],
-        'storyboard': [{'name'  : 'Topline',
-                        'layout': {'rows' : [['freshness_blindcode_col'], ['topline_freshness_table']]},
-                       'active' : True,
-                       }]},
+        'dashboard_name' : 'Intensity'},
     'fresh' : {
         'type'  : 'drivers',
         'descr' : "Fresh",
@@ -342,14 +333,14 @@ steps = {
         },
     'fresh_and_clean_profile_dest'   : {
         'type'      : 'destination',
-        'url'       : '/search_survey?workbook=fresh+and+clean&survey.keyword=fresh+and+clean',
+        'url'       : '/search_survey?workbook_name=fresh+and+clean&survey.keyword=fresh+and+clean',
         'seeker'    : 'SurveySeekerView',
         'tab'       : 'storyboard',
         'dashboard' : 'profile',
         },
     'orange_bevarages_profile_dest'   : {
         'type'      : 'destination',
-        'url'       : '/search_survey?workbook=orange+beverages&survey.keyword=orange+beverages',
+        'url'       : '/search_survey?workbook_name=orange+beverages&survey.keyword=orange+beverages',
         'seeker'    : 'SurveySeekerView',
         'tab'       : 'storyboard',
         'dashboard' : 'profile',
@@ -456,7 +447,7 @@ def route_step(request, route_name, step_name):
                         if chart_data == 'facet':
                             route_charts[chart_name].bind_facet(results.aggregations)
                         if chart_data == 'aggr':
-                            route_charts[chart_name].bind_aggr(results.aggregations)
+                            route_charts[chart_name].bind_aggr(chart_name, results.aggregations)
                         if chart['chart_type'] == 'GeoChart':
                             for row in chart['data']:
                                 row[0] = country_map_geochart(row[0])

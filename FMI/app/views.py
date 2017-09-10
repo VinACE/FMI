@@ -271,9 +271,9 @@ def consumer_insight_view(request):
             #seekerview.request = request
             #return seekerview.render()
             #url = reverse('search_survey', args=(), kwargs={'survey.keyword': '2015'})
-            if 'workbook' in request.POST:
+            if 'workbook_name' in request.POST:
                 kwargs={
-                    'workbook'      : request.POST['workbook'],
+                    'workbook_name' : request.POST['workbook_name'],
                     #'survey.keyword': request.POST['survey.keyword'],
                     }
             else:

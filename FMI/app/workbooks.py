@@ -26,11 +26,12 @@ from django.utils.encoding import python_2_unicode_compatible
 # in the template this is translated into HTML tables, rows, cells and div elements  
 
 class ExcelEcoSystemWorkbook:
+
     dashboard = {
         'company_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Company / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "company.keyword",
                 'label'   : "Company" },
@@ -82,11 +83,12 @@ class ExcelEcoSystemWorkbook:
         }
 
 class ExcelPatentsWorkbook:
+
     dashboard = {
         'assignee_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Assignee / Keyword Hits",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "assignee.keyword",
                 'label'   : "Assignee" },
@@ -105,12 +107,11 @@ class ExcelPatentsWorkbook:
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Month Hits",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
-                'key'     : 'key_as_string',
                 'total'   : False,
                 'type'    : 'date'},
             'Y_facet'     : {
@@ -148,13 +149,11 @@ class ExcelPatentsWorkbook:
         }
 
 class PostWorkbook:
-    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
-    # in the template this is translated into HTML tables, rows, cells and div elements
     dashboard = {
         'category_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "post_category_id.keyword",
@@ -166,7 +165,7 @@ class PostWorkbook:
         "subject_keyword_table" : {
             'chart_type': "Table",
             'chart_title' : "Subject / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "subject.keyword",
@@ -203,14 +202,12 @@ class PostWorkbook:
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Month Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
-                'key'     : 'key_as_string',
-                'total'   : False,
-                'type'    : 'date'},
+                'total'   : False},
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -245,13 +242,13 @@ class ScentemotionWorkbook:
         'region_olfactive_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Region / Olfactive Ingr Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "region.keyword",
-                'label'   : "Region" },
+                'label'   : "Region"},
             'Y_facet'     : {
                 'field'   : "olfactive.keyword",
-                'label'   : "Olfactive" },
+                'label'   : "Olfactive"},
             },
         "olfactive_pie" : {
             'chart_type': "PieChart",
@@ -465,8 +462,6 @@ class ScentemotionWorkbook:
 
 class StudiesWorkbook:
 
-    # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
-    # in the template this is translated into HTML tables, rows, cells and div elements
     dashboard = {
         #'region_olfactive_table' : {
         #    'chart_type'  : "Table",
@@ -703,7 +698,7 @@ class SurveyWorkbook:
         "liking_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Liking/Hedonics Candidate Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
@@ -751,7 +746,7 @@ class SurveyWorkbook:
         "freshness_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Freshness Candidate Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "freshness",
                 'label'   : "Freshness" },
@@ -786,7 +781,7 @@ class SurveyWorkbook:
         "cleanliness_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Cleanliness Candidate Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "cleanliness",
                 'label'   : "Cleanliness" },
@@ -797,28 +792,24 @@ class SurveyWorkbook:
         "suitable_stage_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Suitable Stage Resp Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_stage",
+                "categories" : [],
+                "values"  : [],
                 'total'   : False,
                 'label'   : "Suitable Stage" },
-            'Y_facet'     : {
-                'field'   : "answer",
-                "axis"    : 0,
-                'label'   : "Answer" },
             },
         "suitable_product_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Suitable Product Resp Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_product",
+                "categories" : [],
+                "values"  : [],
                 'total'   : False,
                 'label'   : "Suitable Product" },
-            'Y_facet'     : {
-                'field'   : "answer",
-                "axis"    : 0,
-                'label'   : "Answer" },
             },
         "liking_ans_col" : {
             'chart_type': "ColumnChart",
@@ -829,21 +820,20 @@ class SurveyWorkbook:
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
+                'sort'    : ('label', 'ascending'),
                 },
             },
         "emotion_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Emotion Resp Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
                 'field'   : "emotion",
+                "categories" : [],
+                "values"  : ["Yes", "No"],
                 'total'   : False,
                 'label'   : "Emotion" },
-            'Y_facet'     : {
-                'field'   : "answer",
-                "axis"    : 0,
-                'label'   : "Answer" },
             },
 
         "liking_emotion_corr_table" : {
@@ -852,10 +842,13 @@ class SurveyWorkbook:
             'chart_data'  : "correlation",
             'base'        : ["liking_ans_col", "emotion_ans_col"],
             'controls'    : ['CategoryFilter'],
+            'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal'},
+                             'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean'}},
             'listener'    : {'select' : {'rowsort': None}},
             'X_facet'     : {
-                'field'   : ['question', 'answer', 'value', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
-                'label'   : ['question', 'answer', 'value', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
+                'field'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
+                'label'   : {'category' : 'Question', 'answer':'Answer', 'count':'Tiles', 'mean':'Mean',
+                             'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%'},
                 },
             'Y_facet'     : {
                 'field'   : "quastion/answer",
@@ -894,7 +887,6 @@ class SurveyWorkbook:
                 'question': "Concept",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Concept"
                 },
@@ -919,7 +911,6 @@ class SurveyWorkbook:
                 'question': "Emotion",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Emotion"
                 },
@@ -944,7 +935,6 @@ class SurveyWorkbook:
                 'question': "Mood",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Mood"
                 },
@@ -1031,19 +1021,19 @@ class SurveyWorkbook:
     storyboard_link = [
         {'name'     : 'Topline',
          'layout'   : {'rows' : [['liking_blindcode_col'], ['topline_liking_table']]},
-         'active'   : True,
+         'active'   : False,
         },
         {'name'     : 'Hedonics',
          'layout'   : {'rows' : [['liking_blindcode_col']]},
-         'active'   : True,
+         'active'   : False,
         },
-        {'name'     : 'Topline',
+        {'name'     : 'Intensity',
          'layout'   : {'rows' : [['freshness_blindcode_col'], ['topline_freshness_table']]},
-         'active'   : True,
+         'active'   : False,
         },
         {'name'     : 'Driver Liking',
          'layout'   : {'rows' : [['liking_ans_col'], ['emotion_ans_col'], ['liking_emotion_corr_table']]},
-         'active'   : True,
+         'active'   : False,
         }
         ]
 
@@ -1051,7 +1041,7 @@ class SurveyWorkbook:
         "liking_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Liking/Hedonics Candidate Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
@@ -1069,7 +1059,6 @@ class SurveyWorkbook:
                 'question': "Strength",
                 "answers" : ["strength"],
                 "values"  : [],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Strength"
                 },
@@ -1129,7 +1118,6 @@ class SurveyWorkbook:
                 'question': "Affective",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Affective"
                 },
@@ -1154,7 +1142,6 @@ class SurveyWorkbook:
                 'question': "Behavioral",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Behavioral"
                 },
@@ -1179,7 +1166,6 @@ class SurveyWorkbook:
                 'question': "Ballot",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Ballot"
                 },
@@ -1204,7 +1190,6 @@ class SurveyWorkbook:
                 'question': "Descriptors",
                 "answers" : [],
                 "values"  : ["Yes"],
-                "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Descriptors"
                 },
@@ -1242,6 +1227,7 @@ class SurveyWorkbook:
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
             'charts'        : dashboard_fresh,
             'storyboard'    : storyboard_fresh,
+            'dashboard_data': 'push',
             'filters'       : {'survey.keyword' : ["fresh and clean"]}
             },
         "link" : {
@@ -1250,6 +1236,7 @@ class SurveyWorkbook:
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
             'charts'        : dashboard_link,
             'storyboard'    : storyboard_link,
+            'dashboard_data': 'pull',
             'filters'       : {'survey.keyword' : ["fresh and clean"]}
             },
         "orange beverages" : {
@@ -1258,6 +1245,7 @@ class SurveyWorkbook:
                                "hedonics", "affective", "ballot", "behavioral", "physical"],
             'charts'        : dashboard_orange,
             'storyboard'    : storyboard_orange,
+            'dashboard_data': 'push',
             'filters'       : {'survey.keyword' : ["orange beverages"]}
             },
     }

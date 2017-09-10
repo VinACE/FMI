@@ -6,7 +6,7 @@
 
 
 function fill_workbook(workbook_name) {
-    var input = document.getElementById("workbook");
+    var input = document.getElementById("workbook_name");
     input.value = workbook_name
 }
 

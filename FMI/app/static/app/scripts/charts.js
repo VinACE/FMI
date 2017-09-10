@@ -316,7 +316,7 @@ function selectEventChart(chart_name, rowIndex, columnIndex, argument) {
 }
 
 
-function google_chart(chart_name, json_data) {
+function google_chart(chart_name, json_data, facet_value) {
     google.charts.load('current', {'packages':['corechart', 'controls']});
     var dbdiv = chart_name + '_dbdiv'
     var chdiv = chart_name + '_chdiv'
@@ -328,16 +328,26 @@ function google_chart(chart_name, json_data) {
         var X_facet = json_data['X_facet']
         if ("type" in X_facet) {
             if (X_facet['type'] == 'date') {
-                for (var rix = 1; rix < json_data['data'].length; rix++) {
-                    var s = json_data['data'][rix][0];
+                if (facet_value in g_tiles_d[chart_name]) {
+                    var chart_data = g_tiles_d[chart_name][facet_value];
+                } else {
+                    var chart_data = json_data['data'];
+                }
+                for (var rix = 1; rix < chart_data.length; rix++) {
+                    var s = chart_data[rix][0];
                     if (typeof s === 'string') {
                         var d = new Date(s);
-                        json_data['data'][rix][0] = d
-                    }
+                        chart_data[rix][0] = d
+                        }
                 }
             }
         }
-        var data = google.visualization.arrayToDataTable(json_data['data']);
+        if (facet_value in g_tiles_d[chart_name]) {
+            var chart_data = g_tiles_d[chart_name][facet_value];
+            var data = google.visualization.arrayToDataTable(chart_data);
+        } else {
+            var data = google.visualization.arrayToDataTable(json_data['data']);
+        }
         var view = new google.visualization.DataView(data);
         var chart_type = json_data['chart_type'];
         var chart_title = json_data['chart_title'];

@@ -101,8 +101,10 @@ def facts_survey(survey_field, facts_choices, norms_choices):
 
     search_tile = models.SurveySeekerView.get_empty_search(models.SurveySeekerView)
     #search_tile = facet_survey.filter(search_tile, survey_field)
+    search_tile = models.SurveySeekerView.get_tile_search(models.SurveySeekerView, search_tile, facet_tile,
+                                                        facets=facets, dashboard=facts_dashboard)
     search_tile = models.SurveySeekerView.get_tile_aggr(models.SurveySeekerView, search_tile, facet_tile,
-                                                        facets=facets, dashboard=facts_dashboard, aggregate=True)
+                                                        dashboard=facts_dashboard)
     #search_tite = search_tile.from_dict(body)
     body = search_tile.to_dict()
     results_tile = search_tile.execute(ignore_cache=True)
