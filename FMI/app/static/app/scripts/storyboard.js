@@ -75,7 +75,7 @@ function tile_select_onchange() {
                 //    data[datarownr][0] = "";
                 //}
 
-                if (facet in g_tiles_d[chart_name]) {
+                if (g_tiles_d[chart_name][facet].length > 0) {
                     var chart_data = g_tiles_d[chart_name][facet];
                 } else {
                     var chart_data = new Array();
@@ -162,6 +162,7 @@ function draw_dashboard(dashboard, charts, facet_value, container_elm) {
 
                 var div_card_header = document.createElement("div");
                 div_card_header.setAttribute("class", "iff-card-header");
+                div_card_header.setAttribute("id", chart_name + "_title");
                 div_card.appendChild(div_card_header);
                 var title_txt = document.createElement("b");
                 title_txt.innerHTML = chart['chart_title'];

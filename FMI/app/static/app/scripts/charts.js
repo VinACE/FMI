@@ -328,7 +328,7 @@ function google_chart(chart_name, json_data, facet_value) {
         var X_facet = json_data['X_facet']
         if ("type" in X_facet) {
             if (X_facet['type'] == 'date') {
-                if (facet_value in g_tiles_d[chart_name]) {
+                if (g_tiles_d[chart_name][facet_value].length > 0) {
                     var chart_data = g_tiles_d[chart_name][facet_value];
                 } else {
                     var chart_data = json_data['data'];

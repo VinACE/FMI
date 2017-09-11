@@ -207,7 +207,8 @@ class PostWorkbook:
             'X_facet'     : {
                 'field'   : "published_date",
                 'label'   : "Published",
-                'total'   : False},
+                'total'   : False,
+                'type'    : 'date'},
             'Y_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -710,8 +711,8 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "topline_base",
-            'base'        : "liking_blindcode_col",
+            'chart_data'  : "aggr",
+            'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
@@ -757,8 +758,8 @@ class SurveyWorkbook:
         "topline_freshness_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "topline_base",
-            'base'        : "freshness_blindcode_col",
+            'chart_data'  : "aggr",
+            'aggr_name'   : "freshness_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'listener'    : {'select' : {'rowsort': None}},
             'X_facet'     : {
@@ -945,9 +946,10 @@ class SurveyWorkbook:
             },
         "topline_liking_combo" : {
             'chart_type'  : "ComboChart",
+            #'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "topline_base",
-            'base'        : "liking_blindcode_col",
+            'chart_data'  : "aggr",
+            'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
@@ -1069,8 +1071,8 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "topline_base",
-            'base'        : "liking_blindcode_col",
+            'chart_data'  : "aggr",
+            'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_affective_radar", "cand_behavioral_radar", "cand_ballot_radar", "cand_descriptors_radar"], 'select' : {'rowsort': None}},

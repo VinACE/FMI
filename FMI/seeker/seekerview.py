@@ -1127,39 +1127,37 @@ class SeekerView (View):
         stats_df = {}
         corr_df = {}
 
-        tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, None, charts, results.aggregations)
+        tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, None, charts, results, facets_keyword)
         seeker.models.stats_df = pd.DataFrame()
         seeker.models.corr_df = pd.DataFrame()
 
         facets_tile = self.get_facet_tile(initial=self.initial_facets if not self.request.is_ajax() else None)
-
         if len(facets_tile) > 0:
             search_tile = self.get_empty_search()
             for facet_tile in facets_tile:
                 search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, facets_tile, charts, results_tile.aggregations)
+            tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, facets_tile, charts, results_tile, facets_keyword)
             seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df, self.dashboard)
 
+        #for chart_name, chart in charts.items():
+        #    chart_data = chart.db_chart['chart_data']
+        #    if chart_data == 'facet':
+        #        chart.bind_facet(results.aggregations)
+        #    if chart_data == 'aggr':
+        #        chart.bind_aggr(chart_name, results.aggregations)
+        #    elif chart_data == 'tiles':
+        #        chart.bind_aggr(chart_name, results_tile.aggregations)
+        #    elif chart_data == 'hits':
+        #        chart.bind_hits(results.hits, facets_keyword)
+        #    elif chart_data == 'topline':
+        #        chart.bind_topline(results.hits, facets_keyword)
         for chart_name, chart in charts.items():
             chart_data = chart.db_chart['chart_data']
-            if chart_data == 'facet':
-                chart.bind_facet(results.aggregations)
-            if chart_data == 'aggr':
-                chart.bind_aggr(chart_name, results.aggregations)
-            elif chart_data == 'tiles':
-                chart.bind_aggr(chart_name, results_tile.aggregations)
-            elif chart_data == 'hits':
-                chart.bind_hits(results.hits, facets_keyword)
-            elif chart_data == 'topline':
-                chart.bind_topline(results.hits, facets_keyword)
-        for chart_name, chart in charts.items():
-            chart_data = chart.db_chart['chart_data']
-            if chart_data == 'topline_base':
-                chart.bind_topline_base(results.hits, facets_keyword, base_chart=self.dashboard[chart.db_chart['base']])
             if chart_data == 'correlation':
                 chart.bind_correlation(seeker.models.stats_df, seeker.models.corr_df)
+                tiles_d[chart_name]['All'] = chart.db_chart['data']
 
 
 #       tablechart = seeker.dashboard.Chart("category_keyword_table", dashboard)

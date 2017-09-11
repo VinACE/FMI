@@ -178,7 +178,9 @@ def bind_tile_chart(tile_df, facet_tile_value, chart):
                 rownr = rownr + 1
     pass
 
-def bind_tile(seekerview, facets_tile, charts, aggregations):
+def bind_tile(seekerview, facets_tile, charts, results, facets_keyword):
+    hits = results.hits
+    aggregations = results.aggregations
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
     tiles_d = {}
     tiles_select = {};
@@ -187,24 +189,26 @@ def bind_tile(seekerview, facets_tile, charts, aggregations):
         tiles_d[chart_name] = {}
         chart_data = chart.db_chart['chart_data']
         X_facet = chart.db_chart['X_facet']
-        X_field = X_facet['field']
-        if chart_data == 'topline':
-            continue
-        if chart_data == 'topline_base':
-            continue
-        if chart_data == 'hits':
-            continue
-        if chart_data == 'correlation':
-            continue
 
         if facets_tile == None:
             tiles_select = {}
             if chart_data == 'facet':
                 chart.bind_facet(aggregations)
+            elif chart_data == 'aggr':
+                if 'aggr_name' in chart.db_chart:
+                    aggr_name = chart.db_chart['aggr_name']
+                    chart.bind_topline_aggr(aggregations, facets_keyword, aggr_name)
+                else:
+                    aggr_name = chart_name
+                    chart.bind_aggr(chart_name, aggregations)
+            elif chart_data == 'hits':
+                chart.bind_hits(hits, facets_keyword)
+            elif chart_data == 'topline':
+                chart.bind_topline(hits, facets_keyword)
             else:
-                chart.bind_aggr(chart_name, aggregations)
+                chart.db_chart['data'] = []
             tiles_d[chart_name]['All'] = chart.db_chart['data']
-            bind_tile_chart(tile_df, 'All', chart)
+            #bind_tile_chart(tile_df, 'All', chart)
         else:
             for facet_tile in facets_tile:
                 tiles_select[facet_tile.label] = []
@@ -217,10 +221,12 @@ def bind_tile(seekerview, facets_tile, charts, aggregations):
                             tiles_select[facet_tile.label].append(facet_tile_value)
                         if chart_data == 'facet':
                             chart.bind_facet(tile)
+                        elif chart_data == 'aggr':
+                            chart.bind_aggr(X_facet['field'], tile)
                         else:
-                            chart.bind_aggr(X_field, tile)
+                            chart.db_chart['data'] = []
                         tiles_d[chart_name][facet_tile_value] = chart.db_chart['data']
-                        bind_tile_chart(tile_df, facet_tile_value, chart)
+                        #bind_tile_chart(tile_df, facet_tile_value, chart)
 
     return tile_df, tiles_d, tiles_select
 
@@ -535,9 +541,10 @@ class Chart(object):
             rownr = 0
             for X_key, bucket in buckets.items():
                 X_metric = xfacet.get_metric(bucket)
+                #dt.loc[rownr] = [X_key, X_metric].extend([(0 for ix in range(2, len(dt.columns)))])
                 dt.loc[rownr, X_label] = X_key
-                dt_index.append(X_key)
                 dt.loc[rownr, "Total"] = X_metric
+                dt_index.append(X_key)
                 # skip unrequested categories
                 if 'categories' in X_facet:
                     if len(X_facet['categories']) > 0 and X_key not in X_facet['categories']:
@@ -591,14 +598,17 @@ class Chart(object):
                                 #Y_metric = yes_count
                             if Y_key not in dt_columns:
                                 inserted = False
+                                zero = pd.Series(0.0, index=dt.index)
                                 for i in range(y_start, len(dt_columns)):
                                     if Y_key < dt_columns[i]:
                                         dt_columns.insert(i, Y_key)
-                                        dt.insert(i, Y_key, pd.Series(0, index=dt_index))
+                                        dt.insert(i, Y_key, zero)
                                         inserted = True
                                         break
                                 if not inserted:
                                     dt_columns.append(Y_key)
+                                    dt[Y_key] = zero
+                            #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
                             dt.loc[rownr, Y_key] = Y_metric
                 rownr = rownr + 1
 
@@ -621,6 +631,159 @@ class Chart(object):
             self.db_chart['data'].append(dt_columns)
             for ix, row in dt.iterrows():
                 self.db_chart['data'].append(row.tolist())
+
+    def bind_topline_aggr(self, aggregations, facets_keyword=None, aggr_name=None):
+        self.db_chart['data'] = None
+        self.db_chart['data'] = []
+        X_facet = self.db_chart['X_facet']
+        X_field = X_facet['field']
+        X_label = X_facet['label']
+        hed_lines = X_facet['lines'][X_field]
+        Y_facet = self.db_chart['Y_facet']
+        Y_field = Y_facet['field']
+        Y_label = Y_facet['label']
+        self.bind_aggr(aggr_name, aggregations)
+        data = self.db_chart['data']
+        if len(data) == 0:
+            return
+        # X-facet in rows, Y-facet in columns
+        self.db_chart['data'] = []
+
+        benchmark = []
+        if facets_keyword:
+            for facet_keyword in facets_keyword:
+                if facet_keyword.keywords_k != '' and facet_keyword.keywords_k != []:
+                    benchmark.append(facet_keyword.keywords_k)
+
+        dt_index = []
+        dt_columns = [X_label]
+        for col in data[0][1:]:
+            if col == 'Total':
+                continue
+            IPC = col.strip()
+            # benchmark will be the first column(s)
+            if IPC in benchmark:
+                dt_columns.insert(1, IPC)
+            else:
+                dt_columns.append(IPC)
+        if len(benchmark) == 0:
+            dt_columns.insert(1, 'Average')
+        dt_index = list(hed_lines.keys())
+        dt_index.sort()
+        dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
+        dt[X_label] = dt_index
+
+
+        # scan through the rows to populate df
+        Y_total = 0
+        hit_count = 0
+        Y_benchmark = 0
+        benchmark_count = 0
+        cand_topline = {}
+
+        for ix in range(1, len(data[0])):
+            IPC = data[0][ix].strip()
+            if IPC == 'Total':
+                continue
+            sum_scores = 0
+            nr_resp = 0
+            for row in data[1:]:
+                answer = row[0]
+                try:
+                    answer_code = int(float(answer.split(' ')[0]))
+                except:
+                    if isinstance(answer, numbers.Real):
+                        answer_code = int(answer)
+                    else:
+                        answer_code = 0
+                for hed_line, answers in hed_lines.items():
+                    if answer_code in answers:
+                        dt.loc[hed_line, IPC] = dt.loc[hed_line, IPC] + row[ix]
+                if answer_code > 0:
+                    sum_scores = sum_scores + answer_code * row[ix]
+                    nr_resp = nr_resp + row[ix]
+            for hed_line, answers in hed_lines.items():
+                if 'mean' in answers:
+                    if nr_resp > 1:
+                        Y_metric = sum_scores / nr_resp
+                    else:
+                        Y_metric = sum_scores
+                    dt.loc[hed_line, IPC] = Y_metric
+                    Y_total = Y_total + Y_metric
+                    hit_count = hit_count + 1
+
+        if len(benchmark) == 0:
+            for hed in dt.index:
+                sum = dt.ix[hed][1:].sum()
+                avg = sum / (len(dt._ix[hed]) - 2)
+                dt.loc[hed, 'Average'] = avg
+        if ('q-mean' in X_facet):
+            if hit_count == 0:
+                Y_metric= Y_total
+            else:
+                Y_metric = Y_total / hit_count
+            X_key = "Q-Mean"
+            dt_index.append(X_key)
+            dt.loc[X_key, X_label] = X_key
+            rownr = 0
+            for colnr in range(1, len(dt_columns)):
+                dt.loc[X_key, dt_columns[colnr]] = Y_metric
+            if 'series' in self.db_chart:
+                if 'average' in self.db_chart['series']:
+                    self.db_chart['series'][dt_columns.index(X_key)] = {"type": 'line'}
+                    del self.db_chart['series']['average']
+
+        # prepare for the setProperty formatter. Capture the cells for which a win95, win90, win80, lose95, lose90, lose80
+        # className have to be set. This win/lose is set based on the first columns, which contains either the benchmark
+        # or the average.
+        # The cells in a DataTable start at rownr 0 (this not the header) and at colnr 0 (this is the label)
+        if 'formatter' in self.db_chart:
+            if 'setProperty' in self.db_chart['formatter']:
+                winlose = []
+                for rownr in range(0, len(dt)):
+                    line = dt.ix[rownr]
+                    avg = line[1]
+                    var = 0
+                    for colnr in range(2, len(line)):
+                        var = var + abs(line[colnr] - avg)
+                    stddev = math.sqrt(var)
+                    int95 = norm.interval(0.95, avg, stddev)
+                    int90 = norm.interval(0.90, avg, stddev)
+                    int80 = norm.interval(0.80, avg, stddev)
+                    winlose.append([rownr, 1, 'className', 'benchmark'])
+                    for colnr in range(2, len(line)):
+                        if line[colnr] >= int95[1]:
+                            winlose.append([rownr, colnr, 'className', 'win95'])
+                        elif line[colnr] >= int90[1]:
+                            winlose.append([rownr, colnr, 'className', 'win90'])
+                        elif line[colnr] >= int80[1]:
+                            winlose.append([rownr, colnr, 'className', 'win80'])
+                        elif line[colnr] <=int95[0]:
+                            winlose.append([rownr, colnr, 'className', 'lose95'])
+                        elif line[colnr] <=int90[0]:
+                            winlose.append([rownr, colnr, 'className', 'lose90'])
+                        elif line[colnr] <=int80[0]:
+                            winlose.append([rownr, colnr, 'className', 'lose80'])
+                self.db_chart['formatter']['setProperty'] = winlose
+
+        transpose = False
+        if 'transpose' in self.db_chart:
+            transpose = self.db_chart['transpose']
+        if transpose:
+            # first column contains the labels, remove this column before transpose and add it again after transpose
+            del dt[X_label]
+            dt = dt.transpose()
+            dt_trans_columns = [Y_label]
+            dt_trans_columns.extend(dt_index)
+            dt_trans_index = dt_columns[1:]
+            dt.insert(0, Y_label, dt_trans_index)
+            dt_columns = dt_trans_columns
+
+        dt.fillna(0, inplace=True)
+        self.db_chart['data'].append(dt_columns)
+        for ix, row in dt.iterrows():
+            self.db_chart['data'].append(row.tolist())
+
 
     def bind_hits(self, hits, facets_keyword=None):
         self.db_chart['data'] = None
@@ -870,154 +1033,6 @@ class Chart(object):
             categories = ['Questions']
             categories.extend(topline_columns)
             self.db_chart['data'].insert(0, categories)
-
-    def bind_topline_base(self, hits, facets_keyword=None, base_chart=None):
-        self.db_chart['data'] = None
-        self.db_chart['data'] = []
-        X_facet = self.db_chart['X_facet']
-        X_field = X_facet['field']
-        X_label = X_facet['label']
-        hed_lines = X_facet['lines'][X_field]
-        Y_facet = self.db_chart['Y_facet']
-        Y_field = Y_facet['field']
-        Y_label = Y_facet['label']
-        data = base_chart['data']
-        if len(data) == 0:
-            return
-
-        benchmark = []
-        if facets_keyword:
-            for facet_keyword in facets_keyword:
-                if facet_keyword.keywords_k != '' and facet_keyword.keywords_k != []:
-                    benchmark.append(facet_keyword.keywords_k)
-
-        dt_index = []
-        dt_columns = [X_label]
-        for col in data[0][1:]:
-            if col == 'Total':
-                continue
-            IPC = col.strip()
-            # benchmark will be the first column(s)
-            if IPC in benchmark:
-                dt_columns.insert(1, IPC)
-            else:
-                dt_columns.append(IPC)
-        if len(benchmark) == 0:
-            dt_columns.insert(1, 'Average')
-        dt_index = list(hed_lines.keys())
-        dt_index.sort()
-        dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
-        dt[X_label] = dt_index
-
-
-        # scan through the rows to populate df
-        Y_total = 0
-        hit_count = 0
-        Y_benchmark = 0
-        benchmark_count = 0
-        cand_topline = {}
-
-        for ix in range(1, len(data[0])):
-            IPC = data[0][ix].strip()
-            if IPC == 'Total':
-                continue
-            sum_scores = 0
-            nr_resp = 0
-            for row in data[1:]:
-                answer = row[0]
-                try:
-                    answer_code = int(float(answer.split(' ')[0]))
-                except:
-                    if isinstance(answer, numbers.Real):
-                        answer_code = int(answer)
-                    else:
-                        answer_code = 0
-                for hed_line, answers in hed_lines.items():
-                    if answer_code in answers:
-                        dt.loc[hed_line, IPC] = dt.loc[hed_line, IPC] + row[ix]
-                if answer_code > 0:
-                    sum_scores = sum_scores + answer_code * row[ix]
-                    nr_resp = nr_resp + row[ix]
-            for hed_line, answers in hed_lines.items():
-                if 'mean' in answers:
-                    if nr_resp > 1:
-                        Y_metric = sum_scores / nr_resp
-                    else:
-                        Y_metric = sum_scores
-                    dt.loc[hed_line, IPC] = Y_metric
-                    Y_total = Y_total + Y_metric
-                    hit_count = hit_count + 1
-
-        if len(benchmark) == 0:
-            for hed in dt.index:
-                sum = dt.ix[hed][1:].sum()
-                avg = sum / (len(dt._ix[hed]) - 2)
-                dt.loc[hed, 'Average'] = avg
-        if ('q-mean' in X_facet):
-            if hit_count == 0:
-                Y_metric= Y_total
-            else:
-                Y_metric = Y_total / hit_count
-            X_key = "Q-Mean"
-            dt_index.append(X_key)
-            rownr = 0
-            for colnr in range(0, len(dt_columns)):
-                dt.loc[X_key, dt_columns[colnr]] = Y_metric
-            if 'series' in self.db_chart:
-                if 'average' in self.db_chart['series']:
-                    self.db_chart['series'][dt_columns.index(X_key)] = {"type": 'line'}
-                    del self.db_chart['series']['average']
-
-        # prepare for the setProperty formatter. Capture the cells for which a win95, win90, win80, lose95, lose90, lose80
-        # className have to be set. This win/lose is set based on the first columns, which contains either the benchmark
-        # or the average.
-        # The cells in a DataTable start at rownr 0 (this not the header) and at colnr 0 (this is the label)
-        if 'formatter' in self.db_chart:
-            if 'setProperty' in self.db_chart['formatter']:
-                winlose = []
-                for rownr in range(0, len(dt)):
-                    line = dt.ix[rownr]
-                    avg = line[1]
-                    var = 0
-                    for colnr in range(2, len(line)):
-                        var = var + abs(line[colnr] - avg)
-                    stddev = math.sqrt(var)
-                    int95 = norm.interval(0.95, avg, stddev)
-                    int90 = norm.interval(0.90, avg, stddev)
-                    int80 = norm.interval(0.80, avg, stddev)
-                    winlose.append([rownr, 1, 'className', 'benchmark'])
-                    for colnr in range(2, len(line)):
-                        if line[colnr] >= int95[1]:
-                            winlose.append([rownr, colnr, 'className', 'win95'])
-                        elif line[colnr] >= int90[1]:
-                            winlose.append([rownr, colnr, 'className', 'win90'])
-                        elif line[colnr] >= int80[1]:
-                            winlose.append([rownr, colnr, 'className', 'win80'])
-                        elif line[colnr] <=int95[0]:
-                            winlose.append([rownr, colnr, 'className', 'lose95'])
-                        elif line[colnr] <=int90[0]:
-                            winlose.append([rownr, colnr, 'className', 'lose90'])
-                        elif line[colnr] <=int80[0]:
-                            winlose.append([rownr, colnr, 'className', 'lose80'])
-                self.db_chart['formatter']['setProperty'] = winlose
-
-        transpose = False
-        if 'transpose' in self.db_chart:
-            transpose = self.db_chart['transpose']
-        if transpose:
-            # first column contains the labels, remove this column before transpose and add it again after transpose
-            del dt[X_label]
-            dt = dt.transpose()
-            dt_trans_columns = [Y_label]
-            dt_trans_columns.extend(dt_index)
-            dt_trans_index = dt_columns[1:]
-            dt.insert(0, Y_label, dt_trans_index)
-            dt_columns = dt_trans_columns
-
-        dt.fillna(0, inplace=True)
-        self.db_chart['data'].append(dt_columns)
-        for ix, row in dt.iterrows():
-            self.db_chart['data'].append(row.tolist())
 
     def bind_correlation(self, stats_df, corr_df):
         # The data will be loaded in google_chart arrayToDataTable format
