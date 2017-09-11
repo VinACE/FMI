@@ -1127,7 +1127,7 @@ class SeekerView (View):
         stats_df = {}
         corr_df = {}
 
-        tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, None, charts, results, facets_keyword)
+        tile_df = seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, charts, results, facets_keyword)
         seeker.models.stats_df = pd.DataFrame()
         seeker.models.corr_df = pd.DataFrame()
 
@@ -1138,7 +1138,7 @@ class SeekerView (View):
                 search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            tile_df, tiles_d, tiles_select = seeker.dashboard.bind_tile(self, facets_tile, charts, results_tile, facets_keyword)
+            tile_df = seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, charts, results_tile, facets_keyword)
             seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df, self.dashboard)
 
         #for chart_name, chart in charts.items():

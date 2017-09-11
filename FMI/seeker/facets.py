@@ -83,6 +83,23 @@ class Facet (object):
     def get_metric(self, bucket):
         return bucket['doc_count']
 
+    def get_category(self, key, bucket, chart_facet):
+        categories = []
+        if 'categories' in chart_facet:
+            categories = chart_facet['categories']
+        if len(categories) > 0 and key not in categories:
+            key = None
+        return key
+
+    def get_value_key(self, value_key, bucket, chart_facet):
+        values = []
+        if 'values' in chart_facet:
+            values = chart_facet['values']
+        if len(values) > 0 and value_key not in values:
+            value_key = None
+        return value_key
+
+
     def buckets(self, aggregations):
         #for b in self.data(response).get('buckets', []):
         #    yield self.get_key(b), b.get('doc_count')

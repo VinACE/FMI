@@ -227,7 +227,9 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
             if (tab == "#storyboard_tab") {
-                draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
+                if (typeof g_storyboard != 'undefined') {
+                    draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
+                }
             }
         }
     }

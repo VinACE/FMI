@@ -96,7 +96,7 @@ function tile_select_onchange() {
                 g_db[chart_name].datatable = dt;
                 g_db[chart_name].view = view;
                 // only redraw for the active storyboard
-                if (g_db[chart_name].google_db != 'undefined') {
+                if (typeof g_db[chart_name].google_db != 'undefined') {
                     g_db[chart_name].google_db.draw(dt, g_options);
                 }
             }

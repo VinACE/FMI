@@ -178,12 +178,10 @@ def bind_tile_chart(tile_df, facet_tile_value, chart):
                 rownr = rownr + 1
     pass
 
-def bind_tile(seekerview, facets_tile, charts, results, facets_keyword):
+def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, charts, results, facets_keyword):
     hits = results.hits
     aggregations = results.aggregations
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
-    tiles_d = {}
-    tiles_select = {};
     rownr = 0
     for chart_name, chart in charts.items():
         tiles_d[chart_name] = {}
@@ -191,13 +189,13 @@ def bind_tile(seekerview, facets_tile, charts, results, facets_keyword):
         X_facet = chart.db_chart['X_facet']
 
         if facets_tile == None:
-            tiles_select = {}
+            tiles_select['All'] = []
             if chart_data == 'facet':
                 chart.bind_facet(aggregations)
             elif chart_data == 'aggr':
                 if 'aggr_name' in chart.db_chart:
                     aggr_name = chart.db_chart['aggr_name']
-                    chart.bind_topline_aggr(aggregations, facets_keyword, aggr_name)
+                    chart.bind_topline_aggr(aggr_name, aggregations, facets_keyword)
                 else:
                     aggr_name = chart_name
                     chart.bind_aggr(chart_name, aggregations)
@@ -222,13 +220,17 @@ def bind_tile(seekerview, facets_tile, charts, results, facets_keyword):
                         if chart_data == 'facet':
                             chart.bind_facet(tile)
                         elif chart_data == 'aggr':
-                            chart.bind_aggr(X_facet['field'], tile)
+                            if 'aggr_name' in chart.db_chart:
+                                aggr_name = chart.db_chart['aggr_name']
+                                chart.bind_topline_aggr(aggr_name, tile, facets_keyword)
+                            else:
+                                chart.bind_aggr(X_facet['field'], tile)
                         else:
                             chart.db_chart['data'] = []
                         tiles_d[chart_name][facet_tile_value] = chart.db_chart['data']
                         #bind_tile_chart(tile_df, facet_tile_value, chart)
 
-    return tile_df, tiles_d, tiles_select
+    return tile_df
 
 def tile_obsolete(seekerview, facets_tile, charts, results_tile):
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
@@ -538,79 +540,88 @@ class Chart(object):
             y_start = y_start + 1
             dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
             # next fill the series for the categories
-            rownr = 0
-            for X_key, bucket in buckets.items():
-                X_metric = xfacet.get_metric(bucket)
-                #dt.loc[rownr] = [X_key, X_metric].extend([(0 for ix in range(2, len(dt.columns)))])
-                dt.loc[rownr, X_label] = X_key
-                dt.loc[rownr, "Total"] = X_metric
-                dt_index.append(X_key)
-                # skip unrequested categories
-                if 'categories' in X_facet:
-                    if len(X_facet['categories']) > 0 and X_key not in X_facet['categories']:
+            modes = ['sizing_', 'filling_']
+            for mode in modes:
+                if mode == 'filling_':
+                    dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
+                rownr = 0
+                for X_key, bucket in buckets.items():
+                    # skip and map categories
+                    X_key = xfacet.get_category(X_key, bucket, X_facet)
+                    if X_key == None:
                         continue
-                # loop through the different values for this category, normally only one
-                xvalbuckets = xfacet.valbuckets(bucket)
-                for X_value_key, xvalbucket in xvalbuckets.items():
-                    # skip unrequested values
-                    if 'values' in X_facet:
-                        if len(X_facet['values']) > 0 and X_value_key not in X_facet['values']:
+                    X_metric = xfacet.get_metric(bucket)
+                    if mode == 'sizing_':
+                        dt_index.append(X_key)
+                    if mode == 'filling_':
+                        dt.loc[X_key, X_label] = X_key
+                        dt.loc[X_key, "Total"] = X_metric
+                    # loop through the different values for this category, normally only one
+                    xvalbuckets = xfacet.valbuckets(bucket)
+                    for X_value_key, xvalbucket in xvalbuckets.items():
+                        # skip and map values
+                        X_value_key = xfacet.get_value_key(X_value_key, xvalbucket, X_facet)
+                        if X_value_key == None:
                             continue
-                    if Y_field == "" or Y_field not in xvalbucket:
-                        Y_metric = xfacet.get_metric(xvalbucket)
-                        if X_value_key not in dt_columns:
-                            dt_columns.append(X_value_key)
-                            sub_total = True
-                        dt.loc[rownr, X_value_key] = Y_metric
-                    else:
-                        subagg = xvalbucket[Y_field]
-                        subbuckets = yfacet.buckets(subagg)
-                        for Y_key, subbucket in subbuckets.items():
-                            sub_total = True
-                            Y_metric = yfacet.get_metric(subbucket)
-                            # skip unrequested answers, categories
-                            if 'answers' in Y_facet:
-                                if Y_key not in Y_facet['answers'] and len(Y_facet['answers']) > 0:
-                                    continue
-                            if 'categories' in Y_facet:
-                                if Y_key not in Y_facet['categories'] and len(Y_facet['categories']) > 0:
-                                    continue
-                            # check whether Y facet has subbuckets (multiple values)
-                            # loop through the different values for this category, normally only one
-                            Y_metric = 0
-                            yvalbuckets = yfacet.valbuckets(subbucket)
-                            for Y_value_key, yvalbucket in yvalbuckets.items():
-                                # skip unrequested values
-                                if 'values' in Y_facet:
-                                    if len(Y_facet['values']) > 0 and Y_value_key not in Y_facet['values']:
+                        if Y_field == "" or Y_field not in xvalbucket:
+                            Y_metric = xfacet.get_metric(xvalbucket)
+                            if X_value_key not in dt_columns:
+                                sub_total = True
+                                if mode == 'sizing_':
+                                    dt_columns.append(X_value_key)
+                            if mode == 'filling_':
+                                dt.loc[X_key, X_value_key] = Y_metric
+                        else:
+                            subagg = xvalbucket[Y_field]
+                            subbuckets = yfacet.buckets(subagg)
+                            for Y_key, subbucket in subbuckets.items():
+                                # skip and map answers, categories
+                                if 'answers' in Y_facet:
+                                    if Y_key not in Y_facet['answers'] and len(Y_facet['answers']) > 0:
                                         continue
-                                V_metric = xfacet.get_metric(yvalbucket)
-                                Y_metric = Y_metric + V_metric
-                                #yes_count = 0
-                                #for value_bucket in subbucket.buckets:
-                                #    V_key, V_metric, subvaluebucket = bucket_coor(value_bucket, subbucket.buckets, self.db_chart['Y_facet'])
-                                #    if self.decoder:
-                                #        V_key = self.decoder(Y_key, V_key)
-                                #    if type(V_key) == int:
-                                #        V_key = "{0:d}".format(Y_key)
-                                #    if V_key in Y_facet['values']:
-                                #        yes_count = yes_count + V_metric
-                                #Y_metric = yes_count
-                            if Y_key not in dt_columns:
-                                inserted = False
-                                zero = pd.Series(0.0, index=dt.index)
-                                for i in range(y_start, len(dt_columns)):
-                                    if Y_key < dt_columns[i]:
-                                        dt_columns.insert(i, Y_key)
-                                        dt.insert(i, Y_key, zero)
-                                        inserted = True
-                                        break
-                                if not inserted:
-                                    dt_columns.append(Y_key)
-                                    dt[Y_key] = zero
-                            #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
-                            dt.loc[rownr, Y_key] = Y_metric
-                rownr = rownr + 1
+                                Y_key = yfacet.get_category(Y_key, subbucket, Y_facet)
+                                if Y_key == None:
+                                    continue
+                                sub_total = True
+                                Y_metric = yfacet.get_metric(subbucket)
+                                # check whether Y facet has subbuckets (multiple values)
+                                # loop through the different values for this category, normally only one
+                                Y_metric = 0
+                                yvalbuckets = yfacet.valbuckets(subbucket)
+                                for Y_value_key, yvalbucket in yvalbuckets.items():
+                                    # skip and map values
+                                    Y_value_key = yfacet.get_value_key(Y_value_key, yvalbucket, Y_facet)
+                                    if Y_value_key == None:
+                                        continue
+                                    V_metric = xfacet.get_metric(yvalbucket)
+                                    Y_metric = Y_metric + V_metric
+                                    #yes_count = 0
+                                    #for value_bucket in subbucket.buckets:
+                                    #    V_key, V_metric, subvaluebucket = bucket_coor(value_bucket, subbucket.buckets, self.db_chart['Y_facet'])
+                                    #    if self.decoder:
+                                    #        V_key = self.decoder(Y_key, V_key)
+                                    #    if type(V_key) == int:
+                                    #        V_key = "{0:d}".format(Y_key)
+                                    #    if V_key in Y_facet['values']:
+                                    #        yes_count = yes_count + V_metric
+                                    #Y_metric = yes_count
+                                if Y_key not in dt_columns:
+                                    if mode == 'sizing_':
+                                        inserted = False
+                                        zero = pd.Series(0.0, index=dt.index)
+                                        for i in range(y_start, len(dt_columns)):
+                                            if Y_key < dt_columns[i]:
+                                                dt_columns.insert(i, Y_key)
+                                                dt.insert(i, Y_key, zero)
+                                                inserted = True
+                                                break
+                                        if not inserted:
+                                            dt_columns.append(Y_key)
+                                            dt[Y_key] = zero
+                                if mode == 'filling_':
+                                    #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
+                                    dt.loc[X_key, Y_key] = Y_metric
+                    rownr = rownr + 1
 
             dt.fillna(0, inplace=True)
             if sub_total == True and x_total == False:
@@ -632,7 +643,7 @@ class Chart(object):
             for ix, row in dt.iterrows():
                 self.db_chart['data'].append(row.tolist())
 
-    def bind_topline_aggr(self, aggregations, facets_keyword=None, aggr_name=None):
+    def bind_topline_aggr(self, aggr_name, aggregations, facets_keyword=None):
         self.db_chart['data'] = None
         self.db_chart['data'] = []
         X_facet = self.db_chart['X_facet']
