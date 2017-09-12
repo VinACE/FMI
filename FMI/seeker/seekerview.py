@@ -1114,11 +1114,6 @@ class SeekerView (View):
         #if self.summary != None:, also fill url in results
         self.summary_tab(results, columns)
 
-        # convert dashboard definition into Chart objects
-        charts = {}
-        for chart_name, chart in self.dashboard.items():
-            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.get_facet_by_field_name, self.decoder)
-
         results_tile = None
         tile_df = None
         tile_df = pd.DataFrame()
@@ -1126,6 +1121,12 @@ class SeekerView (View):
         tiles_select = {}
         stats_df = {}
         corr_df = {}
+
+        # convert dashboard definition into Chart objects
+        charts = {}
+        for chart_name, chart in self.dashboard.items():
+            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.get_facet_by_field_name, self.decoder)
+            tiles_d[chart_name] = {}
 
         tile_df = seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, charts, results, facets_keyword)
         seeker.models.stats_df = pd.DataFrame()
@@ -1158,15 +1159,6 @@ class SeekerView (View):
             if chart_data == 'correlation':
                 chart.bind_correlation(seeker.models.stats_df, seeker.models.corr_df)
                 tiles_d[chart_name]['All'] = chart.db_chart['data']
-
-
-#       tablechart = seeker.dashboard.Chart("category_keyword_table", dashboard)
-#       piechart = seeker.dashboard.Chart("keyword_pie", dashboard)
-#       tablechart.bind(results.aggregations)
-#       piechart.bind(results.aggregations)
-#       dashboard_json = {}
-#       dashboard_json["category_keyword_table"] = json.dumps(dashboard["category_keyword_table"])
-#       dashboard_json["keyword_pie"] = json.dumps(dashboard["keyword_pie"])
 
         context_querystring = self.normalized_querystring()
         sort = sorts[0] if sorts else ''

@@ -1,5 +1,6 @@
 ﻿from django.conf import settings
 from elasticsearch_dsl import Search, A, Q
+from elasticsearch_dsl.utils import AttrList, AttrDict
 from collections import OrderedDict
 import functools
 import operator
@@ -436,7 +437,7 @@ class KeywordFacet (TermsFacet):
     def apply(self, search, agg_name, aggs_stack, **extra):
         # in case no keywords specified, just return the original search
         if len(self.keywords_k) == 0:
-            return search
+           return search
         if agg_name in aggs_stack:
             aggs_tail = search.aggs[agg_name]
             for sub_agg_name in aggs_stack[agg_name][1:]:
@@ -471,9 +472,12 @@ class KeywordFacet (TermsFacet):
 
     def buckets(self, aggregations):
         buckets = OrderedDict()
-        for keyword, bucket in aggregations['buckets'].to_dict().items():
-            bucket['key'] = keyword
-            buckets[keyword] = bucket
+        if type(aggregations['buckets']) == AttrDict:
+            for keyword, bucket in aggregations['buckets'].to_dict().items():
+                bucket['key'] = keyword
+                buckets[keyword] = bucket
+        else:
+            buckets = {}
         return buckets
 
 class GlobalTermsFacet (TermsFacet):

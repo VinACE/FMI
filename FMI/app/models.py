@@ -246,7 +246,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         'perfume_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Perfume / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "perfume.keyword",
                 'label'   : "Perfume" },
@@ -257,7 +257,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         "keyword_label_table" : {
             'chart_type': "Table",
             'chart_title' : "Keyword / Category Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -276,7 +276,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         "reviewed_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Reviewed Year Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "review_date",
                 'label'   : "Reviewed",
@@ -646,7 +646,7 @@ class FeedlySeekerView (seeker.SeekerView):
         'category_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "category.keyword",
@@ -658,7 +658,7 @@ class FeedlySeekerView (seeker.SeekerView):
         'feed_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Feed / Keyword Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'X_facet'     : {
                 'field'   : "feed.keyword",
                 'label'   : "Feed" },
@@ -693,7 +693,7 @@ class FeedlySeekerView (seeker.SeekerView):
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Year Doc Count",
-            'chart_data'  : "facet",
+            'chart_data'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",

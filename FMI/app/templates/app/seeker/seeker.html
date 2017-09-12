@@ -50,11 +50,6 @@
     draw_storyboard({{ storyboard|safe }}, "{{dashboard_name}}", {{ dashboard|safe }});
     facts_norms( {{ stats_df|safe}}  );
 
-//    google_chart('category_keyword_table_div',  {{ dashboard.category_keyword_table|safe }});
-//    google_chart('keyword_category_table_div',  {{ dashboard.keyword_category_table|safe }});
-//    google_chart('keyword_pie_div',             {{ dashboard.keyword_pie|safe }});
-//    google_chart('published_keyword_line_div',  {{ dashboard.published_keyword_line|safe }});
-
 </script>
 
 {% endblock %}

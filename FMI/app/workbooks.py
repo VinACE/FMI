@@ -757,7 +757,7 @@ class SurveyWorkbook:
             },
         "topline_freshness_table" : {
             'chart_type'  : "Table",
-            'chart_title' : "Topline Liking - Candidate",
+            'chart_title' : "Topline Freshness - Candidate",
             'chart_data'  : "aggr",
             'aggr_name'   : "freshness_blindcode_col",
             'controls'    : ['CategoryFilter'],

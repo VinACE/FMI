@@ -184,7 +184,6 @@ def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, charts, results, f
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
     rownr = 0
     for chart_name, chart in charts.items():
-        tiles_d[chart_name] = {}
         chart_data = chart.db_chart['chart_data']
         X_facet = chart.db_chart['X_facet']
 

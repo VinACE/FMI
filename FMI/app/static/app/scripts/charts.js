@@ -4,7 +4,7 @@
 
 // JQuery
 
-function d3_chart(chart_name, chart_def, colIndexes) {
+function d3_chart(chart_name, chart_def, facet_value, colIndexes) {
     var chdivid = '#' + chart_name + '_chdiv'
     var ctdivsid = ['#' + chart_name + '_ct1div', '#' + chart_name + '_ct2div']
     var w = 500,
@@ -87,17 +87,22 @@ function d3_chart(chart_name, chart_def, colIndexes) {
 
     //Call function to draw the Radar chart
     //Will expect that data is in %'s
+    if (g_tiles_d[chart_name][facet_value].length > 0) {
+        var chart_data = g_tiles_d[chart_name][facet_value];
+    } else {
+        var chart_data = new Array();
+    }
     var data = [];
     var LegendOptions = [];
-    for (var colnr = 1; colnr < chart_def['data'][0].length; colnr++) {
+    for (var colnr = 1; colnr < chart_data[0].length; colnr++) {
         var series = [];
-        for (var rownr = 1; rownr < chart_def['data'].length; rownr++) {
-            var axis = chart_def['data'][rownr][0];
-            var value = chart_def['data'][rownr][colnr];
+        for (var rownr = 1; rownr < chart_data.length; rownr++) {
+            var axis = chart_data[rownr][0];
+            var value = chart_data[rownr][colnr];
             series.push({ 'axis': axis, 'value': value });
         }
         if (colIndexes.indexOf(colnr) >= 0) {
-            LegendOptions.push(chart_def['data'][0][colnr]);
+            LegendOptions.push(chart_data[0][colnr]);
             data.push(series);
         }
     }
@@ -154,11 +159,16 @@ function d3_chart(chart_name, chart_def, colIndexes) {
 
 function filterD3Chart(chart_name, chart_name2) {
     var chart_def2 = g_db[chart_name2];
+    if (g_tiles_d[chart_name2]['All'].length > 0) {
+        var chart_data2 = g_tiles_d[chart_name]['All'];
+    } else {
+        var chart_data2 = new Array();
+    }
     var colIndexes = [];
     for (var i = 0; i < g_db[chart_name].filters.length; i++) {
         var filter = g_db[chart_name].filters[i];
-        for (var colnr = 1; colnr < chart_def2['data'][0].length; colnr++) {
-            if (chart_def2['data'][0][colnr] == filter) {
+        for (var colnr = 1; colnr < chart_data2[0].length; colnr++) {
+            if (chart_data2[0][colnr] == filter) {
                 colIndexes.push(colnr);
             }
         }
@@ -166,7 +176,7 @@ function filterD3Chart(chart_name, chart_name2) {
     if (colIndexes.length == 0) {
         colIndexes = [1, 2, 3];
     }
-    d3_chart(chart_name2, chart_def2, colIndexes);
+    d3_chart(chart_name2, chart_def2, 'All', colIndexes);
 }
 
 
@@ -316,7 +326,7 @@ function selectEventChart(chart_name, rowIndex, columnIndex, argument) {
 }
 
 
-function google_chart(chart_name, json_data, facet_value) {
+function google_chart(chart_name, chart_def, facet_value) {
     google.charts.load('current', {'packages':['corechart', 'controls']});
     var dbdiv = chart_name + '_dbdiv'
     var chdiv = chart_name + '_chdiv'
@@ -324,15 +334,15 @@ function google_chart(chart_name, json_data, facet_value) {
     google.charts.setOnLoadCallback(drawVisualization);
 
     function drawVisualization() {
+        if (g_tiles_d[chart_name][facet_value].length > 0) {
+            var chart_data = g_tiles_d[chart_name][facet_value];
+        } else {
+            var chart_data = new Array();
+        }
         // in case the X value is a date is still requires converting to a Date
-        var X_facet = json_data['X_facet']
+        var X_facet = chart_def['X_facet']
         if ("type" in X_facet) {
             if (X_facet['type'] == 'date') {
-                if (g_tiles_d[chart_name][facet_value].length > 0) {
-                    var chart_data = g_tiles_d[chart_name][facet_value];
-                } else {
-                    var chart_data = json_data['data'];
-                }
                 for (var rix = 1; rix < chart_data.length; rix++) {
                     var s = chart_data[rix][0];
                     if (typeof s === 'string') {
@@ -342,15 +352,10 @@ function google_chart(chart_name, json_data, facet_value) {
                 }
             }
         }
-        if (facet_value in g_tiles_d[chart_name]) {
-            var chart_data = g_tiles_d[chart_name][facet_value];
-            var data = google.visualization.arrayToDataTable(chart_data);
-        } else {
-            var data = google.visualization.arrayToDataTable(json_data['data']);
-        }
+        var data = google.visualization.arrayToDataTable(chart_data);
         var view = new google.visualization.DataView(data);
-        var chart_type = json_data['chart_type'];
-        var chart_title = json_data['chart_title'];
+        var chart_type = chart_def['chart_type'];
+        var chart_title = chart_def['chart_title'];
         var x_total = true
         //var y_axis = 1 // secondary axis = 1
         if ("total" in X_facet) {
@@ -358,11 +363,11 @@ function google_chart(chart_name, json_data, facet_value) {
         }
         var transpose = false
         //var y_axis = 1 // secondary axis = 1
-        if ("transpose" in json_data) {
-            transpose = json_data['transpose']
+        if ("transpose" in chart_def) {
+            transpose = chart_def['transpose']
         }
-        if ("Y_facet" in json_data) {
-            var Y_facet = json_data['Y_facet']
+        if ("Y_facet" in chart_def) {
+            var Y_facet = chart_def['Y_facet']
             //if ("axis" in Y_facet) {
             //    y_axis = X_facet['axis']
             //}
@@ -380,8 +385,8 @@ function google_chart(chart_name, json_data, facet_value) {
         var t2 = g_db[chart_name].chart_wrapper;
         if (typeof t1 === 'undefined') {
             var controls = ['StringFilter'];
-            if ('controls' in json_data) {
-                var controls = json_data['controls'];
+            if ('controls' in chart_def) {
+                var controls = chart_def['controls'];
                 if (controls == null) {
                     controls = [];
                 }
@@ -401,13 +406,13 @@ function google_chart(chart_name, json_data, facet_value) {
                     startup: true,
                 }
             };
-            if ('options' in json_data) {
-                options = $.extend(options, json_data['options']);
+            if ('options' in chart_def) {
+                options = $.extend(options, chart_def['options']);
             }
-            if ('formatter' in json_data) {
-                for (var prop in json_data['formatter']) {
+            if ('formatter' in chart_def) {
+                for (var prop in chart_def['formatter']) {
                     if (prop == 'NumberFormat') {
-                        var cols = json_data['formatter'][prop];
+                        var cols = chart_def['formatter'][prop];
                         for (var colix in cols) {
                             var format = cols[colix];
                             var formatter = new google.visualization.NumberFormat(format);
@@ -416,7 +421,7 @@ function google_chart(chart_name, json_data, facet_value) {
                         }
                     }
                     if (prop == 'setColumnProperties') {
-                        var cols = json_data['formatter'][prop];
+                        var cols = chart_def['formatter'][prop];
                         for (var colix in cols) {
                             var properties = cols[colix];
                             colix = Number(colix);
@@ -425,7 +430,7 @@ function google_chart(chart_name, json_data, facet_value) {
                         }
                     }
                     if (prop == 'setProperty') {
-                        var cells = json_data['formatter'][prop];
+                        var cells = chart_def['formatter'][prop];
                         for (var cellix=0; cellix<cells.length; cellix++) {
                             var cell = cells[cellix];
                             data.setProperty(cell[0], cell[1], cell[2], cell[3])
@@ -551,9 +556,9 @@ function google_chart(chart_name, json_data, facet_value) {
                 }
                 control_wrappers.push(control_wrapper);
             }
-            if ('listener' in json_data) {
+            if ('listener' in chart_def) {
                 var tempListener = google.visualization.events.addOneTimeListener(chart_wrapper, 'ready', function () {
-                    var listener = json_data['listener'];
+                    var listener = chart_def['listener'];
                     g_db[chart_name].filters = [];
                     g_db[chart_name].setrows = [];
                     g_db[chart_name].sortrows = {};
@@ -683,60 +688,4 @@ function google_chart(chart_name, json_data, facet_value) {
         //google_db.draw(data);
     }
 }
-
-function category_keyword_table(json_data) {
-    google.charts.load('current');
-    google.charts.setOnLoadCallback(drawVisualization);
-
-    function drawVisualization() {
-        var data = google.visualization.arrayToDataTable(json_data['data']);
-        var chart_type = json_data['chart_type'];
-        var wrapper = new google.visualization.ChartWrapper({
-            chartType: chart_type,
-            dataTable: data,
-            options: { 'title': 'Categories / Keywords' },
-            containerId: 'category_keyword_table_div'
-        });
-        wrapper.draw();
-    }
-}
-
-function sentiment_pie(json_data) {
-    //    var touchdowns = resp.aggregations.touchdowns.buckets;
-    // d3 donut chart
-    if ('facet_keyword' in json_data) {
-        var data = json_data['facet_keyword']
-        var width = 600,
-            height = 300,
-            radius = Math.min(width, height) / 2;
-        var color = ['#ff7f0e', '#d62728', '#2ca02c', '#1f77b4'];
-        var arc = d3.svg.arc()
-            .outerRadius(radius - 60)
-            .innerRadius(20);
-        var pie = d3.layout.pie()
-            .sort(null)
-            .value(function (d) { return d.doc_count; });
-        var svg = d3.select("#donut-chart").append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", "translate(" + width / 1.4 + "," + height / 2 + ")");
-        var g = svg.selectAll(".arc")
-            .data(pie(data))
-            .enter()
-            .append("g")
-                .attr("class", "arc")
-        ;
-        g.append("path")
-            .attr("d", arc)
-            .style("fill", function (d, i) { return color[i]; });
-        g.append("text")
-            .attr("transform", function (d) { return "translate(" + arc.centroid(d) + ")"; })
-            .attr("dy", ".35em")
-            .style("text-anchor", "middle")
-            .style("fill", "white")
-            .text(function (d) { return d.data.key; });
-    }
-}
-
 

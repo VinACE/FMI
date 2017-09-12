@@ -14,9 +14,9 @@ var g_stats_df;
 
 
 function tile_select_onchange() {
-    var facet = document.getElementById("tile_select").value;
+    var facet_value = document.getElementById("tile_select").value;
     var params = {
-        "db_facet_selecion": facet
+        "db_facet_selecion": facet_value
     };
     // get the form fields and add them as parameters to the GET. The submit will fire off its own GET request
     // document.getElementById("seeker_form").submit();
@@ -24,59 +24,23 @@ function tile_select_onchange() {
     //    var i = 2;
     // });
 
-    if (facet == "All") {
-        draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
-        return;
-    }
-    //draw_dashboard(g_storyboard[g_storyboard_ix], g_db, facet, "dashboard_div")
+    //if (facet_value == "All") {
+    //    draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
+    //    return;
+    //}
     for (var grid_name in g_storyboard[g_storyboard_ix].layout) {
         var layout = g_storyboard[g_storyboard_ix].layout[grid_name];
         for (var rownr = 0; rownr < layout.length; rownr++) {
             var row = layout[rownr];
             for (var chartnr = 0; chartnr < row.length; chartnr++) {
                 var chart_name = layout[rownr][chartnr];
+                var chart = g_db[chart_name]
                 if (!g_db.hasOwnProperty(chart_name)) continue;
                 var db_chart = g_db[chart_name];
-                if (db_chart.data.length == 0) continue;
                 var X_facet = db_chart['X_facet']
-                //var data = new Array();
-                //var categories = db_chart.data[0]
-                //var data = new Array(categories);
-                //var datarownr = 1;
-                //for (var ti in g_tiles) {
-                //    var tile_coor = g_tiles[ti];
-                //    if (facet == tile_coor.facet_tile && chart_name == tile_coor.chart_name) {
-                //        var x_found = false;
-                //        var y_found = false;
-                //        for (var xi = 0; xi < data.length; xi++) {
-                //            if (data[xi][0] == tile_coor.x_field) {
-                //                x_found = true;
-                //                break;
-                //            }
-                //        }
-                //        if (!x_found) {
-                //            data[datarownr] = new Array(categories.length).fill(0);
-                //            xi = datarownr;
-                //            datarownr++;
-                //        }
-                //        data[xi][0] = tile_coor.x_field;
-                //        for (var yi = 0; yi < categories.length; yi++) {
-                //            if (categories[yi] == tile_coor.y_field) {
-                //                data[xi][yi] = tile_coor.metric;
-                //                y_found = true;
-                //                break;
-                //            }
-                //        }
-                //    }
-                //}
-                //// add dummy row
-                //if (datarownr == 1) {
-                //    data[datarownr] = new Array(categories.length).fill(0);
-                //    data[datarownr][0] = "";
-                //}
 
-                if (g_tiles_d[chart_name][facet].length > 0) {
-                    var chart_data = g_tiles_d[chart_name][facet];
+                if (g_tiles_d[chart_name][facet_value].length > 0) {
+                    var chart_data = g_tiles_d[chart_name][facet_value];
                 } else {
                     var chart_data = new Array();
                 }
@@ -91,13 +55,18 @@ function tile_select_onchange() {
                         }
                     }
                 }
-                var dt = google.visualization.arrayToDataTable(chart_data, false);
-                var view = new google.visualization.DataView(dt);
-                g_db[chart_name].datatable = dt;
-                g_db[chart_name].view = view;
-                // only redraw for the active storyboard
-                if (typeof g_db[chart_name].google_db != 'undefined') {
-                    g_db[chart_name].google_db.draw(dt, g_options);
+                if (chart_data.length == 0) continue;
+                if (chart['chart_type'] == 'RadarChart') {
+                    d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+                } else {
+                    var dt = google.visualization.arrayToDataTable(chart_data, false);
+                    var view = new google.visualization.DataView(dt);
+                    g_db[chart_name].datatable = dt;
+                    g_db[chart_name].view = view;
+                    // only redraw for the active storyboard
+                    if (typeof g_db[chart_name].google_db != 'undefined') {
+                        g_db[chart_name].google_db.draw(dt, g_options);
+                }
                 }
             }
         }
@@ -228,9 +197,14 @@ function draw_dashboard(dashboard, charts, facet_value, container_elm) {
                 var chart_name = layout[rownr][chartnr];
                 if (!charts.hasOwnProperty(chart_name)) continue;
                 var chart = charts[chart_name];
-                if (chart.data.length == 0) continue;
+                if (g_tiles_d[chart_name][facet_value].length > 0) {
+                    var chart_data = g_tiles_d[chart_name][facet_value];
+                } else {
+                    var chart_data = new Array();
+                }
+                if (chart_data.length == 0) continue;
                 if (chart['chart_type'] == 'RadarChart') {
-                    d3_chart(chart_name, chart, [1, 2, 3]);
+                    d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
                 } else {
                     google_chart(chart_name, chart, facet_value);
                 }
@@ -277,6 +251,7 @@ function storyboard_onchange() {
     var input = document.getElementsByName("dashboard_name")[0];
     var dashboard_name = g_storyboard[storyboard_ix]['name'];
     input.value = dashboard_name;
+    var facet_value = document.getElementById("tile_select").value;
 
     // $("#db_layout_div").append($('<table>')).append($('<tr>')).append($('<td Grid>'));
     var table = document.getElementById("db_layout_table");
@@ -293,7 +268,7 @@ function storyboard_onchange() {
         th[i].parentNode.removeChild(th[i]);
     }
     dashboard_definition(storyboard_ix)
-    draw_dashboard(g_storyboard[storyboard_ix], g_db, "All", "dashboard_div")
+    draw_dashboard(g_storyboard[storyboard_ix], g_db, facet_value, "dashboard_div")
 }
 
 
