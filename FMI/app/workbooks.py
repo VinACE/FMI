@@ -31,7 +31,7 @@ class ExcelEcoSystemWorkbook:
         'company_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Company / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "company.keyword",
                 'label'   : "Company" },
@@ -42,7 +42,7 @@ class ExcelEcoSystemWorkbook:
         "aop_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Area of Potential",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "aop.keyword",
                 'label'   : "Area of Potential" },
@@ -50,7 +50,7 @@ class ExcelEcoSystemWorkbook:
         "role_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Role",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "role.keyword",
                 'label'   : "Role" },
@@ -58,7 +58,7 @@ class ExcelEcoSystemWorkbook:
         "keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -88,7 +88,7 @@ class ExcelPatentsWorkbook:
         'assignee_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Assignee / Keyword Hits",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "assignee.keyword",
                 'label'   : "Assignee" },
@@ -99,7 +99,7 @@ class ExcelPatentsWorkbook:
         "facet_comp_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Competitors Hits",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_comp",
                 'label'   : "Competitors" },
@@ -107,7 +107,7 @@ class ExcelPatentsWorkbook:
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Month Hits",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
@@ -124,7 +124,7 @@ class ExcelPatentsWorkbook:
         "keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -153,7 +153,7 @@ class PostWorkbook:
         'category_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "post_category_id.keyword",
@@ -165,7 +165,7 @@ class PostWorkbook:
         "subject_keyword_table" : {
             'chart_type': "Table",
             'chart_title' : "Subject / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "subject.keyword",
@@ -177,7 +177,7 @@ class PostWorkbook:
         "facet_keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "facet_keyword",
@@ -186,7 +186,7 @@ class PostWorkbook:
         "facet_cust_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Customers Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_cust",
                 'label'   : "Customers" },
@@ -194,7 +194,7 @@ class PostWorkbook:
         "facet_comp_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Competitors Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_comp",
                 'label'   : "Competitors" },
@@ -202,7 +202,7 @@ class PostWorkbook:
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Month Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
@@ -243,7 +243,7 @@ class ScentemotionWorkbook:
         'region_olfactive_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Region / Olfactive Ingr Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "region.keyword",
                 'label'   : "Region"},
@@ -254,7 +254,7 @@ class ScentemotionWorkbook:
         "olfactive_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Olfactive Ingr Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "olfactive.keyword",
                 'label'   : "Olfactive" },
@@ -262,7 +262,7 @@ class ScentemotionWorkbook:
         "olfactive_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Olfactive Ingr Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "olfactive.keyword",
                 'label'   : "Olfactive" },
@@ -270,7 +270,7 @@ class ScentemotionWorkbook:
         "cand_mood_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Mood Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'X_facet'     : {
                 'field'   : "IPC",
                 'label'   : "Candidate",
@@ -292,7 +292,7 @@ class ScentemotionWorkbook:
         "cand_smell_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Smell Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'X_facet'     : {
                 'field'   : "IPC",
                 'label'   : "Candidate",
@@ -314,7 +314,7 @@ class ScentemotionWorkbook:
         "cand_intensity_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Intensity Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'controls'    : ['CategoryFilter', 'NumberRangeFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'select' : {'colsort': None, 'rowcolfilter': ["mood_cand_radar", "smell_cand_radar", "negative_cand_radar", "descriptor_cand_radar"]}},
@@ -335,7 +335,7 @@ class ScentemotionWorkbook:
         "mood_cand_radar" : {
             'chart_type'  : "RadarChart",
             'chart_title' : "Mood",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -359,7 +359,7 @@ class ScentemotionWorkbook:
         "smell_cand_radar" : {
             'chart_type'  : "RadarChart",
             'chart_title' : "Smell",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -383,7 +383,7 @@ class ScentemotionWorkbook:
         "negative_cand_radar" : {
             'chart_type'  : "RadarChart",
             'chart_title' : "Negative",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -407,7 +407,7 @@ class ScentemotionWorkbook:
         "descriptor_cand_radar" : {
             'chart_type'  : "RadarChart",
             'chart_title' : "Descriptor",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -467,7 +467,7 @@ class StudiesWorkbook:
         #'region_olfactive_table' : {
         #    'chart_type'  : "Table",
         #    'chart_title' : "Region / Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
+        #    'data_type'  : "facet",
         #    'X_facet'     : {
         #        'field'   : "region.keyword",
         #        'label'   : "Region" },
@@ -478,7 +478,7 @@ class StudiesWorkbook:
         #"olfactive_pie" : {
         #    'chart_type': "PieChart",
         #    'chart_title' : "Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
+        #    'data_type'  : "facet",
         #    'X_facet'     : {
         #        'field'   : "olfactive.keyword",
         #        'label'   : "Olfactive" },
@@ -486,7 +486,7 @@ class StudiesWorkbook:
         #"olfactive_col" : {
         #    'chart_type': "ColumnChart",
         #    'chart_title' : "Olfactive Ingr Count",
-        #    'chart_data'  : "facet",
+        #    'data_type'  : "facet",
         #    'X_facet'     : {
         #        'field'   : "olfactive.keyword",
         #        'label'   : "Olfactive" },
@@ -494,7 +494,7 @@ class StudiesWorkbook:
         "cand_emotion_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Emotion Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'X_facet'     : {
                 'field'   : "IPC",
                 'label'   : "Candidate",
@@ -519,7 +519,7 @@ class StudiesWorkbook:
         "cand_freshness_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Freshness Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'X_facet'     : {
                 'field'   : "IPC",
                 'label'   : "Candidate",
@@ -538,7 +538,7 @@ class StudiesWorkbook:
         "cand_hedonics_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Hedonics Top Candidates",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'X_facet'     : {
                 'field'   : "IPC",
                 'label'   : "Candidate",
@@ -559,7 +559,7 @@ class StudiesWorkbook:
         "hedonics_cand_table" : {
             'chart_type': "Table",
             'chart_title' : "Topline",
-            'chart_data'  : "topline",
+            'data_type'  : "topline",
             'controls'    : [],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["suitable_stage_cand_bar", "suitable_stage_cand_radar"], 'select' : {'rowsort': None}},
@@ -589,7 +589,7 @@ class StudiesWorkbook:
         "suitable_stage_cand_bar" : {
             'chart_type': "BarChart",
             'chart_title' : "Suitable Stage",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'transpose'   : True,
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
@@ -609,7 +609,7 @@ class StudiesWorkbook:
         "suitable_stage_cand_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Suitable Stage",
-            'chart_data'  : "hits",
+            'data_type'  : "hits",
             'transpose'   : True,
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
@@ -664,7 +664,7 @@ class SurveyWorkbook:
         #"liking_col" : {
         #    'chart_type': "Table",
         #    'chart_title' : "Liking/Hedonics Blindcode Count",
-        #    'chart_data'  : "facet",
+        #    'data_type'  : "facet",
         #    'X_facet'     : {
         #        'field'   : "liking.keyword",
         #        'label'   : "Liking/Hedonics" },
@@ -672,7 +672,7 @@ class SurveyWorkbook:
         "cand_emotion_col" : {
             'chart_type': "ComboChart",
             'chart_title' : "Candidates / Emotion",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "blindcode.keyword",
@@ -699,7 +699,7 @@ class SurveyWorkbook:
         "liking_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Liking/Hedonics Candidate Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
@@ -711,7 +711,7 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
@@ -747,7 +747,7 @@ class SurveyWorkbook:
         "freshness_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Freshness Candidate Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "freshness",
                 'label'   : "Freshness" },
@@ -758,7 +758,7 @@ class SurveyWorkbook:
         "topline_freshness_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Freshness - Candidate",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'aggr_name'   : "freshness_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'listener'    : {'select' : {'rowsort': None}},
@@ -782,7 +782,7 @@ class SurveyWorkbook:
         "cleanliness_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Cleanliness Candidate Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "cleanliness",
                 'label'   : "Cleanliness" },
@@ -793,7 +793,7 @@ class SurveyWorkbook:
         "suitable_stage_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Suitable Stage Resp Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_stage",
                 "categories" : [],
@@ -804,7 +804,7 @@ class SurveyWorkbook:
         "suitable_product_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Suitable Product Resp Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_product",
                 "categories" : [],
@@ -814,20 +814,20 @@ class SurveyWorkbook:
             },
         "liking_ans_col" : {
             'chart_type': "ColumnChart",
-            'chart_title' : "Likig Resp Count",
-            'chart_data'  : "facet",
+            'chart_title' : "Liking Resp Count",
+            'data_type'  : "facet",
             'help'        : "Select Legend for sorting Categories",
             'listener'    : {'select' : {'colsort': 'categories'}},
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
-                'sort'    : ('label', 'ascending'),
+                'order'   : { "_term" : "asc" },
                 },
             },
         "emotion_ans_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Emotion Resp Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
                 'field'   : "emotion",
@@ -835,33 +835,6 @@ class SurveyWorkbook:
                 "values"  : ["Yes", "No"],
                 'total'   : False,
                 'label'   : "Emotion" },
-            },
-
-        "liking_emotion_corr_table" : {
-            'chart_type'  : "Table",
-            'chart_title' : "Liking / Emotion Correlation",
-            'chart_data'  : "correlation",
-            'base'        : ["liking_ans_col", "emotion_ans_col"],
-            'controls'    : ['CategoryFilter'],
-            'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal'},
-                             'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean'}},
-            'listener'    : {'select' : {'rowsort': None}},
-            'X_facet'     : {
-                'field'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
-                'label'   : {'category' : 'Question', 'answer':'Answer', 'count':'Tiles', 'mean':'Mean',
-                             'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%'},
-                },
-            'Y_facet'     : {
-                'field'   : "quastion/answer",
-                'label'   : "Q & A"
-                },
-            'options'     : {
-                "allowHtml" : True,
-                'frozenColumns' : 2,
-                },
-            'formatter'  : {
-                'setProperty'   : [],
-                },
             },
 
         #"country_map" : {
@@ -875,7 +848,7 @@ class SurveyWorkbook:
         "cand_concept_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Concept",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -899,7 +872,7 @@ class SurveyWorkbook:
         "cand_emotion_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Emotion",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -923,7 +896,7 @@ class SurveyWorkbook:
         "cand_mood_radar" : {
             'chart_type'  : "RadarChart",
             'chart_title' : "Mood",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -948,7 +921,7 @@ class SurveyWorkbook:
             'chart_type'  : "ComboChart",
             #'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
@@ -1017,7 +990,32 @@ class SurveyWorkbook:
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
         'liking_ans_col'            : dashboard_fresh['liking_ans_col'],
         'emotion_ans_col'           : dashboard_fresh['emotion_ans_col'],
-        'liking_emotion_corr_table' : dashboard_fresh['liking_emotion_corr_table'],
+        "liking_emotion_corr_table" : {
+            'chart_type'  : "Table",
+            'chart_title' : "Liking / Emotion Correlation",
+            'data_type'  : "correlation",
+            'base'        : ["liking_ans_col", "emotion_ans_col"],
+            'controls'    : ['CategoryFilter'],
+            'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal'},
+                             'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean'}},
+            'listener'    : {'select' : {'rowsort': None}},
+            'X_facet'     : {
+                'field'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
+                'label'   : {'category' : 'Question', 'answer':'Answer', 'count':'Tiles', 'mean':'Mean',
+                             'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%'},
+                },
+            'Y_facet'     : {
+                'field'   : "quastion/answer",
+                'label'   : "Q & A"
+                },
+            'options'     : {
+                "allowHtml" : True,
+                'frozenColumns' : 2,
+                },
+            'formatter'  : {
+                'setProperty'   : [],
+                },
+            },
         }
 
     storyboard_link = [
@@ -1043,7 +1041,7 @@ class SurveyWorkbook:
         "liking_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Liking/Hedonics Candidate Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
@@ -1055,7 +1053,7 @@ class SurveyWorkbook:
         "strength_blindcode_col" : {
             'chart_type': "Table",
             'chart_title' : "Strength Candidate Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "hedonics",
                 'question': "Strength",
@@ -1071,7 +1069,7 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'aggr_name'   : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
@@ -1107,7 +1105,7 @@ class SurveyWorkbook:
         "cand_affective_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Affective",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -1131,7 +1129,7 @@ class SurveyWorkbook:
         "cand_behavioral_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Behavioral",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -1155,7 +1153,7 @@ class SurveyWorkbook:
         "cand_ballot_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Ballot",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {
@@ -1179,7 +1177,7 @@ class SurveyWorkbook:
         "cand_descriptors_radar" : {
             'chart_type': "RadarChart",
             'chart_title' : "Descriptors",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'transpose'   : True,
             'X_facet'     : {

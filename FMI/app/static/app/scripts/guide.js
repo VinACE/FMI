@@ -9,7 +9,6 @@ var g_options;
 var g_sites;
 var g_site_views;
 
-
 function tab_active(tab) {
     var selector = "#tabs a[href='" + tab + "']";
     $(selector).tab('show');
@@ -461,9 +460,10 @@ function site_onchange() {
 // 2. In case a site_name is already selected, that site is set to active and is shown
 // 3. When also a menu_name is specified, that site menu is also shown
 // 4. In case also a view_name is specified for a view_selected menu item, that view is shown
-function site_route(site_name, menu_name, view_name, sites, site_views) {
+function site_route(site_name, menu_name, view_name, sites, site_views, tiles_d) {
     g_sites = sites;
     g_site_views = site_views;
+    g_tiles_d = tiles_d;
 
     var select = document.getElementById("site_select");
     select.setAttribute("onChange", "site_onchange()");
@@ -573,7 +573,7 @@ function search(site_name, menu_name, view_name) {
         var tiles_d = JSON.parse(data['tiles_d']);
         var stats_df = JSON.parse(data['stats_df']);
         //var corr_df = JSON.parse(data['corr_df']);
-        draw_storyboard(storyboard, dashboard_name, charts);
         fill_tiles(tiles_select, tiles_d);
+        draw_storyboard(storyboard, dashboard_name, charts);
     });
 }

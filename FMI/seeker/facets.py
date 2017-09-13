@@ -100,11 +100,16 @@ class Facet (object):
             value_key = None
         return value_key
 
+    def decoder(self, X_key, Y_key):
+        return Y_key
 
     def buckets(self, aggregations):
         #for b in self.data(response).get('buckets', []):
         #    yield self.get_key(b), b.get('doc_count')
-        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['buckets']})
+        # preserve sequence
+        buckets = OrderedDict()
+        for bucket in aggregations['buckets']:
+            buckets[bucket['key']] = bucket
         return buckets
 
     def valbuckets(self, bucket):
@@ -190,7 +195,10 @@ class TermsFacet (Facet):
         return search
 
     def buckets(self, aggregations):
-        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['buckets']})
+        # preserve sequence
+        buckets = OrderedDict()
+        for bucket in aggregations['buckets']:
+            buckets[bucket['key']] = bucket
         return buckets
 
 class NestedFacet (TermsFacet):
@@ -377,11 +385,17 @@ class OptionFacet (TermsFacet):
         return self.sort_nested_filter
 
     def buckets(self, aggregations):
-        buckets = OrderedDict({bucket['key'] : bucket for bucket in aggregations['question']['buckets']})
+        # preserve sequence
+        buckets = OrderedDict()
+        for bucket in aggregations['question']['buckets']:
+            buckets[bucket['key']] = bucket
         return buckets
 
     def valbuckets(self, bucket):
-        valbuckets = OrderedDict({subbucket['key'] : subbucket for subbucket in bucket['answer']['buckets']})
+        # preserve sequence
+        valbuckets = OrderedDict()
+        for subbucket in bucket['answer']['buckets']:
+            valbuckets[subbucket['key']] = subbucket
         return valbuckets
 
 class KeywordFacet (TermsFacet):

@@ -39,10 +39,10 @@ function tile_select_onchange() {
                 var db_chart = g_db[chart_name];
                 var X_facet = db_chart['X_facet']
 
-                if (g_tiles_d[chart_name][facet_value].length > 0) {
+                if (g_tiles_d[chart_name][facet_value] != null) {
                     var chart_data = g_tiles_d[chart_name][facet_value];
                 } else {
-                    var chart_data = new Array();
+                    var chart_data = g_tiles_d[chart_name]['All'];
                 }
                 if ("type" in X_facet) {
                     if (X_facet['type'] == 'date') {
@@ -197,10 +197,10 @@ function draw_dashboard(dashboard, charts, facet_value, container_elm) {
                 var chart_name = layout[rownr][chartnr];
                 if (!charts.hasOwnProperty(chart_name)) continue;
                 var chart = charts[chart_name];
-                if (g_tiles_d[chart_name][facet_value].length > 0) {
+                if (g_tiles_d[chart_name][facet_value] != null) {
                     var chart_data = g_tiles_d[chart_name][facet_value];
                 } else {
-                    var chart_data = new Array();
+                    var chart_data = g_tiles_d[chart_name]['All'];
                 }
                 if (chart_data.length == 0) continue;
                 if (chart['chart_type'] == 'RadarChart') {

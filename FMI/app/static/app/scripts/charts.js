@@ -321,7 +321,7 @@ function selectEventChart(chart_name, rowIndex, columnIndex, argument) {
     if (argument == 'country.keyword') {
         var field = argument;
         var select_elm = document.getElementsByName(field)[0];
-        select_elm.options[rowIndex].selected = !select_elm.options[rowIndex].selected;
+        select_elm.options[rowIndex-1].selected = !select_elm.options[rowIndex-1].selected;
     }
 }
 
@@ -334,10 +334,10 @@ function google_chart(chart_name, chart_def, facet_value) {
     google.charts.setOnLoadCallback(drawVisualization);
 
     function drawVisualization() {
-        if (g_tiles_d[chart_name][facet_value].length > 0) {
+        if (g_tiles_d[chart_name][facet_value] != null) {
             var chart_data = g_tiles_d[chart_name][facet_value];
         } else {
-            var chart_data = new Array();
+            var chart_data = g_tiles_d[chart_name]['All'];
         }
         // in case the X value is a date is still requires converting to a Date
         var X_facet = chart_def['X_facet']

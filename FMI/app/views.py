@@ -176,6 +176,7 @@ def guide_view(request):
     menu_name = ''
     view_name = ''
     results = {}
+    tiles_d = {}
     facets = {}
     if request.method == 'GET':
         route_name = request.GET.get('route_select', '')
@@ -211,7 +212,7 @@ def guide_view(request):
                 menu_name = request.GET.get('menu_name', '')
                 view_name = request.GET.get('view_name', '')
                 if site_name != '':
-                    results, facets = guide.site_menu(request, site_name, menu_name, view_name)
+                    results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name)
 
 
     context = {
@@ -220,6 +221,7 @@ def guide_view(request):
             'guide'     : json.dumps(guide.guide),
             'facets'    : facets,
             'results'   : results,
+            'tiles_d'   : json.dumps(tiles_d),
             'site_name' : site_name,
             'menu_name' : menu_name,
             'view_name' : view_name,

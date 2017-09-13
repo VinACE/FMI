@@ -246,7 +246,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         'perfume_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Perfume / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "perfume.keyword",
                 'label'   : "Perfume" },
@@ -257,7 +257,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         "keyword_label_table" : {
             'chart_type': "Table",
             'chart_title' : "Keyword / Category Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -268,7 +268,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         "keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -276,7 +276,7 @@ class PerfumeSeekerView (seeker.SeekerView):
         "reviewed_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Reviewed Year Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "review_date",
                 'label'   : "Reviewed",
@@ -646,7 +646,7 @@ class FeedlySeekerView (seeker.SeekerView):
         'category_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Category / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['CategoryFilter'],
             'X_facet'     : {
                 'field'   : "category.keyword",
@@ -658,7 +658,7 @@ class FeedlySeekerView (seeker.SeekerView):
         'feed_keyword_table' : {
             'chart_type'  : "Table",
             'chart_title' : "Feed / Keyword Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "feed.keyword",
                 'label'   : "Feed" },
@@ -669,7 +669,7 @@ class FeedlySeekerView (seeker.SeekerView):
         "keyword_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Keyword Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_keyword",
                 'label'   : "Keywords" },
@@ -677,7 +677,7 @@ class FeedlySeekerView (seeker.SeekerView):
         "customer_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Customer Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_cust",
                 'label'   : "Customer" },
@@ -685,7 +685,7 @@ class FeedlySeekerView (seeker.SeekerView):
         "competitor_pie" : {
             'chart_type': "PieChart",
             'chart_title' : "Competitor Doc Count",
-            'chart_data'  : "facet",
+            'data_type'  : "facet",
             'X_facet'     : {
                 'field'   : "facet_comp",
                 'label'   : "Competitor" },
@@ -693,7 +693,7 @@ class FeedlySeekerView (seeker.SeekerView):
         "published_keyword_line" : {
             'chart_type'  : "LineChart",
             'chart_title' : "Published Year Doc Count",
-            'chart_data'  : "aggr",
+            'data_type'  : "aggr",
             'controls'    : ['ChartRangeFilter'],
             'X_facet'     : {
                 'field'   : "published_date",
@@ -916,6 +916,8 @@ class ScentemotionSeekerView (seeker.SeekerView, workbooks.ScentemotionWorkbook)
         seeker.TermsFacet("dataset.keyword", label = "Dataset / Survey"),
         seeker.TermsFacet("olfactive.keyword", label = "Olfactive"),
         seeker.TermsFacet("region.keyword", label = "Region"),
+        seeker.TermsFacet("IPC.keyword", label = "IPC", visible_pos=0),
+        seeker.TermsFacet("intensity", label = "Intensity", nestedfield="intensity", visible_pos=0),
         #seeker.TermsFacet("mood.keyword", label = "Mood"),
         #seeker.TermsFacet("smell.keyword", label = "Smell"),
         seeker.NestedFacet("mood.val.keyword", label = "Mood", nestedfield="mood"),
@@ -1658,11 +1660,11 @@ class SurveySeekerView (seeker.SeekerView, workbooks.SurveyWorkbook):
         seeker.TermsFacet("blindcode.keyword", label = "Blind Code"),
         seeker.TermsFacet("olfactive.keyword", label = "Olfactive"),
         seeker.TermsFacet("perception.keyword", label = "Perception"),
-        seeker.TermsFacet("liking.keyword", label = "Liking/Hedonics"),
-        seeker.TermsFacet("freshness", label = "Freshness", visible_pos=0),
-        seeker.TermsFacet("cleanliness", label = "Cleanliness", visible_pos=0),
-        seeker.TermsFacet("lastingness", label = "Lastingness", visible_pos=0),
-        seeker.TermsFacet("intensity", label = "Intensity", visible_pos=0),
+        seeker.TermsFacet("liking.keyword", label = "Liking/Hedonics", order={"_term":"desc"}),
+        seeker.TermsFacet("freshness", label = "Freshness", visible_pos=0, order={"_term":"desc"}),
+        seeker.TermsFacet("cleanliness", label = "Cleanliness", visible_pos=0, order={"_term":"desc"}),
+        seeker.TermsFacet("lastingness", label = "Lastingness", visible_pos=0, order={"_term":"desc"}),
+        seeker.TermsFacet("intensity", label = "Intensity", visible_pos=0, order={"_term":"desc"}),
         seeker.OptionFacet("affective", label = "Affective", nestedfield="affective", visible_pos=0),
         seeker.OptionFacet("ballot", label = "Ballot", nestedfield="ballot", visible_pos=0),
         seeker.OptionFacet("behavioral", label = "Behavioral", nestedfield="behavioral", visible_pos=0),

@@ -687,12 +687,16 @@ class SeekerView (View):
         return facets_keyword
 
     def get_facet_by_field_name(self, field_name):
-        if field_name != 'answer':
+        # check on the base name and not at possible extensions like .keyword
+        base_field_name = field_name.split('.')[0]
+        if base_field_name != 'answer':
             for facet in self.facets:
-                if facet.field == field_name:
+                facet_base_field_name = facet.field.split('.')[0]
+                if facet_base_field_name == base_field_name:
                     return facet
             for facet in self.facets_keyword:
-                if facet.field == field_name:
+                facet_base_field_name = facet.field.split('.')[0]
+                if facet_base_field_name == base_field_name:
                     return facet
             print("get_facet_by_field_name: facet not found, field_name ", field_name)
         return None
@@ -741,7 +745,7 @@ class SeekerView (View):
                         for facet_keyword in facets_keyword.keys():
                             if facet_keyword.keywords_k and dashboard:
                                 for chart_name, chart in dashboard.items():
-                                    if chart['chart_data'] != "facet":
+                                    if chart['data_type'] != "facet":
                                         continue
                                     if 'Y_facet' in chart:
                                         if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet_keyword.field:
@@ -755,7 +759,7 @@ class SeekerView (View):
                     if dashboard:
                         for facet2 in facets.keys():
                             for chart_name, chart in dashboard.items():
-                                if chart['chart_data'] != "facet":
+                                if chart['data_type'] != "facet":
                                     continue
                                 if 'Y_facet' in chart:
                                     if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet2.field:
@@ -798,7 +802,7 @@ class SeekerView (View):
                     if facet_keyword.keywords_k and dashboard:
                         for facet in facets.keys():
                             for chart_name, chart in dashboard.items():
-                                if chart['chart_data'] != "facet":
+                                if chart['data_type'] != "facet":
                                     continue
                                 if 'Y_facet' in chart:
                                     if chart['X_facet']['field'] == facet_keyword.field and chart['Y_facet']['field'] == facet.field:
@@ -821,7 +825,7 @@ class SeekerView (View):
 
     def get_aggr(self, s, dashboard=None):
         for chart_name, chart in dashboard.items():
-            if chart['chart_data'] != "aggr":
+            if chart['data_type'] != "aggr":
                 continue
             X_facet = chart['X_facet']
             xfacet = self.get_facet_by_field_name(X_facet['field'])
@@ -842,7 +846,7 @@ class SeekerView (View):
         #The next charts can occur:
         # - 1) facet*facet, 2) facet*facet_keyword, 3) facet
         # - 4) facet_keyword*facet_keyword (NOT SUPPORTED), 5) facet_keyword*facet, 6) facet_keyword
-        # All deep level aggregation replaced by chart_data == aggr. Only 3 and 6 remain for facet and facet_keyword
+        # All deep level aggregation replaced by data_type == aggr. Only 3 and 6 remain for facet and facet_keyword
         if keywords_q:
             s = self.get_search_query_type(s, keywords_q)
         if facets:
@@ -856,7 +860,7 @@ class SeekerView (View):
                             #if facet_keyword.keywords_k and dashboard:
                             if dashboard:
                                 for chart_name, chart in dashboard.items():
-                                    if chart['chart_data'] != "facet":
+                                    if chart['data_type'] != "facet":
                                         continue
                                     if 'Y_facet' in chart:
                                         if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet_keyword.field:
@@ -878,7 +882,7 @@ class SeekerView (View):
                                                 facet_keyword.apply(s, agg_name, self.aggs_stack, filters=body_kf)
                     for facet2 in facets.keys():
                         for chart_name, chart in dashboard.items():
-                            if chart['chart_data'] != "facet":
+                            if chart['data_type'] != "facet":
                                 continue
                             if 'Y_facet' in chart:
                                 if chart['X_facet']['field'] == facet.field and chart['Y_facet']['field'] == facet2.field:
@@ -894,7 +898,7 @@ class SeekerView (View):
                                     facet.apply(s, agg_name, self.aggs_stack)
                                     facet2.apply(s, agg_name, self.aggs_stack)
                     for chart_name, chart in dashboard.items():
-                        if chart['chart_data'] != "facet":
+                        if chart['data_type'] != "facet":
                             continue
                         single = False
                         nested = False
@@ -932,7 +936,7 @@ class SeekerView (View):
                     if dashboard:
                         for facet in facets.keys():
                             for chart_name, chart in dashboard.items():
-                                if chart['chart_data'] != "facet":
+                                if chart['data_type'] != "facet":
                                     continue
                                 agg_name = facet_tile.name+'_'+chart_name
                                 if 'Y_facet' in chart:
@@ -947,7 +951,7 @@ class SeekerView (View):
                                         facet.apply(s, agg_name, self.aggs_stack)
                         if not subaggr:
                             for chart_name, chart in dashboard.items():
-                                if chart['chart_data'] != "facet":
+                                if chart['data_type'] != "facet":
                                     continue
                                 agg_name = facet_tile.name+'_'+chart_name
                                 if 'Y_facet' not in chart:
@@ -961,7 +965,7 @@ class SeekerView (View):
 
     def get_tile_aggr(self, s, facet_tile, dashboard=None):
         for chart_name, chart in dashboard.items():
-            if chart['chart_data'] != "aggr":
+            if chart['data_type'] != "aggr":
                 continue
             X_facet = chart['X_facet']
             xfacet = self.get_facet_by_field_name(X_facet['field'])
@@ -1128,7 +1132,7 @@ class SeekerView (View):
             charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.get_facet_by_field_name, self.decoder)
             tiles_d[chart_name] = {}
 
-        tile_df = seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, charts, results, facets_keyword)
+        seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, charts, results, facets_keyword)
         seeker.models.stats_df = pd.DataFrame()
         seeker.models.corr_df = pd.DataFrame()
 
@@ -1139,26 +1143,14 @@ class SeekerView (View):
                 search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            tile_df = seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, charts, results_tile, facets_keyword)
-            seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df, self.dashboard)
+            seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, charts, results_tile, facets_keyword)
 
-        #for chart_name, chart in charts.items():
-        #    chart_data = chart.db_chart['chart_data']
-        #    if chart_data == 'facet':
-        #        chart.bind_facet(results.aggregations)
-        #    if chart_data == 'aggr':
-        #        chart.bind_aggr(chart_name, results.aggregations)
-        #    elif chart_data == 'tiles':
-        #        chart.bind_aggr(chart_name, results_tile.aggregations)
-        #    elif chart_data == 'hits':
-        #        chart.bind_hits(results.hits, facets_keyword)
-        #    elif chart_data == 'topline':
-        #        chart.bind_topline(results.hits, facets_keyword)
-        for chart_name, chart in charts.items():
-            chart_data = chart.db_chart['chart_data']
-            if chart_data == 'correlation':
-                chart.bind_correlation(seeker.models.stats_df, seeker.models.corr_df)
-                tiles_d[chart_name]['All'] = chart.db_chart['data']
+        for chart_name, chart in self.dashboard.items():
+            data_type = chart['data_type']
+            if data_type == 'correlation':
+                seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(self, chart_name, tiles_d)
+                chart_data = seeker.dashboard.bind_correlation(self, chart, seeker.models.stats_df, seeker.models.corr_df)
+                tiles_d[chart_name]['All'] = chart_data
 
         context_querystring = self.normalized_querystring()
         sort = sorts[0] if sorts else ''

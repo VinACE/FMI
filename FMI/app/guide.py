@@ -262,8 +262,8 @@ sites = {
 charts = {
     "country_map" : {
         'chart_type'  : "GeoChart",
-        #'chart_data'  : 'aggr',
-        'chart_data'  : 'facet',
+        #'data_type'  : 'aggr',
+        'data_type'   : 'facet',
         'chart_title' : "Country Resp Count",
         'listener'    : {'select' : {'select_event': 'country.keyword'}},
         'X_facet'     : {
@@ -412,7 +412,7 @@ def step_aggr(search, facets, step):
     return search
 
 # prepare the data for the selected route
-def route_step(request, route_name, step_name):
+def route_step(request, tiles_d, route_name, step_name):
     route = routes[route_name]
     route_steps = route[1]
     seekerview = route2seeker[route_name]()
@@ -441,16 +441,17 @@ def route_step(request, route_name, step_name):
             for key, map in dashboard_layout.items():
                 for row in map:
                     for chart_name in row:
+                        tiles_d[chart_name] = {}
                         chart = charts[chart_name]
-                        route_charts[chart_name] = seeker.dashboard.Chart(chart_name, charts, None)
-                        chart_data = chart['chart_data']
-                        if chart_data == 'facet':
-                            route_charts[chart_name].bind_facet(results.aggregations)
-                        if chart_data == 'aggr':
-                            route_charts[chart_name].bind_aggr(chart_name, results.aggregations)
+                        data_type = chart['data_type']
+                        if data_type == 'facet':
+                            chart_data = seeker.dashboard.bind_facet(seekerview, chart, results.aggregations)
+                        if data_type == 'aggr':
+                            chart_data = seeker.dashboard.bind_aggr(seekerview, chart, chart_name, results.aggregations)
                         if chart['chart_type'] == 'GeoChart':
-                            for row in chart['data']:
+                            for row in chart_data:
                                 row[0] = country_map_geochart(row[0])
+                        tiles_d[chart_name]['All'] = chart_data
     if step['type'] == 'decision':
         results = search.execute(ignore_cache=True)
     if step['type'] == 'destination':
@@ -485,6 +486,7 @@ def route_dest(request, route_name, step_name):
 # prepare the data for the selected menu for the site
 def site_menu(request, site_name, menu_name, view_name):
     results = {}
+    tiles_d = {}
     facets = {}
     site = sites[site_name]
     site_menu = site['site_menu']
@@ -494,7 +496,7 @@ def site_menu(request, site_name, menu_name, view_name):
         if menu_item['type'] == 'data-selector':
             route_name = menu_item['step'][0];
             step_name = menu_item['step'][1];
-            results, facets = route_step(request, route_name, step_name);
+            results, facets = route_step(request, tiles_d, route_name, step_name);
         elif menu_item['type'] == 'view-selector':
             if view_name != '':
                 pass
@@ -503,5 +505,5 @@ def site_menu(request, site_name, menu_name, view_name):
         else:
             pass
 
-    return results, facets
+    return results, tiles_d, facets
 
