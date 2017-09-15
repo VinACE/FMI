@@ -646,7 +646,7 @@ class SeekerView (View):
             facet_l.append(facet)
         return facet_l
 
-    def get_facet_data(self, initial=None, exclude=None):
+    def get_facet_selected_data(self, initial=None, exclude=None):
         if initial is None:
             initial = {}
         facets = collections.OrderedDict()
@@ -655,18 +655,31 @@ class SeekerView (View):
                 facets[f] = self.request.GET.getlist(f.field) or initial.get(f.field, [])
         return facets
 
-    def get_facet_tile(self, initial=None, exclude=None):
-        if initial is None:
-            initial = {}
+    def get_facets_data(self, results, tiles_select):
+        facets_data = OrderedDict()
+        for f in self.get_facets():
+            if type(f) == seeker.facets.TermsFacet and f.visible_pos > 0 and f.field in results.aggregations:
+                if f.label in tiles_select:
+                    selected = True
+                else:
+                    selected = False
+                keys = [key for key in f.buckets(results.aggregations[f.field])]
+                facets_data[f.field] = {'label': f.label, 'selected': selected, 'values': keys}
+        return facets_data
+
+    def get_facet_tile(self):
         facets = collections.OrderedDict()
         for f in self.get_facets():
-            if f.field != exclude:
-                tile_checkbox = self.request.GET.get(f.field+'_tile')
-                if tile_checkbox == 'on':
-                    facets[f] = self.request.GET.get(f.field+'_tile')
+            tile_checkbox = self.request.GET.get(f.field+'_tile')
+            if tile_checkbox == 'on':
+                facets[f] = self.request.GET.get(f.field+'_tile')
+        tile_facet_field = self.request.GET.get('tile_facet_field', '')
+        f = self.get_facet_by_field_name(tile_facet_field)
+        if f:
+            facets[f] = 'on'
         return facets
 
-    def get_facets_keyword_data(self, exclude=None):
+    def get_facets_keyword_selected_data(self, exclude=None):
         facets_keyword = collections.OrderedDict()
         for f in self.get_facets_keyword():
             if f.field != exclude:
@@ -689,7 +702,7 @@ class SeekerView (View):
     def get_facet_by_field_name(self, field_name):
         # check on the base name and not at possible extensions like .keyword
         base_field_name = field_name.split('.')[0]
-        if base_field_name != 'answer':
+        if base_field_name != 'answer' and base_field_name != '':
             for facet in self.facets:
                 facet_base_field_name = facet.field.split('.')[0]
                 if facet_base_field_name == base_field_name:
@@ -1075,8 +1088,8 @@ class SeekerView (View):
 
         workbook, dashboard = self.get_workbook_dashboard_names()
         keywords_q = self.get_keywords_q()
-        facets = self.get_facet_data(initial=self.initial_facets if not self.request.is_ajax() else None)
-        facets_keyword = self.get_facets_keyword_data()
+        facets = self.get_facet_selected_data(initial=self.initial_facets if not self.request.is_ajax() else None)
+        facets_keyword = self.get_facets_keyword_selected_data()
         self.set_workbook_filters(facets, workbook)
 
         search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
@@ -1118,33 +1131,23 @@ class SeekerView (View):
         #if self.summary != None:, also fill url in results
         self.summary_tab(results, columns)
 
-        results_tile = None
-        tile_df = None
-        tile_df = pd.DataFrame()
-        tiles_d = {}
-        tiles_select = {}
-        stats_df = {}
-        corr_df = {}
-
-        # convert dashboard definition into Chart objects
-        charts = {}
-        for chart_name, chart in self.dashboard.items():
-            charts[chart_name] = seeker.dashboard.Chart(chart_name, self.dashboard, self.get_facet_by_field_name, self.decoder)
-            tiles_d[chart_name] = {}
-
-        seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, charts, results, facets_keyword)
+        tiles_select = OrderedDict()
+        tiles_d = {chart_name : {} for chart_name in self.dashboard.keys()}
+        seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, results, facets_keyword)
         seeker.models.stats_df = pd.DataFrame()
         seeker.models.corr_df = pd.DataFrame()
 
-        facets_tile = self.get_facet_tile(initial=self.initial_facets if not self.request.is_ajax() else None)
+        facets_tile = self.get_facet_tile()
         if len(facets_tile) > 0:
             search_tile = self.get_empty_search()
             for facet_tile in facets_tile:
                 search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, charts, results_tile, facets_keyword)
+            seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, results_tile, facets_keyword)
 
+        seeker.models.stats_df = pd.DataFrame()
+        seeker.models.corr_df = pd.DataFrame()
         for chart_name, chart in self.dashboard.items():
             data_type = chart['data_type']
             if data_type == 'correlation':
@@ -1154,6 +1157,8 @@ class SeekerView (View):
 
         context_querystring = self.normalized_querystring()
         sort = sorts[0] if sorts else ''
+        facets_data = self.get_facets_data(results, tiles_select)
+
         context = {
             'document': self.document,
             'keywords_q': keywords_q,
@@ -1166,10 +1171,11 @@ class SeekerView (View):
             'selected_facets': self.request.GET.getlist('f') or self.initial_facets.keys(),
             'form_action': self.request.path,
             'results': results,
+            'facets_data': json.dumps(facets_data),
             'tiles_select': json.dumps(tiles_select),
             'tiles_d': json.dumps(tiles_d),
-            'stats_df' : seeker.models.stats_df.to_json(orient='records'),
-            'corr_df' : seeker.models.corr_df.to_json(orient='records'),
+            #'stats_df' : seeker.models.stats_df.to_json(orient='records'),
+            #'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             'storyboard' : json.dumps(self.storyboard),
             'dashboard_name' : dashboard['name'],
             'dashboard': json.dumps(self.dashboard),
@@ -1200,15 +1206,15 @@ class SeekerView (View):
                 'querystring': context_querystring,
                 'page': page,
                 'sort': sort,
-                'facet_data': {facet.field: facet.data(results) for facet in self.get_facets()},
+                'facets_data': json.dumps(facets_data),
                 # 'aggs': json.dumps(aggr),
                 'storyboard' : json.dumps(self.storyboard),
                 'dashboard_name' : dashboard['name'],
                 'dashboard': json.dumps(self.dashboard),
                 'tiles_select': json.dumps(tiles_select),
                 'tiles_d': json.dumps(tiles_d),
-                'stats_df' : seeker.models.stats_df.to_json(orient='records'),
-                'corr_df' : seeker.models.corr_df.to_json(orient='records'),
+                #'stats_df' : seeker.models.stats_df.to_json(orient='records'),
+                #'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             })
         else:
             return render(self.request, self.template_name, context)
@@ -1219,7 +1225,7 @@ class SeekerView (View):
         if not facet:
             raise Http404()
         # We want to apply all the other facet filters besides the one we're querying.
-        facets = self.get_facet_data(exclude=facet)
+        facets = self.get_facet_selected_data(exclude=facet)
         search = self.get_search(keywords_q, facets, aggregate=False)
         fq = '.*' + self.request.GET.get('_query', '').strip() + '.*'
         facet.apply(search, facet.name, include={'pattern': fq, 'flags': 'CASE_INSENSITIVE'})
@@ -1236,8 +1242,8 @@ class SeekerView (View):
         self.get_workbook()
 
         keywords_q = self.get_keywords_q()
-        facets = self.get_facet_data()
-        facets_keyword = self.get_facets_keyword_data()
+        facets = self.get_facet_selected_data()
+        facets_keyword = self.get_facets_keyword_selected_data()
 
         search, keywords_q = self.get_search(keywords_q, facets, facets_keyword, self.dashboard)
         #search = self.get_search(keywords_q, facets, aggregate=False)
@@ -1291,8 +1297,8 @@ class SeekerView (View):
 
         #keywords_q = self.get_keywords_q()
         #keywords_k = self.get_keywords_k()
-        #facets = self.get_facet_data()
-        #facets_keyword = self.get_facets_keyword_data()
+        #facets = self.get_facet_selected_data()
+        #facets_keyword = self.get_facets_keyword_selected_data()
         #search = self.get_search(keywords_q, facets, keywords_k, facets_keyword, aggregate=False)
         #columns = self.get_columns()
         #results = search.execute()

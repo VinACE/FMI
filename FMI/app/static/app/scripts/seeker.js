@@ -216,6 +216,7 @@ $("#_filter").click(function () {
 
 // do a redraw in case the storyboard tab is shown the first time
 $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var input = document.getElementsByName("tab")[0];
     var ul = document.getElementById("tabs");
     var items = ul.getElementsByTagName("li");
     for (var i = 0; i < items.length; ++i) {
@@ -226,6 +227,7 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var href = anchor.href;
             var n = href.lastIndexOf("#");
             var tab = href.substr(n, href.length - 1);
+            input.value = tab;
             if (tab == "#storyboard_tab") {
                 if (typeof g_storyboard != 'undefined') {
                     draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")

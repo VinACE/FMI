@@ -321,7 +321,7 @@ function selectEventChart(chart_name, rowIndex, columnIndex, argument) {
     if (argument == 'country.keyword') {
         var field = argument;
         var select_elm = document.getElementsByName(field)[0];
-        select_elm.options[rowIndex-1].selected = !select_elm.options[rowIndex-1].selected;
+        select_elm.options[rowIndex].selected = !select_elm.options[rowIndex].selected;
     }
 }
 

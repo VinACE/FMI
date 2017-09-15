@@ -211,8 +211,9 @@ def guide_view(request):
             if site_name != '':
                 menu_name = request.GET.get('menu_name', '')
                 view_name = request.GET.get('view_name', '')
+                tile_facet_field = request.GET.get('tile_facet_field', '')
                 if site_name != '':
-                    results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name)
+                    results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name, tile_facet_field)
 
 
     context = {

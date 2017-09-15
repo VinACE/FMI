@@ -60,7 +60,8 @@ function route_step(route_name, step_name) {
             var dashboard = step['selection'][1];
             var charts = step['selection'][2];
             g_db = charts;
-            draw_dashboard(dashboard, charts, "All", "filterchart_div");
+            tab_active('#storyboard_tab');
+            draw_dashboard(dashboard, charts, "All", "dashboard_div");
         }
     }
     if (step['type'] == 'selection') {
@@ -68,6 +69,7 @@ function route_step(route_name, step_name) {
             var gallery = step['selection'][1];
             var field = step['facet'];
             var selsize = step['selsize'];
+            tab_active('#results_tab');
             draw_gallery(field, selsize, gallery);
         }
     }
@@ -76,6 +78,7 @@ function route_step(route_name, step_name) {
             var gallery = step['selection'][1];
             var field = step_name
             var selsize = step['selsize'];
+            tab_active('#results_tab');
             draw_gallery(field, selsize, gallery);
         }
     }
@@ -157,7 +160,7 @@ function route_onchange() {
 
     //var table = document.getElementById("route_definition_table");
     //table.innerHTML = "";
-    //var facet = document.getElementById("tile_select").value;
+    //var facet = document.getElementById("tile_value_select").value;
     //var params = {
     //    "db_facet_selecion": facet
     //};
@@ -172,31 +175,31 @@ function route_onchange() {
 function guide_route(route_name, step_name, guide) {
     g_guide = guide;
 
-    var select = document.getElementById("route_select");
-    select.setAttribute("onChange", "route_onchange()");
-    // remove any existing options
-    var option = document.createElement("option");
-    option.setAttribute("value", "");
-    option.text = "Select a route";
-    if (route_name == "") {
-        option.setAttribute('selected', true);
-    }
-    select.appendChild(option);
-    var routes = guide['routes'];
-    for (var route_key in routes) {
-        var option = document.createElement("option");
-        option.setAttribute("value", route_key);
-        option.text = route_key;
-        if (route_name == route_key) {
-            option.setAttribute('selected', true);
-        }
-        select.appendChild(option);
-    }
+    //var select = document.getElementById("route_select");
+    //select.setAttribute("onChange", "route_onchange()");
+    //// remove any existing options
+    //var option = document.createElement("option");
+    //option.setAttribute("value", "");
+    //option.text = "Select a route";
+    //if (route_name == "") {
+    //    option.setAttribute('selected', true);
+    //}
+    //select.appendChild(option);
+    //var routes = guide['routes'];
+    //for (var route_key in routes) {
+    //    var option = document.createElement("option");
+    //    option.setAttribute("value", route_key);
+    //    option.text = route_key;
+    //    if (route_name == route_key) {
+    //        option.setAttribute('selected', true);
+    //    }
+    //    select.appendChild(option);
+    //}
 
-    if (route_name != "") {
-        //route_definition(route_name);
-        route_step(route_name, step_name);
-    }
+    //if (route_name != "") {
+    //    //route_definition(route_name);
+    //    route_step(route_name, step_name);
+    //}
 }
 
 
@@ -381,7 +384,6 @@ function site_menu_show(site_name, menu_name) {
         case 'data-selector':
             var route_name = menu_item['step'][0];
             var step_name = menu_item['step'][1];
-            tab_active('#filters_tab');
             route_step(route_name, step_name);
             break;
         case 'view-selector':
@@ -542,12 +544,18 @@ function fill_params_facets_tiles(site_name, menu_name, view_name) {
             }
         }
     }
-    var site_view = g_site_views[view_name];
-    var tiles = site_view['tiles'];
-    for (var tile_ix = 0; tile_ix < tiles.length; tile_ix++) {
-        var tile = tiles[tile_ix];
-        var tile_field = tile['field'];
-        params[tile_field + '_tile'] = 'on';
+    var input = document.getElementsByName("tile_facet_field")[0];
+    var tile_field = input.value;
+    if (tile_field == '') {
+        var site_view = g_site_views[view_name];
+        var tiles = site_view['tiles'];
+        for (var tile_ix = 0; tile_ix < tiles.length; tile_ix++) {
+            var tile = tiles[tile_ix];
+            var tile_field = tile['field'];
+            params[tile_field + '_tile'] = 'on';
+        }
+    } else {
+        params[tile_facet_field] = tile_field;
     }
     return params;
 }
@@ -569,11 +577,12 @@ function search(site_name, menu_name, view_name) {
         //var storyboard = site_view['storyboard'];
         var storyboard = JSON.parse(data['storyboard']);
         var charts = JSON.parse(data['dashboard']);
+        var facets_data = JSON.parse(data['facets_data']);
         var tiles_select = JSON.parse(data['tiles_select']);
         var tiles_d = JSON.parse(data['tiles_d']);
-        var stats_df = JSON.parse(data['stats_df']);
+        //var stats_df = JSON.parse(data['stats_df']);
         //var corr_df = JSON.parse(data['corr_df']);
-        fill_tiles(tiles_select, tiles_d);
+        fill_tiles(facets_data, tiles_select, tiles_d);
         draw_storyboard(storyboard, dashboard_name, charts);
     });
 }

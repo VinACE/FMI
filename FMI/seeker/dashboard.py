@@ -28,6 +28,17 @@ from scipy.stats import norm
 import seeker.seekerview
 import seeker.models
 
+#
+# Google Charts and D3.JS are used to render the Chart object
+# A Goolge Chart takes a DataTable as input. This DataTable is populated from the computed chart_data using
+# google.visualization.arrayToDataTable.
+# chart_data is a list of rows, a row on its turn is also a list. The first row describes the column headers,
+# the series. The first cell of each row mentions the category.
+# A column header can be a single value or a col object with an id, label, type, pattern and p (style) attribute.
+# A cell can be a single value or a cell objects. Each cell has an v (value), f (formatted value) and p (stype) attribute.
+# Example of a p attribute: p:{style: 'border: 1px solid green;'}
+#
+
 def bind_facet(seekerview, chart, aggregations):
     chart_data = []
     X_facet = chart['X_facet']
@@ -630,68 +641,83 @@ def bind_correlation(seekerview, chart, stats_df, corr_df):
     X_field = X_facet['field']
     # First row
     row = [X_facet['label']['category']]
-    for col in X_field:
+    for col in X_facet['stats']:
         if col in stats_df.columns:
-            row.append(X_facet['label'][col])
+            if col in X_facet['label']:
+                row.append(X_facet['label'][col])
+            else:
+                row.append(col)
     chart_data.append(row)
     # Category rows
     for ix, stats_s in stats_df.iterrows():
         # First column
         row = [ix[0]]
-        for col in X_field:
+        for col in X_facet['stats']:
             # Series columns
             if col in stats_df.columns:
                 row.append(stats_s[col])
         chart_data.append(row)
     return chart_data
 
-def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, charts, results, facets_keyword):
+
+def bind_chart(seekerview, chart_name, chart, hits, aggregations, facet_tile_value, facets_keyword):
+    data_type = chart['data_type']
+    X_facet = chart['X_facet']
+    if data_type == 'facet':
+        chart_data = bind_facet(seekerview, chart, aggregations)
+    elif data_type == 'aggr':
+        if 'aggr_name' in chart:
+            if facet_tile_value == 'All':
+                aggr_name = chart['aggr_name']
+            else:
+                aggr_name = chart['X_facet']['field']
+            chart_data = bind_topline_aggr(seekerview, chart, aggr_name, aggregations, facets_keyword)
+        else:
+            if facet_tile_value == 'All':
+                aggr_name = chart_name
+            else:
+                aggr_name = chart['X_facet']['field']
+            chart_data = bind_aggr(seekerview, chart, aggr_name, aggregations)
+    elif data_type == 'hits':
+        chart_data = bind_hits(seekerview, chart, hits, facets_keyword)
+    elif data_type == 'topline':
+        chart_data = bind_topline(seekerview, chart, hits, facets_keyword)
+    else:
+        chart_data = []
+    return chart_data
+
+def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, results, facets_keyword):
     hits = results.hits
     aggregations = results.aggregations
-    rownr = 0
-    for chart_name, chart in charts.items():
-        data_type = chart.db_chart['data_type']
-        X_facet = chart.db_chart['X_facet']
 
+    for chart_name, chart in seekerview.dashboard.items():
+    #for chart_name, chart in charts.items():
+        data_type = chart['data_type']
+        if data_type == 'correlation':
+            continue
+        X_facet = chart['X_facet']
         if facets_tile == None:
-            tiles_select['All'] = []
-            if data_type == 'facet':
-                chart_data = bind_facet(seekerview, chart.db_chart, aggregations)
-            elif data_type == 'aggr':
-                if 'aggr_name' in chart.db_chart:
-                    aggr_name = chart.db_chart['aggr_name']
-                    chart_data = bind_topline_aggr(seekerview, chart.db_chart, aggr_name, aggregations, facets_keyword)
-                else:
-                    aggr_name = chart_name
-                    chart_data = bind_aggr(seekerview, chart.db_chart, aggr_name, aggregations)
-            elif data_type == 'hits':
-                chart_data = bind_hits(seekerview, chart.db_chart, hits, facets_keyword)
-            elif data_type == 'topline':
-                chart_data = bind_topline(seekerview, chart.db_chart, hits, facets_keyword)
-            else:
-                chart_data = []
+            tiles_select['All'] = ['All']
+            chart_data = bind_chart(seekerview, chart_name, chart, hits, aggregations, 'All', facets_keyword)
             tiles_d[chart_name]['All'] = chart_data
         else:
             for facet_tile in facets_tile:
                 tiles_select[facet_tile.label] = []
-                agg_name = facet_tile.name + '_' + chart_name
-                if agg_name in aggregations:
-                    agg = aggregations[agg_name]
-                    tiles = facet_tile.buckets(agg)
-                    for facet_tile_value, tile in tiles.items():
-                        if facet_tile_value not in tiles_select[facet_tile.label]:
-                            tiles_select[facet_tile.label].append(facet_tile_value)
-                        if data_type == 'facet':
-                            chart_data = bind_facet(seekerview, chart.db_chart, tile)
-                        elif data_type == 'aggr':
-                            if 'aggr_name' in chart.db_chart:
-                                aggr_name = chart.db_chart['aggr_name']
-                                chart_data = bind_topline_aggr(seekerview, chart.db_chart, aggr_name, tile, facets_keyword)
-                            else:
-                                chart_data = chart_data = bind_aggr(seekerview, chart.db_chart, X_facet['field'], tile)
-                        else:
-                            chart_data = []
-                        tiles_d[chart_name][facet_tile_value] = chart_data
+
+                if 'aggr_name' in chart:
+                    aggr_name = chart['aggr_name']
+                else:
+                    aggr_name = chart_name
+                tile_aggr_name = facet_tile.name + '_' + aggr_name
+                if tile_aggr_name in aggregations:
+                    tile_aggr = aggregations[tile_aggr_name]
+                    tiles = facet_tile.buckets(tile_aggr)
+
+                for facet_tile_value, tile in tiles.items():
+                    if facet_tile_value not in tiles_select[facet_tile.label]:
+                        tiles_select[facet_tile.label].append(facet_tile_value)
+                    chart_data = bind_chart(seekerview, chart_name, chart, hits, tile, facet_tile_value, facets_keyword)
+                    tiles_d[chart_name][facet_tile_value] = chart_data
     return
 
 def get_fqa_v_respondents(fqav_df, question, answer, facet):
@@ -797,12 +823,14 @@ def stats(seekerview, chart_name, tiles_d):
         # aggregate to qa (fact) level
         fqa_df = pd.DataFrame(0.0, columns=qa_columns, index=f_index)
         for facet in f_index:
-            for qav in fqav_df.columns:
-                q = qav[0]
-                a = qav[1]
-                v = qav[2]
+            #for qa in fqa_df.columns:
+            #use stable version of columns becaues of drop and insert into fqa_df
+            for qa in qa_columns:
+                q = qa[0]
+                a = qa[1]
                 question_field = q
                 fact = chart['facts'][question_field]
+
                 total = 0
                 if fact['value_type'] == 'boolean':
                     values, nr_respondents = get_fqa_v_respondents(fqav_df, q, a, facet)
@@ -813,55 +841,70 @@ def stats(seekerview, chart_name, tiles_d):
                         elif value_code == "No":
                             value_code = 0
                         count = fqav_df[(q, a, value)][facet]
-                        total = total + value_code * count
+                        total = total + (value_code * count)
                     if nr_respondents > 0:
                         percentile = total / nr_respondents
                     else:
                         percentile = total
-                    fqa_df.loc [facet, (q, a)] = total
-                    #fqa_df.loc [f, (q, a)] = percentile
+                    if fact['calc'] == 'w-avg':
+                        fqa_df.loc [facet, (q, a)] = percentile
+                    elif fact['calc'] == 'percentile':
+                        fqa_df.loc [facet, (q, a)] = percentile
+                    elif fact['calc'] == 'w-total':
+                        fqa_df.loc [facet, (q, a)] = total
+                    elif fact['calc'] == 'count':
+                        fqa_df.loc [facet, (q, a)] = count
+
                 elif fact['value_type'] == 'ordinal':
                     answers, values, nr_respondents = get_fq_av_respondents(fqav_df, q, facet)
-                    for answer in answers:
+                    for aix in range(0, len(answers)):
+                        answer = answers[aix]
                         value_code = answer_value_decode(answer)
                         if type(value_code) == str:
                             try:
                                 value_code = int(float(value_code))
                             except:
                                 value_code = 0
-                        # normally on value returned from ES -> Total
-                        for value in values:
-                            total = total + fqav_df[q, answer, value][facet]
-                    count = fqav_df[q, a, v][facet]
+                        # normally one value returned from ES -> Total
+                        value = values[aix]
+                        total = total + (value_code * fqav_df[q, answer, value][facet])
+                        if answer == a:
+                            count = fqav_df[q, a, value][facet]
                     if nr_respondents > 0:
                         percentile = count / nr_respondents
+                        mean = total / nr_respondents
                     else:
                         percentile = count
-                    fqa_df.loc [facet, (q, a)] = count
-                    #fqa_df.loc [f, (q, a)] = percentile
-                    mean = total / nr_respondents
-                    #fqa_df.loc [f, (q, 'mean')] = mean
+                        mean = total
+                    if fact['calc'] == 'w-avg':
+                        fqa_df.loc [facet, (q, 'w-avg')] = mean
+                        if (q, a) in fqa_df.columns:
+                            fqa_df.drop((q, a), axis=1, inplace=True)
+                    elif fact['calc'] == 'percentile':
+                        fqa_df.loc [facet, (q, a)] = percentile
+                    elif fact['calc'] == 'w-total':
+                        fqa_df.loc [facet, (q, a)] = total
+                    elif fact['calc'] == 'count':
+                        fqa_df.loc [facet, (q, a)] = count
 
     if len(fqa_df.index) > 0:
         stats_df = fqa_df.describe().transpose()
         stats_df['question'] = [t[0] for t in stats_df.index]
         stats_df['answer'] = [t[1] for t in stats_df.index]
-        corr_df = fqa_df.corr()
-        corr_df['question'] = [t[0] for t in corr_df.index]
-        corr_df['answer'] = [t[1] for t in corr_df.index]
+        #corr_df = fqa_df.corr()
+        #corr_df['question'] = [t[0] for t in corr_df.index]
+        #corr_df['answer'] = [t[1] for t in corr_df.index]
+        # compute the correlation between X and Y, X being the firt fact and Y the others
+        # correlation is returned as a dataframe with X as the row (index) and Y as the columns
+        qx = chart['X_facet']['field']
+        for (q1, ax) in fqa_df.columns:
+            if q1 != qx:
+                continue
+            for (qy, ay) in fqa_df.columns:
+                # exclude 'All'
+                stats_df.loc[(qy, ay), qx] = np.corrcoef(fqa_df[(qx, ax)][1:], fqa_df[(qy, ay)][1:])[0,1]
+
     return stats_df, corr_df
-
-def bucket_coor(key_bucket, buckets, db_facet):
-    if type(buckets) == AttrList:
-        bucket = key_bucket
-        key = bucket[db_facet['key']]
-        metric = bucket[db_facet['metric']]
-    else:
-        key = key_bucket
-        bucket = buckets[key]
-        metric = bucket[db_facet['metric']]
-    return key, metric, bucket
-
 
 # aggs : { <
 #GET survey/_search
@@ -922,41 +965,34 @@ def facet_aggregate(facet, charts):
     return False
 
 
+
+
+#class Chart(object):
+#    name = ""
+#    chart_type = ""
+#    db_chart = None
+#    decoder = None
+#    get_facet_by_field_name = None
 #
-# Google Charts are used to render the Chart object
-# A Goolge Chart takes a DataTable as input. This DataTable can be constructed as a JavaScript data parameter.
-# This data statement defines the table as an object with cols, rows and p attributes.
-# A cols is an array with col object. A col object has an id, label, type, pattern and p (style) attribute.
-# A rows is an array of cell objects. Each cell has an v (value), f (formatted value) and p (stype) attribute.
-# Example of a p attribute: p:{style: 'border: 1px solid green;'}
-#
+#    def __init__(self, name, dashboard, get_facet_by_field_name, decoder=None, **kwargs):
+#        self.name = name
+#        self.chart_type = dashboard[name]['chart_type']
+#        self.db_chart = dashboard[name]
+#        self.get_facet_by_field_name = get_facet_by_field_name
+#        self.decoder = decoder
+#        self.db_chart['data'] = []
+#        if 'key' not in self.db_chart['X_facet']:
+#            self.db_chart['X_facet']['key'] = "key"
+#        if 'metric' not in self.db_chart['X_facet']:
+#            self.db_chart['X_facet']['metric'] = "doc_count"
+#        if 'Y_facet' in self.db_chart:
+#            if 'key' not in self.db_chart['Y_facet']:
+#                self.db_chart['Y_facet']['key'] = "key"
+#            if 'metric' not in self.db_chart['Y_facet']:
+#                self.db_chart['Y_facet']['metric'] = "doc_count"
 
-class Chart(object):
-    name = ""
-    chart_type = ""
-    db_chart = None
-    decoder = None
-    get_facet_by_field_name = None
-
-    def __init__(self, name, dashboard, get_facet_by_field_name, decoder=None, **kwargs):
-        self.name = name
-        self.chart_type = dashboard[name]['chart_type']
-        self.db_chart = dashboard[name]
-        self.get_facet_by_field_name = get_facet_by_field_name
-        self.decoder = decoder
-        self.db_chart['data'] = []
-        if 'key' not in self.db_chart['X_facet']:
-            self.db_chart['X_facet']['key'] = "key"
-        if 'metric' not in self.db_chart['X_facet']:
-            self.db_chart['X_facet']['metric'] = "doc_count"
-        if 'Y_facet' in self.db_chart:
-            if 'key' not in self.db_chart['Y_facet']:
-                self.db_chart['Y_facet']['key'] = "key"
-            if 'metric' not in self.db_chart['Y_facet']:
-                self.db_chart['Y_facet']['metric'] = "doc_count"
-
-    def json(self):
-        return json.dumps({'chart_type': self.chart_type, 'data': self.db_chart['data']})
+#    def json(self):
+#        return json.dumps({'chart_type': self.chart_type, 'data': self.db_chart['data']})
 
 
 

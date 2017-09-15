@@ -9,9 +9,9 @@ from django.views.generic.base import TemplateView
 
 # Create your models here.
 import queue
-import collections
 import datetime
 import FMI.settings
+from collections import OrderedDict
 from pandas import DataFrame
 
 from elasticsearch import Elasticsearch
@@ -64,7 +64,7 @@ class ExcelEcoSystemWorkbook:
                 'label'   : "Keywords" },
             },
         }
-    dashboard_layout = collections.OrderedDict()
+    dashboard_layout = OrderedDict()
     dashboard_layout['table1'] = [["aop_pie", "keyword_pie"], ["role_col"]]
     dashboard_layout['table2'] = [["company_keyword_table"]]
 
@@ -130,7 +130,7 @@ class ExcelPatentsWorkbook:
                 'label'   : "Keywords" },
             },
         }
-    dashboard_layout = collections.OrderedDict()
+    dashboard_layout = OrderedDict()
     dashboard_layout['table1'] = [["published_keyword_line"]]
     dashboard_layout['table2'] = [["facet_comp_pie", "keyword_pie"], ["assignee_keyword_table"]]
 
@@ -218,7 +218,7 @@ class PostWorkbook:
             },
         }
 
-    dashboard_layout = collections.OrderedDict()
+    dashboard_layout = OrderedDict()
     dashboard_layout['rows1'] = [["published_keyword_line"]]
     dashboard_layout['rows2'] = [["facet_cust_pie", "facet_comp_pie", "facet_keyword_pie"]]
     dashboard_layout['rows3'] = [["category_keyword_table", "subject_keyword_table"]]
@@ -429,13 +429,13 @@ class ScentemotionWorkbook:
                 },
             },
         }
-    dashboard_olfactive = collections.OrderedDict()
+    dashboard_olfactive = OrderedDict()
     dashboard_olfactive['rows'] = [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]]
 
-    dashboard_candidates = collections.OrderedDict()
+    dashboard_candidates = OrderedDict()
     dashboard_candidates['rows'] = [["cand_mood_col"],["cand_smell_col"],["cand_intensity_col"]]
 
-    dashboard_profile = collections.OrderedDict()
+    dashboard_profile = OrderedDict()
     dashboard_profile['columns'] = [["cand_intensity_col"], ["mood_cand_radar", "smell_cand_radar"], ["negative_cand_radar", "descriptor_cand_radar"]]
 
     storyboard = [
@@ -627,13 +627,13 @@ class StudiesWorkbook:
                 },
             },
         }
-    dashboard_olfactive = collections.OrderedDict()
+    dashboard_olfactive = OrderedDict()
     dashboard_olfactive['rows'] = [["region_olfactive_table"], ["olfactive_pie", "olfactive_col"]]
 
-    dashboard_candidates = collections.OrderedDict()
+    dashboard_candidates = OrderedDict()
     dashboard_candidates['rows'] = [["cand_emotion_col"],["cand_freshness_col"],["cand_hedonics_col"]]
 
-    dashboard_profile = collections.OrderedDict()
+    dashboard_profile = OrderedDict()
     dashboard_profile['columns'] = [["hedonics_cand_table"], ["suitable_stage_cand_bar"],["suitable_stage_cand_radar"]]
 
     storyboard = [
@@ -947,16 +947,16 @@ class SurveyWorkbook:
         } 
 
 
-    dashboard_fresh_layout = collections.OrderedDict()
+    dashboard_fresh_layout = OrderedDict()
     dashboard_fresh_layout['rows'] = [["emotion_ans_col"],["suitable_stage_ans_col", "suitable_product_ans_col"]]
 
-    dashboard_fresh_hedonics = collections.OrderedDict()
+    dashboard_fresh_hedonics = OrderedDict()
     dashboard_fresh_hedonics['rows'] = [["liking_blindcode_col"],["freshness_blindcode_col"], ["cleanliness_blindcode_col"]]
 
-    dashboard_fresh_topline = collections.OrderedDict()
+    dashboard_fresh_topline = OrderedDict()
     dashboard_fresh_topline['rows'] = [["topline_liking_table"],["topline_freshness_table"],["cand_emotion_col"]]
 
-    dashboard_fresh_profile = collections.OrderedDict()
+    dashboard_fresh_profile = OrderedDict()
     dashboard_fresh_profile['columns'] = [["topline_liking_table"],["topline_liking_combo"],["cand_concept_radar", "cand_emotion_radar"],["cand_mood_radar"]]
 
 
@@ -996,17 +996,20 @@ class SurveyWorkbook:
             'data_type'  : "correlation",
             'base'        : ["liking_ans_col", "emotion_ans_col"],
             'controls'    : ['CategoryFilter'],
-            'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal'},
-                             'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean'}},
+            'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal', 'calc' : 'w-avg'},
+                             'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean', 'calc' : 'w-avg'}},
             'listener'    : {'select' : {'rowsort': None}},
             'X_facet'     : {
-                'field'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%'],
-                'label'   : {'category' : 'Question', 'answer':'Answer', 'count':'Tiles', 'mean':'Mean',
-                             'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%'},
+                'field'   : 'liking.keyword',
+                'stats'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%', 'liking.keyword'],
+                'label'   : {'category' : 'Question',
+                             'answer':'Answer', 'count':'Tiles', 'mean':'Mean', 'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%',
+                             'liking.keyword': 'Liking'},
                 },
             'Y_facet'     : {
-                'field'   : "quastion/answer",
-                'label'   : "Q & A"
+                'field'   : 'emotion',
+                'corrs'   : 'emotion',
+                'label'   : "Emotion"
                 },
             'options'     : {
                 "allowHtml" : True,
@@ -1200,10 +1203,10 @@ class SurveyWorkbook:
             },
         }
 
-    dashboard_orange_hedonics = collections.OrderedDict()
+    dashboard_orange_hedonics = OrderedDict()
     dashboard_orange_hedonics['rows'] = [["liking_blindcode_col"],["strength_blindcode_col"]]
 
-    dashboard_orange_profile = collections.OrderedDict()
+    dashboard_orange_profile = OrderedDict()
     dashboard_orange_profile['columns'] = [
             ["topline_liking_table"],["cand_affective_radar", "cand_behavioral_radar"],
             ["cand_ballot_radar", "cand_descriptors_radar"]

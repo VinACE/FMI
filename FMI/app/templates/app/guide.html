@@ -5,12 +5,11 @@
 {% load seeker %}
 
 <div class="page-header iff-box-header">
-  <h1>Guide {{ title }} <small>Select the Route or Site that leads to results</small></h1>
+  <h1>Guide {{ title }} <small>Select your favority Site to look at CI results</small></h1>
     <p>
-        To find the right search results, this Guide will help in following the right route that leads to the results you are looking for.
-        First select the route that matches the trail you want to follow. The route consists of a serie of selections and decisions that have
-        to be made. These selections and decisions help in defining the search query. Instead of a free format search, the route is a
-        guided process that leads to the right search query which will return the results you are looking for.
+        After you have selected the Site you want to visit, a Site Menu will appear. This Site Menu offers easy navigation.
+        There are different types of Menu Items; the data-selection item assist in making data selections. The view-selection item
+        offers a gallery of view options of how the selected data should be presented.
     </p>
 </div>
 
@@ -19,20 +18,14 @@
         <div style="flex: 0 1 15%; margin-right: 5px;">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <label for="sel1">Select your Route:</label>
-                    <select name="route_select" class="form-control" id="route_select">
-                    </select>
-                    <input type="hidden" name="step_name" value="">
-                    <table class="table table-bordered table-condensed" id="route_definition_table"></table>
-                </div>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-body">
                     <label for="sel2">Select your Site:</label>
                     <select name="site_select" class="form-control" id="site_select">
                     </select>
                     <input type="hidden" name="menu_name" value="">
+                    <input type="hidden" name="step_name" value="">
                     <input type="hidden" name="view_name" value="">
+                    <input type="hidden" name="tile_facet_field" value="">
+                    <input type="hidden" name="tile_facet_value" value="">
                     <div class="vertical-menu" id="site_menu">
                 </div>
             </div>
@@ -59,30 +52,13 @@
         </div>
         <div style="flex: 5 5 auto; padding-bottom:10px; padding-top:10px;">
             <ul class="nav nav-tabs" id="tabs">
-                <li class="active"><a href="#filters_tab" data-toggle="tab">Filters</a></li>
-                <li class=""><a href="#site_menu_views_tab" data-toggle="tab">Views</a></li>
+                <li class="active"><a href="#site_menu_views_tab" data-toggle="tab">Views</a></li>
                 <li class=""><a href="#results_tab" data-toggle="tab">Results</a></li>
                 <li class=""><a href="#storyboard_tab" data-toggle="tab">Storyboard</a></li>
             </ul>
 
             <div class="tab-content" >
-                <div class="tab-pane active" id="filters_tab">
-                    <div class="panel panel-primary" style="min-height: 500px">
-                        <div class="panel-body">
-                            <button type="submit" name="guide_previous"  class="btn btn-primary">
-                                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Previous
-                            </button>
-                            <button type="submit" name="guide_next"  class="btn btn-primary">Next
-                                <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
-                            </button>
-                            <div id="filterchart_div"></div>
-                            <div class="row">
-                                <div id="gallery_div"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane" id="site_menu_views_tab" style="min-height: 500px">
+                <div class="tab-pane active" id="site_menu_views_tab" style="min-height: 500px">
                     <div class="panel panel-primary" style="min-height: 500px">
                         <div class="panel-body" id="view_style_div">
                             <div id="site_menu_views_div" style="display: flex; flex-wrap: wrap; min-height: 500px"></div>
@@ -94,6 +70,7 @@
                         <div class="panel-body" id="results_style_div">
                             <div class="row">
                                 <div id="images_div"></div>
+                                <div id="gallery_div"></div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
@@ -124,17 +101,24 @@
                     <p></p>
                     <div class="container-fluid">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="sel1">Storyboard, select your Dashboard:</label>
                                     <select name="storyboard" class="form-control" id="storyboard_select">
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="sel1">Tile, select your Facet:</label>
-                                    <select name="tile_select" class="form-control" id="tile_select">
+                                    <label for="sel1">Select your Tile-Facet:</label>
+                                    <select name="tile_facet_select" class="form-control" id="tile_facet_select">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="sel1">Select your Tile-Value:</label>
+                                    <select name="tile_value_select" class="form-control" id="tile_value_select">
                                     </select>
                                 </div>
                             </div>

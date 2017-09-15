@@ -417,7 +417,7 @@ def route_step(request, tiles_d, route_name, step_name):
     route_steps = route[1]
     seekerview = route2seeker[route_name]()
     seekerview.request = request
-    facets = seekerview.get_facet_data()
+    facets = seekerview.get_facet_selected_data()
     using = seekerview.using
     index = seekerview.index
     search = seekerview.document.search().index(index).using(using).extra(track_scores=True)
@@ -484,7 +484,7 @@ def route_dest(request, route_name, step_name):
 
 
 # prepare the data for the selected menu for the site
-def site_menu(request, site_name, menu_name, view_name):
+def site_menu(request, site_name, menu_name, view_name, tile_facet_field):
     results = {}
     tiles_d = {}
     facets = {}
@@ -499,7 +499,10 @@ def site_menu(request, site_name, menu_name, view_name):
             results, facets = route_step(request, tiles_d, route_name, step_name);
         elif menu_item['type'] == 'view-selector':
             if view_name != '':
-                pass
+                site_view = site_views[view_name]
+                if 'tiles' in site_view and tile_facet_field != '' and tile_facet_field != 'All':
+                    tile = site_view['tiles'][0]
+                    tile['field'] = tile_facet_field
         elif menu_item['type'] == 'site-view':
             pass
         else:
