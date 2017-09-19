@@ -39,8 +39,23 @@ import seeker.models
 # Example of a p attribute: p:{style: 'border: 1px solid green;'}
 #
 
+def answer_value_decode(answer_code):
+    global qa
+
+    answer_value = answer_code
+    if answer_code == "Yes":
+        answer_value = 1
+    elif answer_code == "No":
+        answer_value = 0
+    elif type(answer_code) == str and answer_code != '':
+        first_code = answer_code.split()[0]
+        if first_code.isdigit():
+            answer_value = int(float(first_code))
+    return answer_value
+
 def bind_facet(seekerview, chart, aggregations):
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
     X_field = X_facet['field']
     X_label = X_facet['label']
@@ -49,6 +64,14 @@ def bind_facet(seekerview, chart, aggregations):
     sub_total = False
     if 'total' in X_facet:
         x_total = X_facet['total']
+    x_calc = 'count'
+    if 'calc' in X_facet:
+        x_calc = X_facet['calc']
+    mean_type = 'none'
+    mean_layout = 'none'
+    if 'mean' in X_facet:
+        mean_type = X_facet['mean']['type']
+        mean_layout = X_facet['mean']['layout']
     if 'Y_facet' in chart:
         Y_facet = chart['Y_facet']
         Y_field = chart['Y_facet']['field']
@@ -69,32 +92,70 @@ def bind_facet(seekerview, chart, aggregations):
         y_start = 1
         dt_columns.append("Total")
         y_start = y_start + 1
-        dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
+        if mean_layout == 'category':
+            dt_index.append('Mean')
+        elif mean_layout == 'serie':
+            dt_columns.append('Mean')
+            y_start = y_start + 1
         # next fill the series for the categories
-        rownr = 0
-        for X_key, bucket in buckets.items():
-            # skip and map categories
-            X_key = xfacet.get_category(X_key, bucket, X_facet)
-            if X_key == None:
-                continue
-            X_metric = xfacet.get_metric(bucket)
-            dt.loc[rownr, X_label] = X_key
-            dt_index.append(X_key)
-            dt.loc[rownr, "Total"] = X_metric
-            rownr = rownr + 1
+        modes = ['sizing_', 'filling_']
+        nr_respondents = 0
+        total = 0
+        for mode in modes:
+            if mode == 'filling_':
+                dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
+            rownr = 0
+            for X_key, bucket in buckets.items():
+                # skip and map categories
+                X_key = xfacet.get_category(X_key, bucket, X_facet)
+                if X_key == None:
+                    continue
+                X_metric = xfacet.get_metric(bucket)
+                if mode == 'sizing_':
+                    dt_index.append(X_key)
+                    nr_respondents = nr_respondents + X_metric
+                if mode == 'filling_':
+                    count = X_metric
+                    value_code = answer_value_decode(X_key)
+                    if type(value_code) == int:
+                        total = total + (value_code * count)
+                    if nr_respondents > 0:
+                        percentile = count / nr_respondents
+                    else:
+                        percentile = count
+                    dt.loc[X_key, X_label] = X_key
+                    if x_calc == 'percentile':
+                        dt.loc[X_key, 'Total'] = percentile
+                    else:
+                        dt.loc[X_key, 'Total'] = count
+                rownr = rownr + 1
+            if mode == 'filling_' and mean_type != 'none' and nr_respondents > 0:
+                if x_calc == 'percentile':
+                    mean = total / nr_respondents
+                else:
+                    mean = nr_respondents / rownr
+                meta_data['mean'] = mean
+                if mean_layout == 'category':
+                    dt.loc['Mean', X_label] = 'Mean'
+                    dt.loc['Mean', 'Total'] = mean
+                elif mean_layout == 'serie':
+                    dt.loc['Mean'] = [mean for c in dt_index]
+                elif mean_layout == 'header':
+                    dt_columns[0] = dt_columns[0] + "%.2f" % mean
 
         dt.fillna(0, inplace=True)
+        # remove Total only when sub_totals exists
         if sub_total == True and x_total == False:
             dt_columns.remove('Total')
             del dt['Total']
         chart_data.append(dt_columns)
-        # remove Total only when sub_totals exists
         for ix, row in dt.iterrows():
             chart_data.append(row.tolist())
-    return chart_data
+    return chart_data, meta_data
 
-def bind_hits(seekerview, chart, hits, facets_keyword=None):
+def bind_hits(seekerview, chart, hits, benchmakr=None):
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
     X_field = X_facet['field']
     X_label = X_facet['label']
@@ -112,11 +173,6 @@ def bind_hits(seekerview, chart, hits, facets_keyword=None):
         Y_field = None
         Y_Label = X_label
         yfacet = None
-
-    benchmark = []
-    if facets_keyword:
-        for facet_keyword in facets_keyword:
-            benchmark.append(facet_keyword.keywords_k)
 
     # next fill the series for the categories
     Y_total = 0
@@ -265,7 +321,7 @@ def bind_hits(seekerview, chart, hits, facets_keyword=None):
     chart_data.append(dt_columns)
     for ix, row in dt.iterrows():
         chart_data.append(row.tolist())
-    return chart_data
+    return chart_data, meta_data
 
 def _nested_box(nestedlist, values):
     prc = 0
@@ -292,17 +348,13 @@ def _nested_mean(nestedlist):
     return prc
 
 
-def bind_topline(seekerview, chart, hits, facets_keyword=None):
+def bind_topline(seekerview, chart, hits, benchmark=None):
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
     X_fields = X_facet['fields']
     Y_facet = chart['Y_facet']
     Y_field = Y_facet['field']
-
-    benchmark = []
-    if facets_keyword:
-        for facet_keyword in facets_keyword:
-            benchmark.append(facet_keyword.keywords_k)
 
     topline_columns = []
     for hit in hits.hits:
@@ -342,23 +394,32 @@ def bind_topline(seekerview, chart, hits, facets_keyword=None):
         categories = ['Questions']
         categories.extend(topline_columns)
         chart_data.insert(0, categories)
-    return chart_data
+    return chart_data, meta_data
 
 def bind_aggr(seekerview, chart, agg_name, aggregations):
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
-    xfacet = seekerview.get_facet_by_field_name(X_facet['field'])
     X_field = X_facet['field']
     X_label = X_facet['label']
+    xfacet = seekerview.get_facet_by_field_name(X_field)
     x_total = True
     sub_total = False
     if 'total' in X_facet:
         x_total = X_facet['total']
+    x_calc = 'count'
+    if 'calc' in X_facet:
+        x_calc = X_facet['calc']
+    mean_type = 'none'
+    mean_layout = 'none'
+    if 'mean' in X_facet:
+        mean_type = X_facet['mean']['type']
+        mean_layout = X_facet['mean']['layout']
     if 'Y_facet' in chart:
         Y_facet = chart['Y_facet']
-        yfacet = seekerview.get_facet_by_field_name(Y_facet['field'])
         Y_field = chart['Y_facet']['field']
         Y_label = Y_facet['label']
+        yfacet = seekerview.get_facet_by_field_name(Y_field)
     else:
         Y_facet = None
         Y_field = ""
@@ -375,7 +436,11 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
         y_start = 1
         dt_columns.append("Total")
         y_start = y_start + 1
-        dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
+        if mean_layout == 'category':
+            dt_index.append('Mean')
+        elif mean_layout == 'serie':
+            dt_columns.append('Mean')
+            y_start = y_start + 1
         # next fill the series for the categories
         modes = ['sizing_', 'filling_']
         for mode in modes:
@@ -393,6 +458,8 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                 if mode == 'filling_':
                     dt.loc[X_key, X_label] = X_key
                     dt.loc[X_key, "Total"] = X_metric
+                    nr_respondents = X_metric
+                    total = 0
                 # loop through the different values for this category, normally only one
                 xvalbuckets = xfacet.valbuckets(bucket)
                 for X_value_key, xvalbucket in xvalbuckets.items():
@@ -401,13 +468,24 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                     if X_value_key == None:
                         continue
                     if Y_field == "" or Y_field not in xvalbucket:
-                        Y_metric = xfacet.get_metric(xvalbucket)
                         if X_value_key not in dt_columns:
                             sub_total = True
                             if mode == 'sizing_':
                                 dt_columns.append(X_value_key)
                         if mode == 'filling_':
-                            dt.loc[X_key, X_value_key] = Y_metric
+                            Y_metric = xfacet.get_metric(xvalbucket)
+                            count = Y_metric
+                            value_code = answer_value_decode(X_value_key)
+                            if type(value_code) == int:
+                                total = total + (value_code * count)
+                            if nr_respondents > 0:
+                                percentile = count / nr_respondents
+                            else:
+                                percentile = count
+                            if x_calc == 'percentile':
+                                dt.loc[X_key, X_value_key] = percentile
+                            else:
+                                dt.loc[X_key, X_value_key] = count
                     else:
                         subagg = xvalbucket[Y_field]
                         subbuckets = yfacet.buckets(subagg)
@@ -445,17 +523,15 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                             if Y_key not in dt_columns:
                                 if mode == 'sizing_':
                                     inserted = False
-                                    zero = pd.Series(0.0, index=dt.index)
                                     for i in range(y_start, len(dt_columns)):
                                         if Y_key < dt_columns[i]:
                                             dt_columns.insert(i, Y_key)
-                                            dt.insert(i, Y_key, zero)
                                             inserted = True
                                             break
                                     if not inserted:
                                         dt_columns.append(Y_key)
-                                        dt[Y_key] = zero
                             if mode == 'filling_':
+                                #zero = pd.Series(0.0, index=dt.index)
                                 #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
                                 dt.loc[X_key, Y_key] = Y_metric
                 rownr = rownr + 1
@@ -479,10 +555,11 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
         chart_data.append(dt_columns)
         for ix, row in dt.iterrows():
             chart_data.append(row.tolist())
-    return chart_data
+    return chart_data, meta_data
 
-def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, facets_keyword=None):
+def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, benchmark=None):
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
     X_field = X_facet['field']
     X_label = X_facet['label']
@@ -490,15 +567,9 @@ def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, facets_keyword
     Y_facet = chart['Y_facet']
     Y_field = Y_facet['field']
     Y_label = Y_facet['label']
-    data = bind_aggr(seekerview, chart, aggr_name, aggregations)
+    data, meta_data = bind_aggr(seekerview, chart, aggr_name, aggregations)
     if len(data) == 0:
         return
-
-    benchmark = []
-    if facets_keyword:
-        for facet_keyword in facets_keyword:
-            if facet_keyword.keywords_k != '' and facet_keyword.keywords_k != []:
-                benchmark.append(facet_keyword.keywords_k)
 
     dt_index = []
     dt_columns = [X_label]
@@ -628,15 +699,16 @@ def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, facets_keyword
     chart_data.append(dt_columns)
     for ix, row in dt.iterrows():
         chart_data.append(row.tolist())
-    return chart_data
+    return chart_data, meta_data
 
 
-def bind_correlation(seekerview, chart, stats_df, corr_df):
+def bind_correlation(seekerview, chart, stats_df):
     # The data will be loaded in google_chart arrayToDataTable format
     # This means columns=series and rows=categories.
     # First Row are the column=series headers, followed by the different categories
     # First Column are the category names followed by the serie values
     chart_data = []
+    meta_data = {}
     X_facet = chart['X_facet']
     X_field = X_facet['field']
     # First row
@@ -657,36 +729,36 @@ def bind_correlation(seekerview, chart, stats_df, corr_df):
             if col in stats_df.columns:
                 row.append(stats_s[col])
         chart_data.append(row)
-    return chart_data
+    return chart_data, meta_data
 
 
-def bind_chart(seekerview, chart_name, chart, hits, aggregations, facet_tile_value, facets_keyword):
+def bind_chart(seekerview, chart_name, chart, hits, aggregations, facet_tile_value, benchmark):
+    chart_data = []
+    meta_data = {}
     data_type = chart['data_type']
     X_facet = chart['X_facet']
     if data_type == 'facet':
-        chart_data = bind_facet(seekerview, chart, aggregations)
+        chart_data, meta_data = bind_facet(seekerview, chart, aggregations)
     elif data_type == 'aggr':
-        if 'aggr_name' in chart:
+        if 'base' in chart:
             if facet_tile_value == 'All':
-                aggr_name = chart['aggr_name']
+                aggr_name = chart['base']
             else:
                 aggr_name = chart['X_facet']['field']
-            chart_data = bind_topline_aggr(seekerview, chart, aggr_name, aggregations, facets_keyword)
+            chart_data, meta_data = bind_topline_aggr(seekerview, chart, aggr_name, aggregations, benchmark)
         else:
             if facet_tile_value == 'All':
                 aggr_name = chart_name
             else:
                 aggr_name = chart['X_facet']['field']
-            chart_data = bind_aggr(seekerview, chart, aggr_name, aggregations)
+            chart_data, meta_data = bind_aggr(seekerview, chart, aggr_name, aggregations)
     elif data_type == 'hits':
-        chart_data = bind_hits(seekerview, chart, hits, facets_keyword)
+        chart_data, meta_data = bind_hits(seekerview, chart, hits, benchmark)
     elif data_type == 'topline':
-        chart_data = bind_topline(seekerview, chart, hits, facets_keyword)
-    else:
-        chart_data = []
-    return chart_data
+        chart_data, meta_data = bind_topline(seekerview, chart, hits, benchmark)
+    return chart_data, meta_data
 
-def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, results, facets_keyword):
+def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, results, benchmark):
     hits = results.hits
     aggregations = results.aggregations
 
@@ -695,17 +767,19 @@ def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, results, facets_ke
         data_type = chart['data_type']
         if data_type == 'correlation':
             continue
+        if data_type == 'join':
+            continue
         X_facet = chart['X_facet']
         if facets_tile == None:
             tiles_select['All'] = ['All']
-            chart_data = bind_chart(seekerview, chart_name, chart, hits, aggregations, 'All', facets_keyword)
-            tiles_d[chart_name]['All'] = chart_data
+            chart_data, meta_data = bind_chart(seekerview, chart_name, chart, hits, aggregations, 'All', benchmark)
+            tiles_d[chart_name]['All'] = {'chart_data' : chart_data, 'meta_data' : meta_data}
         else:
             for facet_tile in facets_tile:
                 tiles_select[facet_tile.label] = []
 
-                if 'aggr_name' in chart:
-                    aggr_name = chart['aggr_name']
+                if 'base' in chart:
+                    aggr_name = chart['base']
                 else:
                     aggr_name = chart_name
                 tile_aggr_name = facet_tile.name + '_' + aggr_name
@@ -716,8 +790,8 @@ def bind_tile(seekerview, tiles_select, tiles_d, facets_tile, results, facets_ke
                 for facet_tile_value, tile in tiles.items():
                     if facet_tile_value not in tiles_select[facet_tile.label]:
                         tiles_select[facet_tile.label].append(facet_tile_value)
-                    chart_data = bind_chart(seekerview, chart_name, chart, hits, tile, facet_tile_value, facets_keyword)
-                    tiles_d[chart_name][facet_tile_value] = chart_data
+                    chart_data, meta_data = bind_chart(seekerview, chart_name, chart, hits, tile, facet_tile_value, benchmark)
+                    tiles_d[chart_name][facet_tile_value] = {'chart_data' : chart_data, 'meta_data' : meta_data}
     return
 
 def get_fqa_v_respondents(fqav_df, question, answer, facet):
@@ -740,23 +814,16 @@ def get_fq_av_respondents(fqav_df, question, facet):
             nr_respondents = nr_respondents + fqav_df[column][facet]
     return answers, values, nr_respondents
 
-def answer_value_decode(answer_code):
-    global qa
-
-    answer_value = answer_code
-    if type(answer_code) == str:
-        first_code = answer_code.split()[0]
-        if first_code.isdigit():
-            answer_value = int(float(first_code))
-    return answer_value
-
 def fill_tile_df(seekerview, tiles_d, base_charts):
     tile_df = pd.DataFrame(columns=('facet_tile', 'chart_name', 'q_field', 'x_field', 'y_field', 'metric'))
     rownr = 0
     for chart_name, facets in tiles_d.items():
         if chart_name in base_charts:
             chart = seekerview.dashboard[chart_name]
-            for facet_value, chart_data in facets.items():
+            for facet_value, data in facets.items():
+                if facet_value == 'All':
+                    continue
+                chart_data = data['chart_data']
                 X_facet = chart['X_facet']
                 X_field = X_facet['field']
                 if len(chart_data) > 0:
@@ -777,7 +844,6 @@ def stats(seekerview, chart_name, tiles_d):
     base_charts = chart['base']
     #questions = tile_df['q_field']
     stats_df = pd.DataFrame()
-    corr_df = pd.DataFrame()
     tile_df = fill_tile_df(seekerview, tiles_d, base_charts)
 
     facets = tile_df['facet_tile']
@@ -791,10 +857,16 @@ def stats(seekerview, chart_name, tiles_d):
     #tile_df = tile_df[tile_df['y_field'] != 'Total']
     fqa_df = pd.DataFrame()
 
+    q_meta = {}
     for base_chart_name in base_charts:
         chart_names.append(base_chart_name)
         base_chart = seekerview.dashboard[base_chart_name]
         question = base_chart['X_facet']['field']
+        if 'calc' in base_chart['X_facet']:
+            calc = base_chart['X_facet']['calc']
+        else:
+            calc = 'count'
+        q_meta[question] = {'calc': calc, 'chart_name': base_chart_name}
         answers = tile_df[tile_df['chart_name'] == base_chart_name]['x_field']
         answers = np.unique(answers).tolist()
         for answer in answers:
@@ -832,60 +904,78 @@ def stats(seekerview, chart_name, tiles_d):
                 fact = chart['facts'][question_field]
 
                 total = 0
-                if fact['value_type'] == 'boolean':
-                    values, nr_respondents = get_fqa_v_respondents(fqav_df, q, a, facet)
-                    for value in values:
-                        value_code = answer_value_decode(value)
-                        if value_code == "Yes":
-                            value_code = 1
-                        elif value_code == "No":
-                            value_code = 0
-                        count = fqav_df[(q, a, value)][facet]
-                        total = total + (value_code * count)
-                    if nr_respondents > 0:
-                        percentile = total / nr_respondents
-                    else:
-                        percentile = total
-                    if fact['calc'] == 'w-avg':
-                        fqa_df.loc [facet, (q, a)] = percentile
-                    elif fact['calc'] == 'percentile':
-                        fqa_df.loc [facet, (q, a)] = percentile
-                    elif fact['calc'] == 'w-total':
-                        fqa_df.loc [facet, (q, a)] = total
-                    elif fact['calc'] == 'count':
-                        fqa_df.loc [facet, (q, a)] = count
-
-                elif fact['value_type'] == 'ordinal':
-                    answers, values, nr_respondents = get_fq_av_respondents(fqav_df, q, facet)
-                    for aix in range(0, len(answers)):
-                        answer = answers[aix]
-                        value_code = answer_value_decode(answer)
-                        if type(value_code) == str:
-                            try:
-                                value_code = int(float(value_code))
-                            except:
+                if q_meta[q]['calc'] == 'count':
+                    if fact['value_type'] == 'boolean':
+                        values, nr_respondents = get_fqa_v_respondents(fqav_df, q, a, facet)
+                        for value in values:
+                            value_code = answer_value_decode(value)
+                            if value_code == "Yes":
+                                value_code = 1
+                            elif value_code == "No":
                                 value_code = 0
-                        # normally one value returned from ES -> Total
-                        value = values[aix]
-                        total = total + (value_code * fqav_df[q, answer, value][facet])
-                        if answer == a:
-                            count = fqav_df[q, a, value][facet]
-                    if nr_respondents > 0:
-                        percentile = count / nr_respondents
-                        mean = total / nr_respondents
-                    else:
-                        percentile = count
-                        mean = total
-                    if fact['calc'] == 'w-avg':
-                        fqa_df.loc [facet, (q, 'w-avg')] = mean
-                        if (q, a) in fqa_df.columns:
-                            fqa_df.drop((q, a), axis=1, inplace=True)
-                    elif fact['calc'] == 'percentile':
-                        fqa_df.loc [facet, (q, a)] = percentile
-                    elif fact['calc'] == 'w-total':
-                        fqa_df.loc [facet, (q, a)] = total
-                    elif fact['calc'] == 'count':
-                        fqa_df.loc [facet, (q, a)] = count
+                            count = fqav_df[(q, a, value)][facet]
+                            total = total + (value_code * count)
+                        if nr_respondents > 0:
+                            percentile = total / nr_respondents
+                        else:
+                            percentile = total
+                        if fact['calc'] == 'w-avg':
+                            fqa_df.loc [facet, (q, a)] = percentile
+                        elif fact['calc'] == 'percentile':
+                            fqa_df.loc [facet, (q, a)] = percentile
+                        elif fact['calc'] == 'w-total':
+                            fqa_df.loc [facet, (q, a)] = total
+                        elif fact['calc'] == 'count':
+                            fqa_df.loc [facet, (q, a)] = count
+                    elif fact['value_type'] == 'ordinal':
+                        answers, values, nr_respondents = get_fq_av_respondents(fqav_df, q, facet)
+                        for aix in range(0, len(answers)):
+                            answer = answers[aix]
+                            value_code = answer_value_decode(answer)
+                            if type(value_code) == str:
+                                try:
+                                    value_code = int(float(value_code))
+                                except:
+                                    value_code = 0
+                            # normally one value returned from ES -> Total
+                            value = values[aix]
+                            total = total + (value_code * fqav_df[q, answer, value][facet])
+                            if answer == a:
+                                count = fqav_df[q, a, value][facet]
+                        if nr_respondents > 0:
+                            percentile = count / nr_respondents
+                            mean = total / nr_respondents
+                        else:
+                            percentile = count
+                            mean = total
+                        if fact['calc'] == 'w-avg':
+                            fqa_df.loc [facet, (q, 'w-avg')] = mean
+                            if (q, a) in fqa_df.columns:
+                                fqa_df.drop((q, a), axis=1, inplace=True)
+                        elif fact['calc'] == 'percentile':
+                            fqa_df.loc [facet, (q, a)] = percentile
+                        elif fact['calc'] == 'w-total':
+                            fqa_df.loc [facet, (q, a)] = total
+                        elif fact['calc'] == 'count':
+                            fqa_df.loc [facet, (q, a)] = count
+                elif q_meta[q]['calc'] == 'percentile':
+                    if fact['value_type'] == 'boolean':
+                        percentile = 0
+                        values, percentiles = get_fqa_v_respondents(fqav_df, q, a, facet)
+                        for value in values:
+                            if value == "Yes":
+                                percentile = fqav_df[(q, a, value)][facet]
+                        if fact['calc'] == 'w-avg':
+                            fqa_df.loc [facet, (q, a)] = percentile
+                        elif fact['calc'] == 'percentile':
+                            fqa_df.loc [facet, (q, a)] = percentile
+                    elif fact['value_type'] == 'ordinal':
+                        chart_name = q_meta[q]['chart_name']
+                        mean = tiles_d[chart_name][facet]['meta_data']['mean']
+                        if fact['calc'] == 'w-avg':
+                            fqa_df.loc [facet, (q, 'w-avg')] = mean
+                            if (q, a) in fqa_df.columns:
+                                fqa_df.drop((q, a), axis=1, inplace=True)
 
     if len(fqa_df.index) > 0:
         stats_df = fqa_df.describe().transpose()
@@ -903,8 +993,8 @@ def stats(seekerview, chart_name, tiles_d):
             for (qy, ay) in fqa_df.columns:
                 # exclude 'All'
                 stats_df.loc[(qy, ay), qx] = np.corrcoef(fqa_df[(qx, ax)][1:], fqa_df[(qy, ay)][1:])[0,1]
-
-    return stats_df, corr_df
+    stats_df.fillna(0, inplace=True)
+    return stats_df
 
 # aggs : { <
 #GET survey/_search

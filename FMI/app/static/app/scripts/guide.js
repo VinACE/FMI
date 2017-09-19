@@ -300,6 +300,7 @@ function site_view_charts(site_name, menu_name, view_name) {
     search(site_name, menu_name, view_name);
 }
 
+
 function site_view_show(site_name, menu_name, view_name) {
     var menu_items = g_sites[site_name].site_menu.menu_items;
     var menu_item = menu_items[menu_name];
@@ -498,6 +499,12 @@ function site_route(site_name, menu_name, view_name, sites, site_views, tiles_d)
     }
 }
 
+function set_params(benchmark) {
+    var input = document.getElementsByName("benchmark")[0];
+    input.value = benchmark
+}
+
+
 function getParameterByName(name, url) {
     if (!url) {
         url = window.location.href;
@@ -544,6 +551,9 @@ function fill_params_facets_tiles(site_name, menu_name, view_name) {
             }
         }
     }
+    var input = document.getElementsByName("benchmark")[0];
+    var benchmark = input.value;
+    params['benchmark'] = benchmark;
     var input = document.getElementsByName("tile_facet_field")[0];
     var tile_field = input.value;
     if (tile_field == '') {
@@ -581,8 +591,23 @@ function search(site_name, menu_name, view_name) {
         var tiles_select = JSON.parse(data['tiles_select']);
         var tiles_d = JSON.parse(data['tiles_d']);
         //var stats_df = JSON.parse(data['stats_df']);
-        //var corr_df = JSON.parse(data['corr_df']);
         fill_tiles(facets_data, tiles_select, tiles_d);
         draw_storyboard(storyboard, dashboard_name, charts);
     });
+
+    //params['csrfmiddlewaretoken'] = csrftoken;
+    //$.post(url, params, function (data, status) {
+    //    var view_name = data['view_name'];
+    //    var dashboard_name = data['dashboard_name'];
+    //    var site_view = g_site_views[view_name];
+    //    //var storyboard = site_view['storyboard'];
+    //    var storyboard = JSON.parse(data['storyboard']);
+    //    var charts = JSON.parse(data['dashboard']);
+    //    var facets_data = JSON.parse(data['facets_data']);
+    //    var tiles_select = JSON.parse(data['tiles_select']);
+    //    var tiles_d = JSON.parse(data['tiles_d']);
+    //    //var stats_df = JSON.parse(data['stats_df']);
+    //    fill_tiles(facets_data, tiles_select, tiles_d);
+    //    draw_storyboard(storyboard, dashboard_name, charts);
+    //});
 }

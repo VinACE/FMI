@@ -711,8 +711,8 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'data_type'  : "aggr",
-            'aggr_name'   : "liking_blindcode_col",
+            'data_type'   : "aggr",
+            'base'        : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
@@ -758,8 +758,8 @@ class SurveyWorkbook:
         "topline_freshness_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Freshness - Candidate",
-            'data_type'  : "aggr",
-            'aggr_name'   : "freshness_blindcode_col",
+            'data_type'   : "aggr",
+            'base'        : "freshness_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'listener'    : {'select' : {'rowsort': None}},
             'X_facet'     : {
@@ -811,18 +811,6 @@ class SurveyWorkbook:
                 "values"  : [],
                 'total'   : False,
                 'label'   : "Suitable Product" },
-            },
-        "liking_ans_col" : {
-            'chart_type': "ColumnChart",
-            'chart_title' : "Liking Resp Count",
-            'data_type'  : "facet",
-            'help'        : "Select Legend for sorting Categories",
-            'listener'    : {'select' : {'colsort': 'categories'}},
-            'X_facet'     : {
-                'field'   : "liking.keyword",
-                'label'   : "Liking/Hedonics",
-                'order'   : { "_term" : "asc" },
-                },
             },
         "emotion_ans_col" : {
             'chart_type': "ColumnChart",
@@ -921,8 +909,8 @@ class SurveyWorkbook:
             'chart_type'  : "ComboChart",
             #'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'data_type'  : "aggr",
-            'aggr_name'   : "liking_blindcode_col",
+            'data_type'   : "aggr",
+            'base'        : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
@@ -988,17 +976,42 @@ class SurveyWorkbook:
         'topline_liking_table'      : dashboard_fresh['topline_liking_table'],
         'freshness_blindcode_col'   : dashboard_fresh['freshness_blindcode_col'],
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
-        'liking_ans_col'            : dashboard_fresh['liking_ans_col'],
-        'emotion_ans_col'           : dashboard_fresh['emotion_ans_col'],
+        "emotion_perc_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Emotion Resp Count",
+            'data_type'  : "aggr",
+            'listener'    : {'select' : {'colsort': None}},
+            'X_facet'     : {
+                'field'   : "emotion",
+                'label'   : "Emotion",
+                'calc'    : 'percentile',
+                "categories" : [],
+                "values"  : ["Yes"],
+                'total'   : False },
+            },
+        "liking_perc_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Liking Resp Count",
+            'data_type'  : "facet",
+            'help'        : "Select Legend for sorting Categories",
+            'listener'    : {'select' : {'colsort': 'categories'}},
+            'X_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Liking with Mean ",
+                'calc'    : 'percentile',
+                'order'   : { "_term" : "asc" },
+                "mean"    : {"type" : "answer", "layout" : "header"},
+                },
+            },
         "liking_emotion_corr_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Liking / Emotion Correlation",
-            'data_type'  : "correlation",
-            'base'        : ["liking_ans_col", "emotion_ans_col"],
+            'data_type'   : "correlation",
+            'base'        : ["liking_perc_col", "emotion_perc_col"],
             'controls'    : ['CategoryFilter'],
             'facts'       : {'liking.keyword': {'fact' : 'hedonics', 'value_type' : 'ordinal', 'calc' : 'w-avg'},
                              'emotion'       : {'fact' : 'emotion',  'value_type' : 'boolean', 'calc' : 'w-avg'}},
-            'listener'    : {'select' : {'rowsort': None}},
+            'listener'    : {'select' : {'join': ["liking_emotion_scatterl"]}},
             'X_facet'     : {
                 'field'   : 'liking.keyword',
                 'stats'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%', 'liking.keyword'],
@@ -1019,6 +1032,20 @@ class SurveyWorkbook:
                 'setProperty'   : [],
                 },
             },
+        "liking_emotion_scatter" : {
+            'chart_type'  : "ScatterChart",
+            'chart_title' : "Liking / Emotion",
+            'data_type'   : "join",
+            'base'        : ["liking_perc_col", "emotion_perc_col"],
+            'X_facet'     : {
+                'field'   : 'liking.keyword',
+                'label'   : "Liking/Hedonics",
+                },
+            'Y_facet'     : {
+                'field'   : 'emotion',
+                'label'   : "Emotion"
+                },
+            },
         }
 
     storyboard_link = [
@@ -1027,7 +1054,7 @@ class SurveyWorkbook:
          'active'   : False,
         },
         {'name'     : 'Hedonics',
-         'layout'   : {'rows' : [['liking_blindcode_col']]},
+         'layout'   : {'rows' : [['topline_liking_table']]},
          'active'   : False,
         },
         {'name'     : 'Intensity',
@@ -1035,7 +1062,7 @@ class SurveyWorkbook:
          'active'   : False,
         },
         {'name'     : 'Driver Liking',
-         'layout'   : {'rows' : [['liking_ans_col'], ['emotion_ans_col'], ['liking_emotion_corr_table']]},
+         'layout'   : {'rows' : [['liking_perc_col'], ['emotion_perc_col'], ['liking_emotion_corr_table', 'liking_emotion_scatter']]},
          'active'   : False,
         }
         ]
@@ -1072,8 +1099,8 @@ class SurveyWorkbook:
         "topline_liking_table" : {
             'chart_type'  : "Table",
             'chart_title' : "Topline Liking - Candidate",
-            'data_type'  : "aggr",
-            'aggr_name'   : "liking_blindcode_col",
+            'data_type'   : "aggr",
+            'base'        : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_affective_radar", "cand_behavioral_radar", "cand_ballot_radar", "cand_descriptors_radar"], 'select' : {'rowsort': None}},

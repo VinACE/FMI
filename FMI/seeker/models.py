@@ -25,4 +25,3 @@ from django.utils.encoding import python_2_unicode_compatible
 
 fqav_df = None
 stats_df = None
-corr_df = None

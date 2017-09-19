@@ -109,7 +109,7 @@ def facts_survey(survey_field, facts_choices, norms_choices):
     body = search_tile.to_dict()
     results_tile = search_tile.execute(ignore_cache=True)
     tile_df, tiles_select = seeker.dashboard.tile(models.SurveySeekerView, [facet_tile], facts_dashboard, results_tile)
-    seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(tile_df)
+    seeker.models.stats_df = seeker.dashboard.stats(tile_df)
 
     facts = {}
     fqav_df = seeker.models.fqav_df

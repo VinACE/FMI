@@ -54,7 +54,7 @@ site_views = {
         'type'  : 'charts',
         'descr' : "Hedonics Per Format",
         'url'   : '/search_survey?workbook_name=link',
-        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
+        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'rows'} ],
         'dashboard_name' : 'Hedonics'},
     'driver_of_liking' : {
         'type'  : 'charts',
@@ -445,13 +445,13 @@ def route_step(request, tiles_d, route_name, step_name):
                         chart = charts[chart_name]
                         data_type = chart['data_type']
                         if data_type == 'facet':
-                            chart_data = seeker.dashboard.bind_facet(seekerview, chart, results.aggregations)
+                            chart_data, meta_data = seeker.dashboard.bind_facet(seekerview, chart, results.aggregations)
                         if data_type == 'aggr':
-                            chart_data = seeker.dashboard.bind_aggr(seekerview, chart, chart_name, results.aggregations)
+                            chart_data, meta_data = seeker.dashboard.bind_aggr(seekerview, chart, chart_name, results.aggregations)
                         if chart['chart_type'] == 'GeoChart':
                             for row in chart_data:
                                 row[0] = country_map_geochart(row[0])
-                        tiles_d[chart_name]['All'] = chart_data
+                        tiles_d[chart_name]['All'] = {'chart_data' : chart_data, 'meta_data' : meta_data}
     if step['type'] == 'decision':
         results = search.execute(ignore_cache=True)
     if step['type'] == 'destination':
@@ -500,11 +500,16 @@ def site_menu(request, site_name, menu_name, view_name, tile_facet_field):
         elif menu_item['type'] == 'view-selector':
             if view_name != '':
                 site_view = site_views[view_name]
-                if 'tiles' in site_view and tile_facet_field != '' and tile_facet_field != 'All':
-                    tile = site_view['tiles'][0]
-                    tile['field'] = tile_facet_field
-        elif menu_item['type'] == 'site-view':
-            pass
+                if 'tiles' in site_view:
+                    if (tile_facet_field != '' and tile_facet_field != 'All'):
+                        if len(site_view['tiles']) > 0:
+                            tile = site_view['tiles'][0]
+                            tile['field'] = tile_facet_field
+                        else:
+                            tile = {'field': tile_facet_field, 'layout' : 'dropodown'}
+                            site_view['tiles'].append(tile)
+                    if (tile_facet_field == 'All') and len(len(site_view['tiles']) > 0):
+                        site_view['tiles'] = []
         else:
             pass
 

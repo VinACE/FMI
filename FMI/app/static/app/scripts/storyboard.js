@@ -13,6 +13,17 @@ var g_storyboard_ix;
 var g_storyboard_tab_activated;
 var g_stats_df;
 
+function benchmark_select_onchange() {
+    var facet_value = document.getElementById("benchmark_select").value;
+    var input = document.getElementsByName("benchmark")[0];
+    input.value = facet_value;
+    var form_elm = document.getElementById("guide_form");
+    if (form_elm == null) {
+        var form_elm = document.getElementById("seeker_form");
+    }
+    form_elm.submit();
+}
+
 function tile_facet_select_onchange() {
     var facet_field = document.getElementById("tile_facet_select").value;
     var input = document.getElementsByName("tile_facet_field")[0];
@@ -52,13 +63,13 @@ function tile_value_select_onchange() {
                 var div_card_header = document.getElementById(chart_name + "_title");
                 div_card_header.innerHTML = "<b>" + chart['chart_title'] + "</b>";
                 if (g_tiles_d[chart_name][facet_value] != null) {
-                    var chart_data = g_tiles_d[chart_name][facet_value];
+                    var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
                     if (facet_value != 'All') {
                         div_card_header.innerHTML = div_card_header.innerHTML +
                             " / <font color='red'>" + facet_value + "</font>";
                     }
                 } else {
-                    var chart_data = g_tiles_d[chart_name]['All'];
+                    var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
                 }
                 if ("type" in X_facet) {
                     if (X_facet['type'] == 'date') {
@@ -94,6 +105,31 @@ function fill_tiles(facets_data, tiles_select, tiles_d) {
     g_facet_data = facet_data
     g_tiles_select = tiles_select;
     g_tiles_d = tiles_d;
+
+    var selectList = document.getElementById("benchmark_select");
+    selectList.setAttribute("onChange", "benchmark_select_onchange()");
+    var option = document.createElement("option");
+    option.setAttribute("value", "All");
+    option.text = "All";
+    selectList.appendChild(option);
+    for (var facet_field in facets_data) {
+        var facet_data = facets_data[facet_field];
+        var optgroup = document.createElement("optgroup");
+        optgroup.setAttribute('value', facet_field);
+        optgroup.setAttribute("label", facet_data['label']);
+        selectList.appendChild(optgroup);
+        var values = facet_data['values']
+        for (var vi = 0; vi < values.length; vi++) {
+            var facet_value = values[vi];
+            var option = document.createElement("option");
+            option.setAttribute("value", facet_value);
+            if (facet_data['benchmark'] == facet_value) {
+                option.setAttribute('selected', true);
+            }
+            option.text = facet_value;
+            optgroup.appendChild(option);
+        }
+    }
 
     var selectList = document.getElementById("tile_facet_select");
     selectList.setAttribute("onChange", "tile_facet_select_onchange()");
@@ -231,13 +267,13 @@ function draw_dashboard(dashboard, charts, facet_value, container_elm) {
                 var chart = charts[chart_name];
                 var div_card_header = document.getElementById(chart_name + "_title");
                 if (g_tiles_d[chart_name][facet_value] != null) {
-                    var chart_data = g_tiles_d[chart_name][facet_value];
+                    var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
                     if (facet_value != 'All') {
                         div_card_header.innerHTML = div_card_header.innerHTML +
                             " / <font color='red'>" + facet_value + "</font>";
                     }
                 } else {
-                    var chart_data = g_tiles_d[chart_name]['All'];
+                    var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
                 }
                 if (chart_data.length == 0) continue;
                 if (chart['chart_type'] == 'RadarChart') {
@@ -371,11 +407,4 @@ function draw_storyboard(storyboard, dashboard_name, charts) {
     dashboard_definition(active_nr);
     draw_dashboard(g_storyboard[active_nr], g_db, "All", "dashboard_div")
 }
-
-
-
-
-
-
-
 

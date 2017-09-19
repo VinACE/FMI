@@ -87,8 +87,8 @@ function d3_chart(chart_name, chart_def, facet_value, colIndexes) {
 
     //Call function to draw the Radar chart
     //Will expect that data is in %'s
-    if (g_tiles_d[chart_name][facet_value].length > 0) {
-        var chart_data = g_tiles_d[chart_name][facet_value];
+    if (g_tiles_d[chart_name][facet_value]['chart_data'].length > 0) {
+        var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
     } else {
         var chart_data = new Array();
     }
@@ -159,8 +159,8 @@ function d3_chart(chart_name, chart_def, facet_value, colIndexes) {
 
 function filterD3Chart(chart_name, chart_name2) {
     var chart_def2 = g_db[chart_name2];
-    if (g_tiles_d[chart_name2]['All'].length > 0) {
-        var chart_data2 = g_tiles_d[chart_name]['All'];
+    if (g_tiles_d[chart_name2]['All']['chart_data'].length > 0) {
+        var chart_data2 = g_tiles_d[chart_name]['All']['chart_data'];
     } else {
         var chart_data2 = new Array();
     }
@@ -335,9 +335,9 @@ function google_chart(chart_name, chart_def, facet_value) {
 
     function drawVisualization() {
         if (g_tiles_d[chart_name][facet_value] != null) {
-            var chart_data = g_tiles_d[chart_name][facet_value];
+            var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
         } else {
-            var chart_data = g_tiles_d[chart_name]['All'];
+            var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
         }
         // in case the X value is a date is still requires converting to a Date
         var X_facet = chart_def['X_facet']
@@ -642,6 +642,23 @@ function google_chart(chart_name, chart_def, facet_value) {
                                             for (var charts2_ix = 0; charts2_ix < charts2.length; charts2_ix++) {
                                                 var chart_name2 = charts2[charts2_ix];
                                                 filterChart(chart_name, chart_name2);
+                                            }
+                                        }
+                                        if (action == 'join') {
+                                            // join data from two base datatables into a new datatable.
+                                            var chart_data = [[]];
+                                            var chart = g_db[chart_name];
+                                            chart_data[0][0] = chart['X_facet']['label'];
+                                            chart_data[0][1] = chart['Y_facet']['label'];
+                                            for (var fix = 1; fix <  g_tiles_d[chart_name].lenght; fix++) {
+                                                var facet_value = g_tiles_d[chart_name][fix];
+                                                var charts2 = listen[action];
+                                                for (var charts2_ix = 0; charts2_ix < charts2.length; charts2_ix++) {
+                                                    var chart_name2 = charts2[charts2_ix];
+                                                    var chart_data2 = g_tiles_d[chart_name][facet_value]['chart_data'];
+                                                    chart_data[fix][charts2_ix + 1] = chart_data2[rowIndex];
+                                                    chart_data[fix][charts2_ix + 1] = chart_data2[rowIndex];
+                                                }
                                             }
                                         }
                                         if (action == 'select_event') {

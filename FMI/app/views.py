@@ -175,6 +175,7 @@ def guide_view(request):
     site_name = ''
     menu_name = ''
     view_name = ''
+    benchmark = ''
     results = {}
     tiles_d = {}
     facets = {}
@@ -211,6 +212,7 @@ def guide_view(request):
             if site_name != '':
                 menu_name = request.GET.get('menu_name', '')
                 view_name = request.GET.get('view_name', '')
+                benchmark = request.GET.get('benchmark', '')
                 tile_facet_field = request.GET.get('tile_facet_field', '')
                 if site_name != '':
                     results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name, tile_facet_field)
@@ -226,6 +228,7 @@ def guide_view(request):
             'site_name' : site_name,
             'menu_name' : menu_name,
             'view_name' : view_name,
+            'benchmark' : benchmark,
             'sites'     : json.dumps(guide.sites),
             'site_views': json.dumps(guide.site_views)
         }

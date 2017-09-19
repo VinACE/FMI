@@ -655,7 +655,7 @@ class SeekerView (View):
                 facets[f] = self.request.GET.getlist(f.field) or initial.get(f.field, [])
         return facets
 
-    def get_facets_data(self, results, tiles_select):
+    def get_facets_data(self, results, tiles_select, benchmark):
         facets_data = OrderedDict()
         for f in self.get_facets():
             if type(f) == seeker.facets.TermsFacet and f.visible_pos > 0 and f.field in results.aggregations:
@@ -664,7 +664,7 @@ class SeekerView (View):
                 else:
                     selected = False
                 keys = [key for key in f.buckets(results.aggregations[f.field])]
-                facets_data[f.field] = {'label': f.label, 'selected': selected, 'values': keys}
+                facets_data[f.field] = {'label': f.label, 'selected': selected, 'benchmark': benchmark, 'values': keys}
         return facets_data
 
     def get_facet_tile(self):
@@ -678,6 +678,15 @@ class SeekerView (View):
         if f:
             facets[f] = 'on'
         return facets
+
+    def get_benchmark(self):
+        # return a list of benchmarks, so far only one can be specified.
+        benchmark = self.request.GET.get('benchmark')
+        if benchmark == '':
+            benchmark = []
+        else:
+            benchmark = [benchmark]
+        return benchmark
 
     def get_facets_keyword_selected_data(self, exclude=None):
         facets_keyword = collections.OrderedDict()
@@ -1131,11 +1140,11 @@ class SeekerView (View):
         #if self.summary != None:, also fill url in results
         self.summary_tab(results, columns)
 
+        benchmark = self.get_benchmark()
         tiles_select = OrderedDict()
         tiles_d = {chart_name : {} for chart_name in self.dashboard.keys()}
-        seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, results, facets_keyword)
+        seeker.dashboard.bind_tile(self, tiles_select, tiles_d, None, results, benchmark)
         seeker.models.stats_df = pd.DataFrame()
-        seeker.models.corr_df = pd.DataFrame()
 
         facets_tile = self.get_facet_tile()
         if len(facets_tile) > 0:
@@ -1144,20 +1153,21 @@ class SeekerView (View):
                 search_tile = self.get_tile_search(search_tile, facet_tile, keywords_q, facets, facets_keyword, self.dashboard)
                 search_tile = self.get_tile_aggr(search_tile, facet_tile, self.dashboard)
             results_tile = search_tile.execute(ignore_cache=True)
-            seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, results_tile, facets_keyword)
+            seeker.dashboard.bind_tile(self, tiles_select, tiles_d, facets_tile, results_tile, benchmark)
 
         seeker.models.stats_df = pd.DataFrame()
-        seeker.models.corr_df = pd.DataFrame()
         for chart_name, chart in self.dashboard.items():
             data_type = chart['data_type']
             if data_type == 'correlation':
-                seeker.models.stats_df, seeker.models.corr_df = seeker.dashboard.stats(self, chart_name, tiles_d)
-                chart_data = seeker.dashboard.bind_correlation(self, chart, seeker.models.stats_df, seeker.models.corr_df)
-                tiles_d[chart_name]['All'] = chart_data
+                seeker.models.stats_df = seeker.dashboard.stats(self, chart_name, tiles_d)
+                chart_data, meta_data = seeker.dashboard.bind_correlation(self, chart, seeker.models.stats_df)
+                tiles_d[chart_name]['All'] = {'chart_data' : chart_data, 'meta_data' : meta_data}
+            if data_type == 'join':
+                tiles_d[chart_name]['All'] =  {'chart_data' : [], 'meta_data' : {}}
 
         context_querystring = self.normalized_querystring()
         sort = sorts[0] if sorts else ''
-        facets_data = self.get_facets_data(results, tiles_select)
+        facets_data = self.get_facets_data(results, tiles_select, benchmark)
 
         context = {
             'document': self.document,
@@ -1175,7 +1185,6 @@ class SeekerView (View):
             'tiles_select': json.dumps(tiles_select),
             'tiles_d': json.dumps(tiles_d),
             #'stats_df' : seeker.models.stats_df.to_json(orient='records'),
-            #'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             'storyboard' : json.dumps(self.storyboard),
             'dashboard_name' : dashboard['name'],
             'dashboard': json.dumps(self.dashboard),
@@ -1214,7 +1223,6 @@ class SeekerView (View):
                 'tiles_select': json.dumps(tiles_select),
                 'tiles_d': json.dumps(tiles_d),
                 #'stats_df' : seeker.models.stats_df.to_json(orient='records'),
-                #'corr_df' : seeker.models.corr_df.to_json(orient='records'),
             })
         else:
             return render(self.request, self.template_name, context)
