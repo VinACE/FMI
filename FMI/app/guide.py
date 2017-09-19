@@ -508,7 +508,7 @@ def site_menu(request, site_name, menu_name, view_name, tile_facet_field):
                         else:
                             tile = {'field': tile_facet_field, 'layout' : 'dropodown'}
                             site_view['tiles'].append(tile)
-                    if (tile_facet_field == 'All') and len(len(site_view['tiles']) > 0):
+                    if (tile_facet_field == 'All') and len(site_view['tiles']) > 0:
                         site_view['tiles'] = []
         else:
             pass

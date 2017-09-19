@@ -682,7 +682,7 @@ class SeekerView (View):
     def get_benchmark(self):
         # return a list of benchmarks, so far only one can be specified.
         benchmark = self.request.GET.get('benchmark')
-        if benchmark == '':
+        if benchmark == '' or benchmark == 'All':
             benchmark = []
         else:
             benchmark = [benchmark]
