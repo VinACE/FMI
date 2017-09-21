@@ -1002,6 +1002,12 @@ class SurveyWorkbook:
                 'order'   : { "_term" : "asc" },
                 "mean"    : {"type" : "answer", "layout" : "header"},
                 },
+            'Z_facet'     : {
+                'field'   : "product_form.keyword",
+                'label'   : "Product Form",
+                'order'   : { "_term" : "asc" },
+                "mean"    : {"type" : "answer", "layout" : "header"},
+                },
             },
         "liking_emotion_corr_table" : {
             'chart_type'  : "Table",
@@ -1063,6 +1069,10 @@ class SurveyWorkbook:
         },
         {'name'     : 'Driver Liking',
          'layout'   : {'rows' : [['liking_perc_col'], ['emotion_perc_col'], ['liking_emotion_corr_table', 'liking_emotion_scatter']]},
+         'active'   : False,
+        },
+        {'name'     : 'Fresh',
+         'layout'   : {'rows' : [['liking_perc_col']]},
          'active'   : False,
         }
         ]

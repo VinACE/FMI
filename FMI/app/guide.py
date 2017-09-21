@@ -69,9 +69,11 @@ site_views = {
         'tiles' : [],
         'dashboard_name' : 'Intensity'},
     'fresh' : {
-        'type'  : 'drivers',
+        'type'  : 'charts',
         'descr' : "Fresh",
-        'drivers': ['freshness', 'method']},
+        'url'   : '/search_survey?workbook_name=link',
+        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ],
+        'dashboard_name' : 'Fresh'},
     'superior_fresh' : {
         'type'  : 'drivers',
         'descr' : "Superior Fresh",

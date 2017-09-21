@@ -592,7 +592,7 @@ function search(site_name, menu_name, view_name) {
         var tiles_d = JSON.parse(data['tiles_d']);
         //var stats_df = JSON.parse(data['stats_df']);
         fill_tiles(facets_data, tiles_select, tiles_d);
-        draw_storyboard(storyboard, dashboard_name, charts);
+        draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
     });
 
     //params['csrfmiddlewaretoken'] = csrftoken;
@@ -608,6 +608,6 @@ function search(site_name, menu_name, view_name) {
     //    var tiles_d = JSON.parse(data['tiles_d']);
     //    //var stats_df = JSON.parse(data['stats_df']);
     //    fill_tiles(facets_data, tiles_select, tiles_d);
-    //    draw_storyboard(storyboard, dashboard_name, charts);
+    //    draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
     //});
 }

@@ -153,7 +153,7 @@ def bind_facet(seekerview, chart, aggregations):
             chart_data.append(row.tolist())
     return chart_data, meta_data
 
-def bind_hits(seekerview, chart, hits, benchmakr=None):
+def bind_hits(seekerview, chart, hits, benchmark=None):
     chart_data = []
     meta_data = {}
     X_facet = chart['X_facet']

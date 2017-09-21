@@ -46,10 +46,6 @@ function tile_value_select_onchange() {
     //    var i = 2;
     // });
 
-    //if (facet_value == "All") {
-    //    draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
-    //    return;
-    //}
     for (var grid_name in g_storyboard[g_storyboard_ix].layout) {
         var layout = g_storyboard[g_storyboard_ix].layout[grid_name];
         for (var rownr = 0; rownr < layout.length; rownr++) {
@@ -170,9 +166,9 @@ function fill_tiles(facets_data, tiles_select, tiles_d) {
     }
 }
 
-function draw_dashboard(dashboard, charts, facet_value, container_elm) {
+function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
     //var dashboard_div = document.getElementById("dashboard_div");
-    var dashboard_div = document.getElementById(container_elm);
+    var dashboard_div = document.getElementById("dashboard_div");
     dashboard_div.innerHTML = "";
     for (var chart_name in charts) {
         var db_chart = charts[chart_name];
@@ -276,10 +272,19 @@ function draw_dashboard(dashboard, charts, facet_value, container_elm) {
                     var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
                 }
                 if (chart_data.length == 0) continue;
-                if (chart['chart_type'] == 'RadarChart') {
-                    d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+                if ('Z_facet' in chart) {
+                    var Z_facet = chart['Z_facet'];
+                    if (chart['chart_type'] == 'RadarChart') {
+                        d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+                    } else {
+                        google_chart(chart_name, chart, facet_value);
+                    }
                 } else {
-                    google_chart(chart_name, chart, facet_value);
+                    if (chart['chart_type'] == 'RadarChart') {
+                        d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+                    } else {
+                        google_chart(chart_name, chart, facet_value);
+                    }
                 }
             }
         }
@@ -341,7 +346,7 @@ function storyboard_onchange() {
         th[i].parentNode.removeChild(th[i]);
     }
     dashboard_definition(storyboard_ix)
-    draw_dashboard(g_storyboard[storyboard_ix], g_db, facet_value, "dashboard_div")
+    draw_dashboard(g_storyboard[storyboard_ix], g_db, facet_value, g_tiles_select)
 }
 
 
@@ -367,7 +372,7 @@ function chart_selecion_onchange() {
     }
 }
 
-function draw_storyboard(storyboard, dashboard_name, charts) {
+function draw_storyboard(storyboard, dashboard_name, charts, tiles_select) {
     g_storyboard = storyboard;
     g_db = charts;
 
@@ -405,6 +410,6 @@ function draw_storyboard(storyboard, dashboard_name, charts) {
     }
     //chart_definitions(charts);
     dashboard_definition(active_nr);
-    draw_dashboard(g_storyboard[active_nr], g_db, "All", "dashboard_div")
+    draw_dashboard(g_storyboard[active_nr], g_db, "All", tiles_select)
 }
 
