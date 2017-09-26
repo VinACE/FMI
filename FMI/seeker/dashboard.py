@@ -64,9 +64,9 @@ def bind_facet(seekerview, chart, aggregations):
     sub_total = False
     if 'total' in X_facet:
         x_total = X_facet['total']
-    x_calc = 'count'
+    calc = 'count'
     if 'calc' in X_facet:
-        x_calc = X_facet['calc']
+        calc = X_facet['calc']
     mean_type = 'none'
     mean_layout = 'none'
     if 'mean' in X_facet:
@@ -124,13 +124,13 @@ def bind_facet(seekerview, chart, aggregations):
                     else:
                         percentile = count
                     dt.loc[X_key, X_label] = X_key
-                    if x_calc == 'percentile':
-                        dt.loc[X_key, 'Total'] = percentile
+                    if calc == 'percentile':
+                        dt.loc[X_key, 'Total'] = percentile * 100
                     else:
                         dt.loc[X_key, 'Total'] = count
                 rownr = rownr + 1
             if mode == 'filling_' and mean_type != 'none' and nr_respondents > 0:
-                if x_calc == 'percentile':
+                if calc == 'percentile':
                     mean = total / nr_respondents
                 else:
                     mean = nr_respondents / rownr
@@ -407,9 +407,9 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
     sub_total = False
     if 'total' in X_facet:
         x_total = X_facet['total']
-    x_calc = 'count'
+    calc = 'count'
     if 'calc' in X_facet:
-        x_calc = X_facet['calc']
+        calc = X_facet['calc']
     mean_type = 'none'
     mean_layout = 'none'
     if 'mean' in X_facet:
@@ -420,6 +420,8 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
         Y_field = chart['Y_facet']['field']
         Y_label = Y_facet['label']
         yfacet = seekerview.get_facet_by_field_name(Y_field)
+        if 'calc' in Y_facet:
+            calc = Y_facet['calc']
     else:
         Y_facet = None
         Y_field = ""
@@ -442,6 +444,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
             dt_columns.append('Mean')
             y_start = y_start + 1
         # next fill the series for the categories
+        nr_respondents = 0
         modes = ['sizing_', 'filling_']
         for mode in modes:
             if mode == 'filling_':
@@ -455,10 +458,19 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                 X_metric = xfacet.get_metric(bucket)
                 if mode == 'sizing_':
                     dt_index.append(X_key)
+                    nr_respondents = nr_respondents + X_metric
                 if mode == 'filling_':
                     dt.loc[X_key, X_label] = X_key
-                    dt.loc[X_key, "Total"] = X_metric
-                    nr_respondents = X_metric
+                    count = X_metric
+                    if nr_respondents > 0:
+                        percentile = count / nr_respondents
+                    else:
+                        percentile = count
+                    if calc == 'percentile':
+                        dt.loc[X_key, "Total"] = percentile * 100
+                    else:
+                        dt.loc[X_key, "Total"] = count
+                    nr_respondents_x = X_metric
                     total = 0
                 # loop through the different values for this category, normally only one
                 xvalbuckets = xfacet.valbuckets(bucket)
@@ -482,8 +494,8 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                                 percentile = count / nr_respondents
                             else:
                                 percentile = count
-                            if x_calc == 'percentile':
-                                dt.loc[X_key, X_value_key] = percentile
+                            if calc == 'percentile':
+                                dt.loc[X_key, X_value_key] = percentile * 100
                             else:
                                 dt.loc[X_key, X_value_key] = count
                     else:
@@ -531,9 +543,21 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                                     if not inserted:
                                         dt_columns.append(Y_key)
                             if mode == 'filling_':
+                                count = Y_metric
+                                value_code = answer_value_decode(X_value_key)
+                                if type(value_code) == int:
+                                    total = total + (value_code * count)
+                                if nr_respondents_x > 0:
+                                    percentile = count / nr_respondents_x
+                                else:
+                                    percentile = count
+                                if calc == 'percentile':
+                                    dt.loc[X_key, Y_key] = percentile * 100
+                                else:
+                                    dt.loc[X_key, Y_key] = count
                                 #zero = pd.Series(0.0, index=dt.index)
                                 #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
-                                dt.loc[X_key, Y_key] = Y_metric
+                                #dt.loc[X_key, Y_key] = Y_metric
                 rownr = rownr + 1
 
         dt.fillna(0, inplace=True)

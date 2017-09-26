@@ -4,17 +4,6 @@
 
 // JQuery
 
-function getParameterByName(name, url) {
-    if (!url) {
-        url = window.location.href;
-    }
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
 
 function tab_active() {
     var input = document.getElementsByName("tab")[0];
@@ -24,18 +13,6 @@ function tab_active() {
     var selector = "#tabs a[href='" + tab + "']";
     //$('#tabs a[href="#summary_tab"]').tab('show');
     $(selector).tab('show');
-}
-
-
-function get_workbook_dashboard_names() {
-    var input = document.getElementsByName("workbook_name")[0];
-    var query = window.location.search;
-    var workbook_name = getParameterByName("workbook_name");
-    input.value = workbook_name;
-    var input = document.getElementsByName("dashboard_name")[0];
-    var query = window.location.search;
-    var dashboard_name = getParameterByName("dashboard_name");
-    input.value = dashboard_name;
 }
 
 
@@ -230,7 +207,7 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             input.value = tab;
             if (tab == "#storyboard_tab") {
                 if (typeof g_storyboard != 'undefined') {
-                    draw_dashboard(g_storyboard[g_storyboard_ix], g_db, "All", "dashboard_div")
+                    draw_dashboard(g_storyboard[g_storyboard_ix], g_charts, "All", "dashboard_div")
                 }
             }
         }

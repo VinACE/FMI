@@ -2,6 +2,131 @@
 
 'use strict';
 
+
+
+function chart_tile_value_select_onchange(chart_name, containerId) {
+    var selectList = document.getElementById(containerId);
+    var tile_facet_value = selectList.getElementsByTagName("select")[0].value;
+    var facet_value = document.getElementById("tile_value_select").value;
+    
+    var old_tiles = g_charts[chart_name]['Z_facet']['tiles'];
+    var new_tiles = tile_facet_value;
+    if (new_tiles.substr(0,4) == 'grid') {
+        g_charts[chart_name]['Z_facet']['tiles'] = new_tiles;
+        draw_dashboard(g_storyboard[g_storyboard_ix], g_charts, facet_value, g_tiles_select);
+    } else if (old_tiles.substr(0, 4) == 'grid') {
+        g_charts[chart_name]['Z_facet']['tiles'] = 'dropdown';
+        facet_value = tile_facet_value;
+        draw_dashboard(g_storyboard[g_storyboard_ix], g_charts, facet_value, g_tiles_select);
+    } else {
+        g_charts[chart_name]['Z_facet']['tiles'] = new_tiles;
+        facet_value = tile_facet_value;
+        var chart = g_charts[chart_name];
+        var X_facet = chart['X_facet']
+
+        var div_card_header = document.getElementById(chart_name + "_title");
+        div_card_header.innerHTML = "<b>" + chart['chart_title'] + "</b>";
+        if (g_tiles_d[chart_name][facet_value] != null) {
+            var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
+            if (facet_value != 'All') {
+                div_card_header.innerHTML = div_card_header.innerHTML +
+                    " / <font color='red'>" + facet_value + "</font>";
+            }
+        } else {
+            var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
+        }
+        if ("type" in X_facet) {
+            if (X_facet['type'] == 'date') {
+                for (var rix = 1; rix < chart_data.length; rix++) {
+                    var s = chart_data[rix][0];
+                    if (typeof s === 'string') {
+                        var d = new Date(s);
+                        chart_data[rix][0] = d
+                    }
+                }
+            }
+        }
+        if (chart_data.length > 0) {
+            if (chart['chart_type'] == 'RadarChart') {
+                d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+            } else {
+                var dt = google.visualization.arrayToDataTable(chart_data, false);
+                var view = new google.visualization.DataView(dt);
+                g_charts[chart_name].datatable = dt;
+                g_charts[chart_name].view = view;
+                // only redraw for the active storyboard, read the dashboard from the web page instead form g_charts
+                if (typeof g_charts[chart_name].google_db != 'undefined') {
+                    g_charts[chart_name].google_db.draw(dt, g_options);
+                }
+            }
+        }
+    }
+}
+
+
+//<div class="google-visualization-controls-categoryfilter">
+//	<label class="google-visualization-controls-label">Hedonics_</label>
+//	<div>
+//	<span class="goog-combobox goog-inline-block">
+//	<input name="" type="text" autocomplete="off" label="Choose a value..." placeholder="Choose a value..." aria-label="Choose a value..." class="label-input-label">
+//	<span class="goog-combobox-button" style="user-select: none;">▼</span>
+//	<div class="goog-menu goog-menu-vertical" role="menu" aria-haspopup="true" style="user-select: none; left: 0px; top: 17px; display: none;">
+//		<div class="goog-menuitem" role="menuitem" id=":0" style="user-select: none;">
+//		<div class="goog-menuitem-content" style="user-select: none;"><b></b>0-Mean</div></div>
+//		<div class="goog-menuitem" role="menuitem" id=":1" style="user-select: none;">
+//		<div class="goog-menuitem-content" style="user-select: none;"><b></b>1-Excellent</div></div>
+//		<div class="goog-menuitem" role="menuitem" id=":2" style="user-select: none;">
+//		<div class="goog-menuitem-content" style="user-select: none;"><b></b>2-Top2</div></div>
+//		<div class="goog-menuitem" role="menuitem" id=":3" style="user-select: none;">
+//		<div class="goog-menuitem-content" style="user-select: none;"><b></b>3-Bottom2</div></div>
+//	</div>
+//	</span>
+//	<ul class="google-visualization-controls-categoryfilter-selected goog-inline-block"></ul>
+//	</div>
+//</div>
+
+function fill_tiles_chart(chart_name, chart_def, facet_value, containerId) {
+    // g_facet_data 
+    // g_tiles_select 
+
+    var selectList = document.getElementById(containerId);
+    selectList.innerHTML =
+        //"<div class='form-group'>" +
+        //    "<label for='sel1'>Select Tile-Value:</label>" +
+        //    "<select name='tile_value_select' class='form-control' id='tile_value_select'></select>" +
+        //"</div>";
+        '<div class="google-visualization-controls-categoryfilter">' +
+	        '<label class="google-visualization-controls-label">Tile-Value</label>' +
+	        '<div>' +
+	            '<span class="goog-combobox goog-inline-block">' +
+	            '<select name="" type="text" autocomplete="off" label="Choose facet..." placeholder="Choose facet..." aria-label="Choose facet..." class="label-input-label">' +
+	            '<span class="goog-combobox-button" style="user-select: none;">▼</span>' +
+	            '</span>' +
+	        '</div>' +
+	    '</div>';
+    var selectList = selectList.getElementsByTagName('select')[0];
+    selectList.setAttribute("onChange", "chart_tile_value_select_onchange('" + chart_name + "','" + containerId + "')");
+    var tiles_select = new Object();
+    tiles_select['Layout'] = ['grid-nx1', 'grid-nx2', 'grid-nx3', 'grid-nx4'];
+    tiles_select = Object.assign(tiles_select, g_tiles_select);
+    for (var facet_tile in tiles_select) {
+        var optgroup = document.createElement("optgroup");
+        optgroup.setAttribute("label", facet_tile);
+        optgroup.text = facet_tile;
+        selectList.appendChild(optgroup);
+        for (var fi = 0; fi < tiles_select[facet_tile].length; fi++) {
+            var option_facet_value = tiles_select[facet_tile][fi];
+            var option = document.createElement("option");
+            option.setAttribute("value", option_facet_value);
+            if (option_facet_value == facet_value) {
+                option.setAttribute('selected', true);
+            }
+            option.text = option_facet_value;
+            selectList.appendChild(option);
+        }
+    }
+}
+
 // JQuery
 
 function d3_chart(chart_name, chart_def, facet_value, colIndexes) {
@@ -158,15 +283,15 @@ function d3_chart(chart_name, chart_def, facet_value, colIndexes) {
 }
 
 function filterD3Chart(chart_name, chart_name2) {
-    var chart_def2 = g_db[chart_name2];
+    var chart_def2 = g_charts[chart_name2];
     if (g_tiles_d[chart_name2]['All']['chart_data'].length > 0) {
         var chart_data2 = g_tiles_d[chart_name]['All']['chart_data'];
     } else {
         var chart_data2 = new Array();
     }
     var colIndexes = [];
-    for (var i = 0; i < g_db[chart_name].filters.length; i++) {
-        var filter = g_db[chart_name].filters[i];
+    for (var i = 0; i < g_charts[chart_name].filters.length; i++) {
+        var filter = g_charts[chart_name].filters[i];
         for (var colnr = 1; colnr < chart_data2[0].length; colnr++) {
             if (chart_data2[0][colnr] == filter) {
                 colIndexes.push(colnr);
@@ -200,7 +325,7 @@ function getFilteredColumns(dt, filters) {
 function sortColumns(dt, rownr, frozenColumns, sortAscending) {
     var sortcols = [];
     var cols = [];
-    //g_db[chart_name2].view.setColumns(0, nrcols - 1);
+    //g_charts[chart_name2].view.setColumns(0, nrcols - 1);
     // first two rows are fixed
     for (var cix = frozenColumns; cix < dt.getNumberOfColumns() ; cix++) {
         var value = dt.getValue(rownr, cix);
@@ -227,39 +352,39 @@ function sortColumns(dt, rownr, frozenColumns, sortAscending) {
 
 function setFilters(chart_name, categorie) {
     var found = false;
-    for (var i = 0; i < g_db[chart_name].filters.length; i++) {
-        var filter = g_db[chart_name].filters[i];
+    for (var i = 0; i < g_charts[chart_name].filters.length; i++) {
+        var filter = g_charts[chart_name].filters[i];
         if (categorie == filter) {
-            g_db[chart_name].filters.splice(i, 1);
+            g_charts[chart_name].filters.splice(i, 1);
             found = true;
             break;
         }
     }
     if (!found) {
-        g_db[chart_name].filters.push(categorie);
+        g_charts[chart_name].filters.push(categorie);
     }
 }
 
 function setRowsChart(chart_name, chart_name2) {
-    var dt2 = g_db[chart_name2].datatable;
+    var dt2 = g_charts[chart_name2].datatable;
     var nrrows2 = dt2.getNumberOfRows();
     var nrcols2 = dt2.getNumberOfColumns();
     var setrows = [];
     var transpose = false;
-    if ('transpose' in g_db[chart_name2]) {
-        transpose = g_db[chart_name2]['transpose'];
+    if ('transpose' in g_charts[chart_name2]) {
+        transpose = g_charts[chart_name2]['transpose'];
     }
-    if (g_db[chart_name].filters.length > 0) {
+    if (g_charts[chart_name].filters.length > 0) {
         if (!transpose) {
-            for (var i = 0; i < g_db[chart_name].filters.length; i++) {
-                var filter = g_db[chart_name].filters[i];
+            for (var i = 0; i < g_charts[chart_name].filters.length; i++) {
+                var filter = g_charts[chart_name].filters[i];
                 var rowIndexes = dt2.getFilteredRows([{ column: 0, value: filter }]);
                 setrows = setrows.concat(rowIndexes);
             }
         } else {
             var filters = [];
-            for (var i = 0; i < g_db[chart_name].filters.length; i++) {
-                var filter = g_db[chart_name].filters[i];
+            for (var i = 0; i < g_charts[chart_name].filters.length; i++) {
+                var filter = g_charts[chart_name].filters[i];
                 var rowIndexes = getFilteredColumns(dt2, [{ row: 0, value: filter }]);
                 setrows = setrows.concat(rowIndexes);
             }
@@ -281,26 +406,26 @@ function setRowsChart(chart_name, chart_name2) {
 }
 
 function filterGoogleChart(chart_name, chart_name2) {
-    var dt2 = g_db[chart_name2].datatable;
+    var dt2 = g_charts[chart_name2].datatable;
     var transpose = false;
-    if ('transpose' in g_db[chart_name2]) {
-        transpose = g_db[chart_name2]['transpose'];
+    if ('transpose' in g_charts[chart_name2]) {
+        transpose = g_charts[chart_name2]['transpose'];
     }
     var setrows = setRowsChart(chart_name, chart_name2);
     if (!transpose) {
-        g_db[chart_name2].view.setRows(setrows);
-        //g_db[chart_name2].chart_wrapper.draw();
+        g_charts[chart_name2].view.setRows(setrows);
+        //g_charts[chart_name2].chart_wrapper.draw();
     } else {
-        //g_db[chart_name2].chart_wrapper.setDataTable(g_db[chart_name2].datatable);
-        g_db[chart_name2].view.setColumns(setrows);
-        //g_db[chart_name2].chart_wrapper.setView(g_db[chart_name2].view.toJSON());
-        //g_db[chart_name2].chart_wrapper.draw();
-        //for (var cix = 0; cix < g_db[chart_name2].control_wrappers.length; cix++) {
-        //    g_db[chart_name2].google_db.bind(g_db[chart_name2].control_wrappers[cix], g_db[chart_name2].chart_wrapper);
+        //g_charts[chart_name2].chart_wrapper.setDataTable(g_charts[chart_name2].datatable);
+        g_charts[chart_name2].view.setColumns(setrows);
+        //g_charts[chart_name2].chart_wrapper.setView(g_charts[chart_name2].view.toJSON());
+        //g_charts[chart_name2].chart_wrapper.draw();
+        //for (var cix = 0; cix < g_charts[chart_name2].control_wrappers.length; cix++) {
+        //    g_charts[chart_name2].google_db.bind(g_charts[chart_name2].control_wrappers[cix], g_charts[chart_name2].chart_wrapper);
         //}
-        //g_db[chart_name2].google_db.draw(g_db[chart_name2].data);
+        //g_charts[chart_name2].google_db.draw(g_charts[chart_name2].data);
     }
-    g_db[chart_name2].google_db.draw(g_db[chart_name2].view);
+    g_charts[chart_name2].google_db.draw(g_charts[chart_name2].view);
 }
 
 function filterChart(chart_name, chart_name2) {
@@ -308,7 +433,7 @@ function filterChart(chart_name, chart_name2) {
     // check whether chart2 is part of existing dashboard
     var chart_div2 = document.getElementById(chdiv2);
     if (chart_div2 != null) {
-        if (g_db[chart_name2]['chart_type'] == 'RadarChart') {
+        if (g_charts[chart_name2]['chart_type'] == 'RadarChart') {
             filterD3Chart(chart_name, chart_name2)
         } else {
             filterGoogleChart(chart_name, chart_name2)
@@ -327,10 +452,19 @@ function selectEventChart(chart_name, rowIndex, columnIndex, argument) {
 
 
 function google_chart(chart_name, chart_def, facet_value) {
-    google.charts.load('current', {'packages':['corechart', 'controls']});
-    var dbdiv = chart_name + '_dbdiv'
-    var chdiv = chart_name + '_chdiv'
-    var ctdivs = [chart_name + '_ct1div', chart_name + '_ct2div']
+    google.charts.load('current', { 'packages': ['corechart', 'controls'] });
+    var tiles = 'dropdown';
+    if ('Z_facet' in chart_def) {
+        tiles = chart_def['Z_facet']['tiles'];
+    }
+    if (tiles == 'dropdown') {
+        var div_name = chart_name
+    } else {
+        var div_name = chart_name + "_" + facet_value.split(' ').join('')
+    }
+    var dbdiv = div_name + '_dbdiv'
+    var chdiv = div_name + '_chdiv'
+    var ctdivs = [div_name + '_ct1div', div_name + '_ct2div']
     google.charts.setOnLoadCallback(drawVisualization);
 
     function drawVisualization() {
@@ -381,9 +515,8 @@ function google_chart(chart_name, chart_def, facet_value) {
         //    axis = y_axis
         //}
 
-        var t1 = g_db[chart_name].google_db;
-        var t2 = g_db[chart_name].chart_wrapper;
-        if (typeof t1 === 'undefined') {
+        var t1 = g_charts[chart_name].google_db;
+        if (typeof t1 === 'undefined' || true) {
             var controls = ['StringFilter'];
             if ('controls' in chart_def) {
                 var controls = chart_def['controls'];
@@ -553,15 +686,19 @@ function google_chart(chart_name, chart_def, facet_value) {
                         }
                     });
                     //document.getElementById(ctdivs[cix]).style.height = "50px";
+                } else if (control == 'tile_value_select') {
+                    if (tiles == 'dropdown' || facet_value == 'All') {
+                        fill_tiles_chart(chart_name, chart_def, facet_value, ctdivs[cix]);
+                    }
                 }
                 control_wrappers.push(control_wrapper);
             }
             if ('listener' in chart_def) {
                 var tempListener = google.visualization.events.addOneTimeListener(chart_wrapper, 'ready', function () {
                     var listener = chart_def['listener'];
-                    g_db[chart_name].filters = [];
-                    g_db[chart_name].setrows = [];
-                    g_db[chart_name].sortrows = {};
+                    g_charts[chart_name].filters = [];
+                    g_charts[chart_name].setrows = [];
+                    g_charts[chart_name].sortrows = {};
                     for (var event_name in listener) {
                         if (event_name == 'sort') {
                             google.visualization.events.addListener(chart_wrapper.getChart(), 'sort', function (ev) {
@@ -571,10 +708,10 @@ function google_chart(chart_name, chart_def, facet_value) {
 
                                 var columnIndex = ev['column'];
                                 //var categorie = dt.getColumnLabel(columnIndex)
-                                var categorie = g_db[chart_name].view.getColumnLabel(columnIndex)
-                                //var rowIndexes = g_db['cand_emotion_col'].view.getFilteredRows([{ column: 0, value: categorie }]);
+                                var categorie = g_charts[chart_name].view.getColumnLabel(columnIndex)
+                                //var rowIndexes = g_charts['cand_emotion_col'].view.getFilteredRows([{ column: 0, value: categorie }]);
                                 setFilters(chart_name, categorie)
-                                var charts2 = g_db[chart_name]['listener']['sort'];
+                                var charts2 = g_charts[chart_name]['listener']['sort'];
                                 for (var charts2_ix = 0; charts2_ix < charts2.length; charts2_ix++) {
                                     var chart_name2 = charts2[charts2_ix];
                                     filterChart(chart_name, chart_name2);
@@ -585,7 +722,7 @@ function google_chart(chart_name, chart_def, facet_value) {
                             google.visualization.events.addListener(chart_wrapper.getChart(), 'select', function (ev) {
                                 var chart_name = chart_wrapper.getChartName();
                                 var chart = chart_wrapper.getChart();
-                                var listen = g_db[chart_name]['listener']['select'];
+                                var listen = g_charts[chart_name]['listener']['select'];
                                 // getDataTable returns the view, for sorting we use the original datatable
                                 var dt = chart_wrapper.getDataTable();
                                 var selection = chart.getSelection();
@@ -598,21 +735,21 @@ function google_chart(chart_name, chart_def, facet_value) {
                                         if (action == 'rowsort' && rowIndex != null && columnIndex == null) {
                                             var rowlabel = dt.getValue(rowIndex, 0);
                                             var sortAscending = false;
-                                            if (rowlabel in g_db[chart_name].sortrows) {
-                                                sortAscending = !g_db[chart_name].sortrows[rowlabel];
+                                            if (rowlabel in g_charts[chart_name].sortrows) {
+                                                sortAscending = !g_charts[chart_name].sortrows[rowlabel];
                                             }
-                                            g_db[chart_name].sortrows[rowlabel] = sortAscending;
-                                            var setcols = sortColumns(g_db[chart_name].datatable, rowIndex, 2, sortAscending);
-                                            g_db[chart_name].view.setColumns(setcols);
+                                            g_charts[chart_name].sortrows[rowlabel] = sortAscending;
+                                            var setcols = sortColumns(g_charts[chart_name].datatable, rowIndex, 2, sortAscending);
+                                            g_charts[chart_name].view.setColumns(setcols);
                                             // make view effective for not topline???
-                                            for (var cix = 0; cix < g_db[chart_name].control_wrappers.length; cix++) {
-                                                g_db[chart_name].google_db.bind(g_db[chart_name].control_wrappers[cix], g_db[chart_name].chart_wrapper);
+                                            for (var cix = 0; cix < g_charts[chart_name].control_wrappers.length; cix++) {
+                                                g_charts[chart_name].google_db.bind(g_charts[chart_name].control_wrappers[cix], g_charts[chart_name].chart_wrapper);
                                             }
-                                            if (g_db[chart_name].google_db != null) {
-                                                g_db[chart_name].google_db.draw(g_db[chart_name].view);
+                                            if (g_charts[chart_name].google_db != null) {
+                                                g_charts[chart_name].google_db.draw(g_charts[chart_name].view);
                                             } else {
-                                                g_db[chart_name].chart_wrapper.setView(g_db[chart_name].view.toJSON());
-                                                g_db[chart_name].chart_wrapper.draw();
+                                                g_charts[chart_name].chart_wrapper.setView(g_charts[chart_name].view.toJSON());
+                                                g_charts[chart_name].chart_wrapper.draw();
                                             }
                                         }
                                         if (action == 'colsort' && rowIndex == null && columnIndex != null) {
@@ -621,18 +758,18 @@ function google_chart(chart_name, chart_def, facet_value) {
                                             }
                                             var columnlabel = dt.getColumnLabel(columnIndex);
                                             var sortAscending = false;
-                                            if (columnlabel in g_db[chart_name].sortrows) {
-                                                sortAscending = !g_db[chart_name].sortrows[columnlabel];
+                                            if (columnlabel in g_charts[chart_name].sortrows) {
+                                                sortAscending = !g_charts[chart_name].sortrows[columnlabel];
                                             }
-                                            g_db[chart_name].sortrows[columnlabel] = sortAscending;
-                                            var setrows = g_db[chart_name].datatable.getSortedRows({ 'column': columnIndex, 'desc': !sortAscending });
-                                            g_db[chart_name].view.setRows(setrows);
-                                            //g_db[chart_name].chart_wrapper.draw();
-                                            if (g_db[chart_name].google_db != null) {
-                                                g_db[chart_name].google_db.draw(g_db[chart_name].view);
+                                            g_charts[chart_name].sortrows[columnlabel] = sortAscending;
+                                            var setrows = g_charts[chart_name].datatable.getSortedRows({ 'column': columnIndex, 'desc': !sortAscending });
+                                            g_charts[chart_name].view.setRows(setrows);
+                                            //g_charts[chart_name].chart_wrapper.draw();
+                                            if (g_charts[chart_name].google_db != null) {
+                                                g_charts[chart_name].google_db.draw(g_charts[chart_name].view);
                                             } else {
-                                                g_db[chart_name].chart_wrapper.setView(g_db[chart_name].view.toJSON());
-                                                g_db[chart_name].chart_wrapper.draw();
+                                                g_charts[chart_name].chart_wrapper.setView(g_charts[chart_name].view.toJSON());
+                                                g_charts[chart_name].chart_wrapper.draw();
                                             }
                                         }
                                         if (action == 'rowcolfilter' && rowIndex != null && columnIndex != null) {
@@ -647,7 +784,7 @@ function google_chart(chart_name, chart_def, facet_value) {
                                         if (action == 'join') {
                                             // join data from two base datatables into a new datatable.
                                             var chart_data = [[]];
-                                            var chart = g_db[chart_name];
+                                            var chart = g_charts[chart_name];
                                             chart_data[0][0] = chart['X_facet']['label'];
                                             chart_data[0][1] = chart['Y_facet']['label'];
                                             for (var fix = 1; fix <  g_tiles_d[chart_name].lenght; fix++) {
@@ -673,11 +810,13 @@ function google_chart(chart_name, chart_def, facet_value) {
                     }
                 });
             }
-            g_db[chart_name].google_db = google_db;
-            g_db[chart_name].chart_wrapper = chart_wrapper;
-            g_db[chart_name].control_wrappers = control_wrappers;
-            g_db[chart_name].datatable = data;
-            g_db[chart_name].view = view
+            if (tiles == 'dropdown' || facet_value == 'All') {
+                g_charts[chart_name].google_db = google_db;
+                g_charts[chart_name].chart_wrapper = chart_wrapper;
+                g_charts[chart_name].control_wrappers = control_wrappers;
+                g_charts[chart_name].datatable = data;
+                g_charts[chart_name].view = view
+            }
 
             if (controls.length > 0) {
                 for (var cix = 0; cix < controls.length; cix++) {
@@ -691,17 +830,17 @@ function google_chart(chart_name, chart_def, facet_value) {
                         startup     : true,
                     }
                 }
-                g_db[chart_name].google_db.draw(view, g_options);
+                google_db.draw(view, g_options);
             } else {
-                g_db[chart_name].chart_wrapper.setDataTable(data);
-                g_db[chart_name].chart_wrapper.setView(view.toJSON());
-                g_db[chart_name].chart_wrapper.draw();
+                chart_wrapper.setDataTable(data);
+                chart_wrapper.setView(view.toJSON());
+                chart_wrapper.draw();
             }
 
         }
 
         // chart_wrapper.draw();
-        //g_db[chart_name].google_db.draw(data, g_options);
+        //g_charts[chart_name].google_db.draw(data, g_options);
         //google_db.draw(data);
     }
 }

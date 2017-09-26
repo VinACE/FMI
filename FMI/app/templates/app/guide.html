@@ -16,6 +16,8 @@
                     <input type="hidden" name="menu_name" value="">
                     <input type="hidden" name="step_name" value="">
                     <input type="hidden" name="view_name" value="">
+                    <input type="hidden" name="workbook_name" value="">
+                    <input type="hidden" name="dashboard_name" value="">
                     <input type="hidden" name="benchmark" value="">
                     <input type="hidden" name="tile_facet_field" value="">
                     <input type="hidden" name="tile_facet_value" value="">
@@ -99,7 +101,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="sel1">Select Dashboard:</label>
-                                    <select name="storyboard" class="form-control" id="storyboard_select">
+                                    <select name="storyboard" class="form-control" id="dashboard_select">
                                     </select>
                                 </div>
                             </div>
@@ -154,7 +156,8 @@
 <script>
     var csrftoken = '{{ csrf_token }}';
     guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }});
-    set_params("{{benchmark}}");
+    set_hidden_param("benchmark", "{{benchmark}}");
+    get_workbook_dashboard_names();
     site_route("{{site_name}}", "{{menu_name}}", "{{view_name}}", {{ sites|safe }}, {{ site_views|safe }}, {{ tiles_d|safe }});
 </script>
 

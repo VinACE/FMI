@@ -59,7 +59,7 @@ function route_step(route_name, step_name) {
         if (step['selection'][0] == 'graph') {
             var dashboard = step['selection'][1];
             var charts = step['selection'][2];
-            g_db = charts;
+            g_charts = charts;
             tab_active('#storyboard_tab');
             draw_dashboard(dashboard, charts, "All", "dashboard_div");
         }
@@ -499,11 +499,6 @@ function site_route(site_name, menu_name, view_name, sites, site_views, tiles_d)
     }
 }
 
-function set_params(benchmark) {
-    var input = document.getElementsByName("benchmark")[0];
-    input.value = benchmark
-}
-
 
 function getParameterByName(name, url) {
     if (!url) {
@@ -535,7 +530,10 @@ function fill_params_facets_tiles(site_name, menu_name, view_name) {
     var views = menu_item['views'];
     var site_view = g_site_views[view_name];
     params['view_name'] = view_name;
+    params['workbook_name'] = site_view['workbook_name'];
+    set_hidden_param('workbook_name', site_view['workbook_name'])
     params['dashboard_name'] = site_view['dashboard_name'];
+    set_hidden_param('dashboard_name', site_view['dashboard_name'])
 
     for (var menu_ix = 0; menu_ix < menu.length; menu_ix++) {
         var menu_name = menu[menu_ix];

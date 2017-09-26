@@ -460,6 +460,7 @@ class SeekerView (View):
          'active'   : True,
          }
     ]
+    tiles = []
 
     #workbook = {
     #    }
@@ -658,7 +659,7 @@ class SeekerView (View):
     def get_facets_data(self, results, tiles_select, benchmark):
         facets_data = OrderedDict()
         for f in self.get_facets():
-            if type(f) == seeker.facets.TermsFacet and f.visible_pos > 0 and f.field in results.aggregations:
+            if type(f) == seeker.facets.TermsFacet and f.visible_pos > 0 and f.field in results.aggregations and f.field in self.tiles:
                 if f.label in tiles_select:
                     selected = True
                 else:
@@ -1029,6 +1030,8 @@ class SeekerView (View):
                             facet.visible_pos = 0
                 if 'charts' in workbook:
                     self.dashboard = workbook['charts']
+                if 'tiles' in workbook:
+                    self.tiles = workbook['tiles']
                 if 'storyboard' in workbook:
                     self.storyboard = workbook['storyboard']
                 if 'dashboard_data' in workbook:
@@ -1039,11 +1042,15 @@ class SeekerView (View):
             if dashboard_name != '':
                 if db['name'] == dashboard_name:
                     dashboard = db
-                    break
+                    db['dashboard_data'] = 'push'
+                else:
+                    db['dashboard_data'] = dashboard_data
             else:
                 if db['active'] == True:
                     dashboard = db
-                    break;
+                    db['dashboard_data'] = 'push'
+                else:
+                    db['dashboard_data'] = dashboard_data
         if workbook_name != '' and dashboard_name != '' and dashboard_data == 'pull':
             self.dashboard = {};
             for layout_name, layout in dashboard['layout'].items():

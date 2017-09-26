@@ -23,7 +23,38 @@ import seeker
 from django.utils.encoding import python_2_unicode_compatible
 
 # A dashboard layout is a dictionary of tables. Each table is a list of rows and each row is a list of charts
-# in the template this is translated into HTML tables, rows, cells and div elements  
+# in the template this is translated into HTML tables, rows, cells and div elements
+
+
+# Chart Syntax
+# "chart_name"          : <chart_properties>
+# <chart_properties>    : <chart_type> <chart_title> <data_type> <controls>? <help>? <listener>? <transpose>? <X_facet> <Y_facet>? <Z_facet>? <options>?
+# <chart_type>          : 'chart_type' : <google chart types> | <d3.js chart types>
+# <chart_title>         : 'chart_title' : "chart title"
+# <data_type>           : 'facet' | 'aggr' | 'hits' | 'topline'
+# <controls>            : [ <google chart controls> | 'tile_value_select' ]
+# <google chart controls> : 'CategoryFilter', 'ChartRangeFilter', 'DateRangeFilter', 'NumberRangeFilter', 'StringFilter'
+# <options>             : <google chart options>
+# <google chart options> : 'width', 'height', 'colors', 'legend', 'bar', <vAxis>, <hAxis>, 'seriesType', <series>
+# <transpose>           : True | False
+# <X_facet>, <Y-facet> < Z_facet> : <facet>
+#
+# <facet>               : <field> <label> <total> <type> <question> <answers> <metric> <mean> <order>
+# <type>                : 'date'
+# <metric>              : <ElasticSearch metric>
+# <ElasticSearch metric>: 'doc_count', 'prc'
+# <order>               : <ElasticSearch order>
+# <ElasticSearch order> : '_count'|'_term' 'asc'|'desc'
+#
+# Mean can be the average of the different series within a category, type=answer
+# Mean can be the average of a serie of all categores, type=question
+# The mean can be shown as its own serie, layout=serie
+# The mean can be shown as its own category, layout=category
+# The mean can be catured as meta_data and shown in the header, layout=header
+# <mean>                : <type>, <layout>
+# <type>                : 'answer', 'question'
+# <layout>              : 'category', 'serie', 'header'
+# 
 
 class ExcelEcoSystemWorkbook:
 
@@ -698,7 +729,7 @@ class SurveyWorkbook:
             },
         "liking_blindcode_col" : {
             'chart_type': "Table",
-            'chart_title' : "Liking/Hedonics Candidate Count",
+            'chart_title' : "Liking Candidate #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
@@ -710,7 +741,7 @@ class SurveyWorkbook:
             },
         "topline_liking_table" : {
             'chart_type'  : "Table",
-            'chart_title' : "Topline Liking - Candidate",
+            'chart_title' : "Topline Liking - Candidate #",
             'data_type'   : "aggr",
             'base'        : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
@@ -746,7 +777,7 @@ class SurveyWorkbook:
             },
         "freshness_blindcode_col" : {
             'chart_type': "Table",
-            'chart_title' : "Freshness Candidate Count",
+            'chart_title' : "Freshness Candidate #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "freshness",
@@ -757,7 +788,7 @@ class SurveyWorkbook:
             },
         "topline_freshness_table" : {
             'chart_type'  : "Table",
-            'chart_title' : "Topline Freshness - Candidate",
+            'chart_title' : "Topline Freshness - Candidate #",
             'data_type'   : "aggr",
             'base'        : "freshness_blindcode_col",
             'controls'    : ['CategoryFilter'],
@@ -781,7 +812,7 @@ class SurveyWorkbook:
             },
         "cleanliness_blindcode_col" : {
             'chart_type': "Table",
-            'chart_title' : "Cleanliness Candidate Count",
+            'chart_title' : "Cleanliness Candidate #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "cleanliness",
@@ -803,7 +834,7 @@ class SurveyWorkbook:
             },
         "suitable_product_ans_col" : {
             'chart_type': "ColumnChart",
-            'chart_title' : "Suitable Product Resp Count",
+            'chart_title' : "Suitable Product #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_product",
@@ -814,7 +845,7 @@ class SurveyWorkbook:
             },
         "emotion_ans_col" : {
             'chart_type': "ColumnChart",
-            'chart_title' : "Emotion Resp Count",
+            'chart_title' : "Emotion #",
             'data_type'  : "aggr",
             'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
@@ -976,9 +1007,70 @@ class SurveyWorkbook:
         'topline_liking_table'      : dashboard_fresh['topline_liking_table'],
         'freshness_blindcode_col'   : dashboard_fresh['freshness_blindcode_col'],
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
+        "liking_blindcode_perc_col" : {
+            'chart_type': "Table",
+            'chart_title' : "Liking Candidate %",
+            'data_type'  : "aggr",
+            'listener'    : {'select' : {'rowsort': None}},
+            'X_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Liking/Hedonics",
+                'calc'    : 'percentile',
+                },
+            'Y_facet'     : {
+                'field'   : "blindcode.keyword",
+                'label'   : "Candidate"},
+            'options'     : {
+                'sort'    : 'event',
+                'frozenColumns' : 2,
+                }
+            },
+        "topline_liking_perc_table" : {
+            'chart_type'  : "Table",
+            'chart_title' : "Topline Liking - Candidate %",
+            'data_type'   : "aggr",
+            'base'        : "liking_blindcode_perc_col",
+            'controls'    : ['CategoryFilter', 'tile_value_select'],
+            'help'        : "Select Row for sorting, Select Column Header for filter",
+            'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
+            'X_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Hedonics_",
+                'calc'    : 'percentile',
+                'lines'   : {"liking.keyword" : {'0-Mean':['mean'], '1-Excellent':[7], '2-Top2':[7,6], '3-Bottom2':[2,1]}},
+                },
+            'Y_facet'     : {
+                'field'   : "blindcode.keyword",
+                'label'   : "Candidate"
+                },
+            'Z_facet'     : {
+                'field'   : "product_form.keyword",
+                'label'   : "Product Form",
+                'order'   : { "_term" : "asc" },
+                'tiles'   : 'grid-2x1',
+                },
+            'options'     : {
+                'sort'    : 'event',
+                "allowHtml" : True,
+                'frozenColumns' : 2,
+                },
+            'formatter'  : {
+                #'NumberFormat' : {1 : {'pattern' : '#.##'},2 : {'pattern' : '#.#'}},
+                #'setColumnProperties'   : {1 : {'style': 'font-style:bold; font-size:22px;'}},
+                'setProperty'   : [],
+                #'setProperty'   : [[2, 1, 'style', 'font-style:bold;'],
+                #                   [3, 3, 'background-color', 'red' ],
+                #                   [0, 1, 'className', 'benchmark'],
+                #                   [1, 1, 'className', 'benchmark'],
+                #                   [2, 1, 'className', 'benchmark'],
+                #                   [3, 1, 'className', 'benchmark'],
+                #                   [4, 1, 'className', 'benchmark'],
+                #                   ],
+                },
+            },
         "emotion_perc_col" : {
             'chart_type': "ColumnChart",
-            'chart_title' : "Emotion Resp Count",
+            'chart_title' : "Emotion %",
             'data_type'  : "aggr",
             'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
@@ -991,7 +1083,7 @@ class SurveyWorkbook:
             },
         "liking_perc_col" : {
             'chart_type': "ColumnChart",
-            'chart_title' : "Liking Resp Count",
+            'chart_title' : "Liking %",
             'data_type'  : "facet",
             'help'        : "Select Legend for sorting Categories",
             'listener'    : {'select' : {'colsort': 'categories'}},
@@ -1006,7 +1098,7 @@ class SurveyWorkbook:
                 'field'   : "product_form.keyword",
                 'label'   : "Product Form",
                 'order'   : { "_term" : "asc" },
-                "mean"    : {"type" : "answer", "layout" : "header"},
+                'tiles'   : 'grid-2x3',
                 },
             },
         "liking_emotion_corr_table" : {
@@ -1020,10 +1112,10 @@ class SurveyWorkbook:
             'listener'    : {'select' : {'join': ["liking_emotion_scatterl"]}},
             'X_facet'     : {
                 'field'   : 'liking.keyword',
-                'stats'   : ['answer', 'count', 'mean', 'std', 'min', 'max', '25%', '50%', '75%', 'liking.keyword'],
+                'stats'   : ['answer', 'liking.keyword', 'mean', 'std', 'min', 'max', '25%', '50%', '75%', 'count'],
                 'label'   : {'category' : 'Question',
-                             'answer':'Answer', 'count':'Tiles', 'mean':'Mean', 'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%',
-                             'liking.keyword': 'Liking'},
+                             'answer':'Answer', 'liking.keyword': 'Liking', 'mean':'Mean', 'std':'Std', 'min':'Min', 'max':'Max', '25%':'25%', '50%':'50%', '75%': '75%',
+                             'count':'Tiles'},
                 },
             'Y_facet'     : {
                 'field'   : 'emotion',
@@ -1056,11 +1148,11 @@ class SurveyWorkbook:
 
     storyboard_link = [
         {'name'     : 'Topline',
-         'layout'   : {'rows' : [['liking_blindcode_col'], ['topline_liking_table']]},
+         'layout'   : {'rows' : [['liking_blindcode_col'], ['liking_blindcode_perc_col'], ['topline_liking_table'], ['topline_liking_perc_table']]},
          'active'   : False,
         },
         {'name'     : 'Hedonics',
-         'layout'   : {'rows' : [['topline_liking_table']]},
+         'layout'   : {'rows' : [['topline_liking_perc_table']]},
          'active'   : False,
         },
         {'name'     : 'Intensity',
@@ -1080,7 +1172,7 @@ class SurveyWorkbook:
     dashboard_orange = {
         "liking_blindcode_col" : {
             'chart_type': "Table",
-            'chart_title' : "Liking/Hedonics Candidate Count",
+            'chart_title' : "Liking Candidate #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "liking.keyword",
@@ -1092,7 +1184,7 @@ class SurveyWorkbook:
             },
         "strength_blindcode_col" : {
             'chart_type': "Table",
-            'chart_title' : "Strength Candidate Count",
+            'chart_title' : "Strength Candidate #",
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "hedonics",
@@ -1108,7 +1200,7 @@ class SurveyWorkbook:
             },
         "topline_liking_table" : {
             'chart_type'  : "Table",
-            'chart_title' : "Topline Liking - Candidate",
+            'chart_title' : "Topline Liking - Candidate #",
             'data_type'   : "aggr",
             'base'        : "liking_blindcode_col",
             'controls'    : ['CategoryFilter'],
@@ -1265,6 +1357,7 @@ class SurveyWorkbook:
             'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
             'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
+            'tiles'         : ["country.keyword", "gender.keyword", "age.keyword", "product_form.keyword", "method.keyword", "blindcode.keyword"],
             'charts'        : dashboard_fresh,
             'storyboard'    : storyboard_fresh,
             'dashboard_data': 'push',
@@ -1274,6 +1367,7 @@ class SurveyWorkbook:
             'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
             'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
+            'tiles'         : ["country.keyword", "gender.keyword", "age.keyword", "product_form.keyword", "method.keyword", "blindcode.keyword"],
             'charts'        : dashboard_link,
             'storyboard'    : storyboard_link,
             'dashboard_data': 'pull',
@@ -1283,6 +1377,7 @@ class SurveyWorkbook:
             'display'       : ["gender", "age", 'brand', "blindcode", "liking"],
             'facets'        : ["survey.keyword", "gender.keyword", "age.keyword", "blindcode.keyword", "liking.keyword",
                                "hedonics", "affective", "ballot", "behavioral", "physical"],
+            'tiles'         : ["gender.keyword", "age.keyword", "blindcode.keyword"],
             'charts'        : dashboard_orange,
             'storyboard'    : storyboard_orange,
             'dashboard_data': 'push',

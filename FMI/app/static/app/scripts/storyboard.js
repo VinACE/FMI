@@ -3,7 +3,7 @@
 'use strict';
 
 // JQuery
-var g_db;
+var g_charts;
 var g_facet_data;
 var g_tiles_d;
 var g_tiles_select;
@@ -52,10 +52,16 @@ function tile_value_select_onchange() {
             var row = layout[rownr];
             for (var chartnr = 0; chartnr < row.length; chartnr++) {
                 var chart_name = layout[rownr][chartnr];
-                var chart = g_db[chart_name]
-                if (!g_db.hasOwnProperty(chart_name)) continue;
-                var chart = g_db[chart_name];
+                if (!g_charts.hasOwnProperty(chart_name)) continue;
+                var chart = g_charts[chart_name];
                 var X_facet = chart['X_facet']
+                var tiles = 'dropdown';
+                if ('Z_facet' in chart) {
+                    tiles = chart['Z_facet']['tiles'];
+                }
+                if (tiles != 'dropdown') {
+                    continue;
+                }
                 var div_card_header = document.getElementById(chart_name + "_title");
                 div_card_header.innerHTML = "<b>" + chart['chart_title'] + "</b>";
                 if (g_tiles_d[chart_name][facet_value] != null) {
@@ -84,11 +90,11 @@ function tile_value_select_onchange() {
                 } else {
                     var dt = google.visualization.arrayToDataTable(chart_data, false);
                     var view = new google.visualization.DataView(dt);
-                    g_db[chart_name].datatable = dt;
-                    g_db[chart_name].view = view;
-                    // only redraw for the active storyboard
-                    if (typeof g_db[chart_name].google_db != 'undefined') {
-                        g_db[chart_name].google_db.draw(dt, g_options);
+                    g_charts[chart_name].datatable = dt;
+                    g_charts[chart_name].view = view;
+                    // only redraw for the active storyboard, read the dashboard from the web page instead form g_charts
+                    if (typeof g_charts[chart_name].google_db != 'undefined') {
+                        g_charts[chart_name].google_db.draw(dt, g_options);
                     }
                 }
             }
@@ -100,7 +106,11 @@ function tile_value_select_onchange() {
 function fill_tiles(facets_data, tiles_select, tiles_d) {
     g_facet_data = facet_data
     g_tiles_select = tiles_select;
-    g_tiles_d = tiles_d;
+    if (typeof g_tiles_d == 'undefined') {
+        g_tiles_d = tiles_d;
+    } else {
+        g_tiles_d = Object.assign(g_tiles_d, tiles_d)
+    }
 
     var selectList = document.getElementById("benchmark_select");
     selectList.setAttribute("onChange", "benchmark_select_onchange()");
@@ -166,6 +176,81 @@ function fill_tiles(facets_data, tiles_select, tiles_d) {
     }
 }
 
+function draw_dashboard_layout(dashboard, chart_name, chart, facet_value, tiles_select) {
+    var tiles = 'dropdown';
+    if ('Z_facet' in chart) {
+        tiles = chart['Z_facet']['tiles'];
+    }
+    if (tiles == 'dropdown') {
+        var div_name = chart_name
+    } else {
+        var div_name = chart_name + "_" + facet_value.split(' ').join('');
+    }
+    var div_card = document.createElement("div");
+    div_card.setAttribute("class", "iff-card-6");
+    var div_card_header = document.createElement("div");
+    div_card_header.setAttribute("class", "iff-card-header");
+    div_card_header.setAttribute("id", div_name + "_title");
+    div_card.appendChild(div_card_header);
+    div_card_header.innerHTML = "<b>" + chart['chart_title'] + "</b>";
+    if (facet_value != 'All') {
+        div_card_header.innerHTML = div_card_header.innerHTML +
+            " / <font color='red'>" + facet_value + "</font>";
+    }
+    var div_card_body = document.createElement("div");
+    div_card_body.setAttribute("class", "iff-card-body");
+    div_card.appendChild(div_card_body);
+
+    var div_db = document.createElement("div");
+    div_db.setAttribute("id", div_name + "_dbdiv");
+    //div_db.setAttribute("style", "width: 100%; height: 100%");
+    div_db.setAttribute("style", "width: 100%;");
+    div_card_body.appendChild(div_db);
+    var div_cont_db = document.createElement("div");
+    div_cont_db.setAttribute("class", "container-fluid");
+    div_db.appendChild(div_cont_db);
+    if ('help' in chart) {
+        //var help_txt = document.createTextNode(chart['help']);
+        var div_row_db = document.createElement("div");
+        div_row_db.setAttribute("class", "row");
+        div_cont_db.appendChild(div_row_db);
+        var div_col_db = document.createElement("div");
+        div_col_db.setAttribute("class", "col-md-12");
+        div_row_db.appendChild(div_col_db);
+        var help_txt = document.createElement("b");
+        help_txt.innerHTML = chart['help'];
+        div_col_db.appendChild(help_txt);
+    }
+    var nrcontrols = 1
+    if ('controls' in chart) {
+        nrcontrols = chart['controls'].length;
+    }
+    var div_row_db = document.createElement("div");
+    div_row_db.setAttribute("class", "row");
+    div_cont_db.appendChild(div_row_db);
+    var c_width = 12 / nrcontrols;
+    for (var controlnr = 0; controlnr < nrcontrols; controlnr++) {
+        var div_col_db = document.createElement("div");
+        div_col_db.setAttribute("class", "col-md-" + c_width);
+        div_row_db.appendChild(div_col_db);
+        var div_ct = document.createElement("div");
+        var control_div_name = div_name + "_ct" + (controlnr + 1) + "div";
+        div_ct.setAttribute("id", control_div_name);
+        div_col_db.appendChild(div_ct);
+    }
+    var div_row_db = document.createElement("div");
+    div_row_db.setAttribute("class", "row");
+    div_cont_db.appendChild(div_row_db);
+    var div_col_db = document.createElement("div");
+    div_col_db.setAttribute("class", "col-md-12");
+    div_row_db.appendChild(div_col_db);
+    var div_ch = document.createElement("div");
+    div_ch.setAttribute("id", div_name + "_chdiv");
+    div_col_db.appendChild(div_ch);
+
+    return div_card;
+}
+
 function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
     //var dashboard_div = document.getElementById("dashboard_div");
     var dashboard_div = document.getElementById("dashboard_div");
@@ -179,11 +264,9 @@ function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
         var layout = dashboard.layout[grid_name];
         for (var rownr = 0; rownr < layout.length; rownr++) {
             var row = layout[rownr];
-
             var div_row = document.createElement("div");
             div_row.setAttribute("class", "row iff-margin-t15");
             dashboard_div.appendChild(div_row);
-
             var l_width = 12 / row.length;
             for (var chartnr = 0; chartnr < row.length; chartnr++) {
                 var chart_name = layout[rownr][chartnr];
@@ -191,64 +274,46 @@ function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
                 var div_col = document.createElement("div");
                 div_col.setAttribute("class", "col-md-" + l_width);
                 div_row.appendChild(div_col);
-                var div_card = document.createElement("div");
-                div_card.setAttribute("class", "iff-card-6");
-                div_col.appendChild(div_card);
-
-                var div_card_header = document.createElement("div");
-                div_card_header.setAttribute("class", "iff-card-header");
-                div_card_header.setAttribute("id", chart_name + "_title");
-                div_card.appendChild(div_card_header);
-                div_card_header.innerHTML = "<b>" + chart['chart_title'] + "</b>";
-                var div_card_body = document.createElement("div");
-                div_card_body.setAttribute("class", "iff-card-body");
-                div_card.appendChild(div_card_body);
-
-                var div_db = document.createElement("div");
-                div_db.setAttribute("id", chart_name + "_dbdiv");
-                //div_db.setAttribute("style", "width: 100%; height: 100%");
-                div_db.setAttribute("style", "width: 100%;");
-                div_card_body.appendChild(div_db);
-                var div_cont_db = document.createElement("div");
-                div_cont_db.setAttribute("class", "container-fluid");
-                div_db.appendChild(div_cont_db);
-                if ('help' in chart) {
-                    //var help_txt = document.createTextNode(chart['help']);
-                    var div_row_db = document.createElement("div");
-                    div_row_db.setAttribute("class", "row");
-                    div_cont_db.appendChild(div_row_db);
-                    var div_col_db = document.createElement("div");
-                    div_col_db.setAttribute("class", "col-md-12");
-                    div_row_db.appendChild(div_col_db);
-                    var help_txt = document.createElement("b");
-                    help_txt.innerHTML = chart['help'];
-                    div_col_db.appendChild(help_txt);
+                var tiles = 'dropdown';
+                if ('Z_facet' in chart) {
+                    tiles = chart['Z_facet']['tiles'];
                 }
-                var nrcontrols = 1
-                if ('controls' in chart) {
-                    nrcontrols = chart['controls'].length;
+                if (tiles == 'dropdown') {
+                    var div_card = draw_dashboard_layout(dashboard, chart_name, chart, facet_value, tiles_select)
+                    div_col.appendChild(div_card);
+                } else {
+                    var re = /(grid)(-*)([1-9]*)(x*)([1-9]*)/
+                    var ar = re.exec(tiles);
+                    var nrrow = (ar[3] == '') ? 1 : parseInt(ar[3]);
+                    var nrcol = (ar[5] == '') ? 1 : parseInt(ar[5]);
+                    var nrtiles = 0;
+                    for (var facet_tile in tiles_select) {
+                        nrtiles = nrtiles + tiles_select[facet_tile].length;
+                    }
+                    nrrow = (nrtiles % nrcol == 0) ? nrtiles / nrcol : parseInt(nrtiles / nrcol) + 1
+                    var l_width = 12 / nrcol;
+                    var colnr = 0;
+                    for (var facet_tile in tiles_select) {
+                        for (var fi = 0; fi < tiles_select[facet_tile].length; fi++) {
+                            var facet_value = tiles_select[facet_tile][fi];
+                            facet_value = facet_value.split(' ').join('');
+                            if (colnr == 0) {
+                                var div_row_facet = document.createElement("div");
+                                div_row_facet.setAttribute("class", "row");
+                                div_col.appendChild(div_row_facet);
+                            }
+                            var div_col_facet = document.createElement("div");
+                            div_col_facet.setAttribute("class", "col-md-" + l_width);
+                            div_row_facet.appendChild(div_col_facet);
+                            var div_card = draw_dashboard_layout(dashboard, chart_name, chart, facet_value, tiles_select)
+                            div_col_facet.appendChild(div_card);
+                            colnr = colnr + 1;
+                            if (colnr == nrcol) {
+                                colnr = 0
+                            }
+                        }
+                    }
                 }
-                var div_row_db = document.createElement("div");
-                div_row_db.setAttribute("class", "row");
-                div_cont_db.appendChild(div_row_db);
-                var c_width = 12 / nrcontrols;
-                for (var controlnr = 0; controlnr < nrcontrols; controlnr++) {
-                    var div_col_db = document.createElement("div");
-                    div_col_db.setAttribute("class", "col-md-" + c_width);
-                    div_row_db.appendChild(div_col_db);
-                    var div_ct = document.createElement("div");
-                    div_ct.setAttribute("id", chart_name + "_ct" + (controlnr + 1) + "div");
-                    div_col_db.appendChild(div_ct);
-                }
-                var div_row_db = document.createElement("div");
-                div_row_db.setAttribute("class", "row");
-                div_cont_db.appendChild(div_row_db);
-                var div_col_db = document.createElement("div");
-                div_col_db.setAttribute("class", "col-md-12");
-                div_row_db.appendChild(div_col_db);
-                var div_ch = document.createElement("div");
-                div_ch.setAttribute("id", chart_name + "_chdiv");
-                div_col_db.appendChild(div_ch);
             }
         }
     }
@@ -264,26 +329,30 @@ function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
                 var div_card_header = document.getElementById(chart_name + "_title");
                 if (g_tiles_d[chart_name][facet_value] != null) {
                     var chart_data = g_tiles_d[chart_name][facet_value]['chart_data'];
-                    if (facet_value != 'All') {
-                        div_card_header.innerHTML = div_card_header.innerHTML +
-                            " / <font color='red'>" + facet_value + "</font>";
-                    }
                 } else {
                     var chart_data = g_tiles_d[chart_name]['All']['chart_data'];
                 }
                 if (chart_data.length == 0) continue;
+                var tiles = 'dropdown';
                 if ('Z_facet' in chart) {
-                    var Z_facet = chart['Z_facet'];
+                    tiles = chart['Z_facet']['tiles'];
+                }
+                if (tiles == 'dropdown') {
                     if (chart['chart_type'] == 'RadarChart') {
                         d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
                     } else {
                         google_chart(chart_name, chart, facet_value);
                     }
                 } else {
-                    if (chart['chart_type'] == 'RadarChart') {
-                        d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
-                    } else {
-                        google_chart(chart_name, chart, facet_value);
+                    for (var facet_tile in tiles_select) {
+                        for (var fi = 0; fi < tiles_select[facet_tile].length; fi++) {
+                            var facet_value = tiles_select[facet_tile][fi];
+                            if (chart['chart_type'] == 'RadarChart') {
+                                d3_chart(chart_name, chart, facet_value, [1, 2, 3]);
+                            } else {
+                                google_chart(chart_name, chart, facet_value);
+                            }
+                        }
                     }
                 }
             }
@@ -296,6 +365,19 @@ function dashboard_definition(storyboard_ix) {
     g_storyboard_ix = storyboard_ix;
     var table = document.getElementById("db_layout_table");
     if (table != null) {
+        // $("#db_layout_div").append($('<table>')).append($('<tr>')).append($('<td Grid>'));
+        //var nrrow = table.rows.length;
+        //for (var rownr = 0; rownr<nrrow; rownr++) {
+        //   table.deleteRow(0);
+        //}
+        var tb = table.querySelectorAll('tbody');
+        for (var i = 0; i < tb.length; i++) {
+            tb[i].parentNode.removeChild(tb[i]);
+        }
+        var th = table.querySelectorAll('thead');
+        for (var i = 0; i < th.length; i++) {
+            th[i].parentNode.removeChild(th[i]);
+        }
         for (var grid_name in g_storyboard[storyboard_ix].layout) {
             var thead = document.createElement("thead");
             table.appendChild(thead)
@@ -325,28 +407,22 @@ function dashboard_definition(storyboard_ix) {
 }
 
 function storyboard_onchange() {
-    var storyboard_ix = document.getElementById("storyboard_select").value;
+    var storyboard_ix = document.getElementById("dashboard_select").value;
     var input = document.getElementsByName("dashboard_name")[0];
     var dashboard_name = g_storyboard[storyboard_ix]['name'];
+    var dashboard_data = g_storyboard[storyboard_ix]['dashboard_data'];
     input.value = dashboard_name;
     var facet_value = document.getElementById("tile_value_select").value;
 
-    // $("#db_layout_div").append($('<table>')).append($('<tr>')).append($('<td Grid>'));
-    var table = document.getElementById("db_layout_table");
-    //var nrrow = table.rows.length;
-    //for (var rownr = 0; rownr<nrrow; rownr++) {
-    //   table.deleteRow(0);
-    //}
-    var tb = table.querySelectorAll('tbody');
-    for (var i = 0; i < tb.length; i++) {
-        tb[i].parentNode.removeChild(tb[i]);
+   // check whether the data is already retrieved, it not raise the request
+    if (dashboard_data == 'push') {
+        dashboard_definition(storyboard_ix)
+        draw_dashboard(g_storyboard[storyboard_ix], g_charts, facet_value, g_tiles_select)
     }
-    var th = table.querySelectorAll('thead');
-    for (var i = 0; i < th.length; i++) {
-        th[i].parentNode.removeChild(th[i]);
+    if (dashboard_data == 'pull') {
+        get_dashboard(dashboard_name)
+        g_storyboard[storyboard_ix]['dashboard_data'] = 'push';
     }
-    dashboard_definition(storyboard_ix)
-    draw_dashboard(g_storyboard[storyboard_ix], g_db, facet_value, g_tiles_select)
 }
 
 
@@ -363,7 +439,7 @@ function chart_selecion_onchange() {
     td.appendChild(txt)
     var tbody = document.createElement("tbody");
     table.appendChild(tbody)
-    var chart = g_db[chart_name];
+    var chart = g_charts[chart_name];
     add_table_row(tbody, ['Title', chart.chart_title]);
     add_table_row(tbody, ['Type', chart.chart_type]);
     add_table_row(tbody, ['X', chart.X_facet.field]);
@@ -373,10 +449,14 @@ function chart_selecion_onchange() {
 }
 
 function draw_storyboard(storyboard, dashboard_name, charts, tiles_select) {
-    g_storyboard = storyboard;
-    g_db = charts;
+    if (typeof g_charts == 'undefined') {
+        g_charts = charts;
+        g_storyboard = storyboard;
+    } else {
+        g_charts = Object.assign(g_charts, charts)
+    }
 
-    var select = document.getElementById("storyboard_select");
+    var select = document.getElementById("dashboard_select");
     if (select != null) {
         select.setAttribute("onChange", "storyboard_onchange()");
         // remove any existing options
@@ -410,6 +490,86 @@ function draw_storyboard(storyboard, dashboard_name, charts, tiles_select) {
     }
     //chart_definitions(charts);
     dashboard_definition(active_nr);
-    draw_dashboard(g_storyboard[active_nr], g_db, "All", tiles_select)
+    draw_dashboard(g_storyboard[active_nr], g_charts, "All", tiles_select)
+}
+
+function set_hidden_param(param_name, param_value) {
+    var input = document.getElementsByName(param_name)[0];
+    input.value = param_value;
+}
+
+function getParameterByName(name, url) {
+    if (!url) {
+        url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+function get_workbook_dashboard_names() {
+    var input = document.getElementsByName("workbook_name")[0];
+    var query = window.location.search;
+    var workbook_name = getParameterByName("workbook_name");
+    input.value = workbook_name;
+    var input = document.getElementsByName("dashboard_name")[0];
+    var query = window.location.search;
+    var dashboard_name = getParameterByName("dashboard_name");
+    input.value = dashboard_name;
+}
+
+function fill_params_dashboard(dashboard_name) {
+    var params = {};
+    var input = document.getElementsByName("workbook_name")[0];
+    var workbook_name = input.value;
+    params['workbook_name'] = workbook_name;
+    params['dashboard_name'] = dashboard_name;
+    var input = document.getElementsByName("benchmark")[0];
+    var benchmark = input.value;
+    params['benchmark'] = benchmark;
+    return params;
+}
+
+
+function get_dashboard(dashboard_name) {
+    var params = fill_params_dashboard(dashboard_name);
+    var url = window.location.href;
+    //strip of the last part of the URL so it can be replaced by the destination url
+    var to = url.lastIndexOf('/');
+    to = to == -1 ? url.length : to;
+    url = url.substring(0, to) + '/search_survey?workbook_name=link'
+
+    $.get(url, params, function (data, status) {
+        var view_name = data['view_name'];
+        var dashboard_name = data['dashboard_name'];
+        var storyboard = JSON.parse(data['storyboard']);
+        var charts = JSON.parse(data['dashboard']);
+        var facets_data = JSON.parse(data['facets_data']);
+        var tiles_select = JSON.parse(data['tiles_select']);
+        var tiles_d = JSON.parse(data['tiles_d']);
+        //var stats_df = JSON.parse(data['stats_df']);
+        //g_storyboard[storyboard_ix]['dashboard_data'] = 'push';
+        fill_tiles(facets_data, tiles_select, tiles_d);
+        draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
+    });
+
+    //params['csrfmiddlewaretoken'] = csrftoken;
+    //$.post(url, params, function (data, status) {
+    //    var view_name = data['view_name'];
+    //    var dashboard_name = data['dashboard_name'];
+    //    var site_view = g_site_views[view_name];
+    //    //var storyboard = site_view['storyboard'];
+    //    var storyboard = JSON.parse(data['storyboard']);
+    //    var charts = JSON.parse(data['dashboard']);
+    //    var facets_data = JSON.parse(data['facets_data']);
+    //    var tiles_select = JSON.parse(data['tiles_select']);
+    //    var tiles_d = JSON.parse(data['tiles_d']);
+    //    //var stats_df = JSON.parse(data['stats_df']);
+    //    fill_tiles(facets_data, tiles_select, tiles_d);
+    //    draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
+    //});
 }
 
