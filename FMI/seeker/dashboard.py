@@ -447,8 +447,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
     # ONLY X FACET
     if Y_field == "":
         if 'a-mean' in X_total_calc:
-            dt_columns.append('Mean')
-            y_start = y_start + 1
+            dt_index.append('Mean')
             if X_total_calc['a-mean'] == '**':
                 dt_columns.append('q-Mean')
                 y_start = y_start + 1
@@ -491,7 +490,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                 categories.append(X_key)
                 nr_respondents = nr_respondents + X_metric
             if mode == 'filling_':
-                dt.loc[X_key, X_label] = X_key
+                dt.loc[X_key, X_label] = str(X_key)
                 count = X_metric
                 if nr_respondents > 0:
                     percentile = count / nr_respondents
@@ -507,7 +506,6 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
             X_value_rownr = 0
             X_value_count = 0
             X_value_total = 0
-            X_value_calc = {'v-sum':'*'}
             # ONLY X FACET
             if Y_field == "":
                 for X_value_key, xvalbucket in xvalbuckets.items():
@@ -515,18 +513,21 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                     X_value_key = xfacet.get_value_key(X_value_key, xvalbucket, X_facet)
                     if X_value_key == None:
                         continue
+                    # no values exist
+                    if X_value_key == 'Total':
+                        X_metric = nr_respondents
                     X_value_metric = xfacet.get_metric(xvalbucket)
                     X_value_code = answer_value_decode(X_value_key)
                     X_value_rownr = X_value_rownr + 1
                     X_value_count = X_value_count + X_value_metric
                     if type(X_value_code) == int:
                         X_value_total = X_value_total + (X_value_metric * X_value_code)
-                    if 'single' in X_value_calc:
+                    if 'single' in X_value_total_calc:
                         if mode == 'sizing_':
                             sub_total = True
                             if X_value_key not in dt_columns:
-                                dt_columns.append(X_value_key)
-                                series.append(X_value_key)
+                                dt_columns.append(str(X_value_key))
+                                series.append(str(X_value_key))
                         if mode == 'filling_':
                             count = X_value_metric
                             if X_metric > 0:
@@ -537,7 +538,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                                 dt.loc[X_key, X_value_key] = percentile * 100
                             else:
                                 dt.loc[X_key, X_value_key] = count
-                if any(aggr in X_value_calc for aggr in ['v-sum','v-mean']):
+                if any(aggr in X_value_total_calc for aggr in ['v-sum','v-mean']):
                     if mode == 'filling_':
                         count = X_value_count
                         if X_metric > 0:
@@ -581,7 +582,6 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                             Y_value_count = 0
                             Y_value_total = 0
                             Y_code = answer_value_decode(Y_key)
-                            Y_value_calc = {'v-sum':'*'}
                             for Y_value_key, yvalbucket in yvalbuckets.items():
                                 # skip and map values
                                 Y_value_key = yfacet.get_value_key(Y_value_key, yvalbucket, Y_facet)
@@ -593,7 +593,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                                 Y_value_count = Y_value_count + V_metric
                                 if type(Y_value_code) == int:
                                     Y_value_total = Y_value_total + (V_metric * Y_value_code)
-                                if  'single' in Y_value_calc:
+                                if  'single' in Y_value_total_calc:
                                     if mode == 'sizing_':
                                         if Y_value_key not in dt_columns:
                                             series.append(Y_value_key)
@@ -615,7 +615,7 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
                                             dt.loc[X_key, Y_value_key] = percentile * 100
                                         else:
                                             dt.loc[X_key, Y_value_key] = count
-                            if any(aggr in Y_value_calc for aggr in ['v-sum','v-mean']):
+                            if any(aggr in Y_value_total_calc for aggr in ['v-sum','v-mean']):
                                 if mode == 'sizing_':
                                     if Y_key not in dt_columns:
                                         series.append(Y_key)
@@ -670,12 +670,12 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
     # ONLY X FACET
     if Y_field == "":
         if 'a-mean' in X_total_calc:
-            for cat in dt_index:
-                a_mean = dt.ix[cat][series].mean();
-                dt.loc[cat, 'Mean'] = a_mean
-            if X_total_calc['a-mean'][0] == '*':
-                dt.drop(series, axis=1, inplace=True)
-                dt_columns = list(dt.columns)
+            x_mean = dt['Total'].mean();
+            dt.loc['Mean', X_label] = 'Mean'
+            dt.loc['Mean', 'Total'] = x_mean
+            if X_total_calc['a-mean'] == '*':
+                dt_index.remove('Mean')
+                dt.drop(dt_index, axis=0, inplace=True)
             if X_total_calc['a-mean'] == '**':
                 q_mean = dt['Mean'].mean();
                 dt['q-Mean'] = pd.Series([q_mean for c in dt.index], index=dt.index)
