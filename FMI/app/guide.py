@@ -78,7 +78,7 @@ site_views = {
         'url'   : '/search_survey?',
         'workbook_name' : 'link',
         'dashboard_name' : 'Fresh',
-        'tiles' : [{'field': 'product_form.keyword', 'layout' : 'dropdown'} ]},
+        'tiles' : []},
     'superior_fresh' : {
         'type'  : 'drivers',
         'descr' : "Superior Fresh",

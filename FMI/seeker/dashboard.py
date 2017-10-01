@@ -58,6 +58,9 @@ def bind_facet(seekerview, chart, aggregations):
     meta_data = {}
     X_facet = chart['X_facet']
     X_field = X_facet['field']
+    if X_field not in aggregations:
+        return chart_data, meta_data
+
     X_label = X_facet['label']
     xfacet = seekerview.get_facet_by_field_name(X_field)
     x_total = True
@@ -67,11 +70,7 @@ def bind_facet(seekerview, chart, aggregations):
     calc = 'count'
     if 'calc' in X_facet:
         calc = X_facet['calc']
-    mean_type = 'none'
-    mean_layout = 'none'
-    if 'mean' in X_facet:
-        mean_type = X_facet['mean']['type']
-        mean_layout = X_facet['mean']['layout']
+    X_total_calc = xfacet.get_answer_total_calc(X_facet)
     if 'Y_facet' in chart:
         Y_facet = chart['Y_facet']
         Y_field = chart['Y_facet']['field']
@@ -83,74 +82,76 @@ def bind_facet(seekerview, chart, aggregations):
         Y_Label = X_label
         yfacet = None
 
-    if X_field in aggregations:
-        agg = aggregations[X_field]
-        buckets = xfacet.buckets(agg)
-        #categories = [X_label]
-        dt_index = []
-        dt_columns = [X_label]
-        y_start = 1
-        dt_columns.append("Total")
+    agg = aggregations[X_field]
+    buckets = xfacet.buckets(agg)
+    #categories = [X_label]
+    dt_index = []
+    dt_columns = [X_label]
+    y_start = 1
+    dt_columns.append("Total")
+    y_start = y_start + 1
+    if 'a-mean' in X_total_calc:
+        dt_index.append('Mean')
+    if 'q_mean' in X_total_calc:
+        dt_columns.append('Mean')
         y_start = y_start + 1
-        if mean_layout == 'category':
-            dt_index.append('Mean')
-        elif mean_layout == 'serie':
-            dt_columns.append('Mean')
-            y_start = y_start + 1
-        # next fill the series for the categories
-        modes = ['sizing_', 'filling_']
-        nr_respondents = 0
-        total = 0
-        for mode in modes:
+    # next fill the series for the categories
+    modes = ['sizing_', 'filling_']
+    nr_respondents = 0
+    total = 0
+    for mode in modes:
+        if mode == 'filling_':
+            dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
+        rownr = 0
+        for X_key, bucket in buckets.items():
+            # skip and map categories
+            X_key = xfacet.get_answer(X_key, bucket, X_facet)
+            if X_key == None:
+                continue
+            X_metric = xfacet.get_metric(bucket)
+            if mode == 'sizing_':
+                dt_index.append(X_key)
+                nr_respondents = nr_respondents + X_metric
             if mode == 'filling_':
-                dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
-            rownr = 0
-            for X_key, bucket in buckets.items():
-                # skip and map categories
-                X_key = xfacet.get_category(X_key, bucket, X_facet)
-                if X_key == None:
-                    continue
-                X_metric = xfacet.get_metric(bucket)
-                if mode == 'sizing_':
-                    dt_index.append(X_key)
-                    nr_respondents = nr_respondents + X_metric
-                if mode == 'filling_':
-                    count = X_metric
-                    value_code = answer_value_decode(X_key)
-                    if type(value_code) == int:
-                        total = total + (value_code * count)
-                    if nr_respondents > 0:
-                        percentile = count / nr_respondents
-                    else:
-                        percentile = count
-                    dt.loc[X_key, X_label] = X_key
-                    if calc == 'percentile':
-                        dt.loc[X_key, 'Total'] = percentile * 100
-                    else:
-                        dt.loc[X_key, 'Total'] = count
-                rownr = rownr + 1
-            if mode == 'filling_' and mean_type != 'none' and nr_respondents > 0:
-                if calc == 'percentile':
-                    mean = total / nr_respondents
+                count = X_metric
+                value_code = answer_value_decode(X_key)
+                if type(value_code) == int:
+                    total = total + (value_code * count)
+                if nr_respondents > 0:
+                    percentile = count / nr_respondents
                 else:
-                    mean = nr_respondents / rownr
-                meta_data['mean'] = mean
-                if mean_layout == 'category':
-                    dt.loc['Mean', X_label] = 'Mean'
-                    dt.loc['Mean', 'Total'] = mean
-                elif mean_layout == 'serie':
-                    dt.loc['Mean'] = [mean for c in dt_index]
-                elif mean_layout == 'header':
-                    dt_columns[0] = dt_columns[0] + "%.2f" % mean
+                    percentile = count
+                dt.loc[X_key, X_label] = X_key
+                if calc == 'percentile':
+                    dt.loc[X_key, 'Total'] = dt.loc[X_key, 'Total'] + percentile * 100
+                else:
+                    dt.loc[X_key, 'Total'] = dt.loc[X_key, 'Total'] + count
+            rownr = rownr + 1
+        if mode == 'filling_' and nr_respondents > 0:
+            if calc == 'percentile':
+                mean = total / nr_respondents
+            else:
+                mean = nr_respondents / rownr
+            meta_data['mean'] = mean
+            meta_data['size'] = nr_respondents
+            if 'a-mean' in X_total_calc:
+                x_mean = dt['Total'].mean();
+                dt.loc['Mean', X_label] = 'Mean'
+                dt.loc['Mean', 'Total'] = x_mean
+                if X_total_calc['a-mean'] == '*':
+                    dt_index.remove('Mean')
+                    dt.drop(dt_index, axis=0, inplace=True)
+                if 'q_mean' in X_total_calc:
+                    dt['Mean'] = pd.Series([x_mean for c in dt.index], index=dt.index)
 
-        dt.fillna(0, inplace=True)
-        # remove Total only when sub_totals exists
-        if sub_total == True and x_total == False:
-            dt_columns.remove('Total')
-            del dt['Total']
-        chart_data.append(dt_columns)
-        for ix, row in dt.iterrows():
-            chart_data.append(row.tolist())
+    dt.fillna(0, inplace=True)
+    # remove Total only when sub_totals exists
+    if sub_total == True and x_total == False:
+        dt_columns.remove('Total')
+        del dt['Total']
+    chart_data.append(dt_columns)
+    for ix, row in dt.iterrows():
+        chart_data.append(row.tolist())
     return chart_data, meta_data
 
 def bind_hits(seekerview, chart, hits, benchmark=None):
@@ -399,6 +400,8 @@ def bind_topline(seekerview, chart, hits, benchmark=None):
 def bind_aggr(seekerview, chart, agg_name, aggregations):
     chart_data = []
     meta_data = {}
+    if agg_name not in aggregations:
+        return chart_data, meta_data
     X_facet = chart['X_facet']
     X_field = X_facet['field']
     X_label = X_facet['label']
@@ -410,16 +413,16 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
     calc = 'count'
     if 'calc' in X_facet:
         calc = X_facet['calc']
-    mean_type = 'none'
-    mean_layout = 'none'
-    if 'mean' in X_facet:
-        mean_type = X_facet['mean']['type']
-        mean_layout = X_facet['mean']['layout']
+    X_total_calc = xfacet.get_answer_total_calc(X_facet)
+    X_value_total_calc = xfacet.get_value_total_calc(X_facet)
+    Y_total_calc = {}
     if 'Y_facet' in chart:
         Y_facet = chart['Y_facet']
         Y_field = chart['Y_facet']['field']
         Y_label = Y_facet['label']
         yfacet = seekerview.get_facet_by_field_name(Y_field)
+        Y_total_calc = yfacet.get_answer_total_calc(Y_facet)
+        Y_value_total_calc = yfacet.get_value_total_calc(Y_facet)
         if 'calc' in Y_facet:
             calc = Y_facet['calc']
     else:
@@ -430,155 +433,293 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
     # Aggregation is an AttrDict
     # Buckets is an AttrList for Terms and AttrDict for Keywords. The facet.buckets method returns alwasy a OrderedDict
     # Bucket is an AttrDict and can act as a Sub-Aggregation
-    if agg_name in aggregations:
-        agg = aggregations[agg_name]
-        buckets = xfacet.buckets(agg)
-        dt_index = []
-        dt_columns = [X_label]
-        y_start = 1
-        dt_columns.append("Total")
-        y_start = y_start + 1
-        if mean_layout == 'category':
-            dt_index.append('Mean')
-        elif mean_layout == 'serie':
+    agg = aggregations[agg_name]
+    buckets = xfacet.buckets(agg)
+    dt_index = []
+    categories = []
+    dt_columns = [X_label]
+    series = []
+    y_start = 1
+    dt_columns.append("Total")
+    y_start = y_start + 1
+    if 'q-mean' in X_total_calc:
+        dt_index.append('Mean')
+    # ONLY X FACET
+    if Y_field == "":
+        if 'a-mean' in X_total_calc:
             dt_columns.append('Mean')
             y_start = y_start + 1
-        # next fill the series for the categories
-        nr_respondents = 0
-        modes = ['sizing_', 'filling_']
-        for mode in modes:
+            if X_total_calc['a-mean'] == '**':
+                dt_columns.append('q-Mean')
+                y_start = y_start + 1
+    else:
+        if 'a-mean' in Y_total_calc:
+            dt_columns.append('Mean')
+            y_start = y_start + 1
+            if Y_total_calc['a-mean'] == '**':
+                dt_columns.append('q-Mean')
+                y_start = y_start + 1
+        if 'a-wmean' in Y_total_calc:
+            dt_columns.append('Mean')
+            y_start = y_start + 1
+            if Y_total_calc['a-wmean'] == '**':
+                dt_columns.append('q-Mean')
+                y_start = y_start + 1
+    # next fill the series for the categories
+    nr_respondents = 0
+    modes = ['sizing_', 'filling_']
+    for mode in modes:
+        if mode == 'filling_':
+            dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
+        X_rownr = 0
+        X_count = 0
+        X_total = 0
+        rownr = 0
+        for X_key, bucket in buckets.items():
+            # skip and map categories
+            X_key = xfacet.get_answer(X_key, bucket, X_facet)
+            if X_key == None:
+                continue
+            X_metric = xfacet.get_metric(bucket)
+            X_code = answer_value_decode(X_key)
+            X_rownr = X_rownr + 1
+            X_count = X_count + X_metric
+            if type(X_code) == int:
+                X_total = X_total + (X_metric * X_code)
+            if mode == 'sizing_':
+                dt_index.append(X_key)
+                categories.append(X_key)
+                nr_respondents = nr_respondents + X_metric
             if mode == 'filling_':
-                dt = pd.DataFrame(0.0, columns=dt_columns, index=dt_index)
-            rownr = 0
-            for X_key, bucket in buckets.items():
-                # skip and map categories
-                X_key = xfacet.get_category(X_key, bucket, X_facet)
-                if X_key == None:
-                    continue
-                X_metric = xfacet.get_metric(bucket)
-                if mode == 'sizing_':
-                    dt_index.append(X_key)
-                    nr_respondents = nr_respondents + X_metric
-                if mode == 'filling_':
-                    dt.loc[X_key, X_label] = X_key
-                    count = X_metric
-                    if nr_respondents > 0:
-                        percentile = count / nr_respondents
-                    else:
-                        percentile = count
-                    if calc == 'percentile':
-                        dt.loc[X_key, "Total"] = percentile * 100
-                    else:
-                        dt.loc[X_key, "Total"] = count
-                    nr_respondents_x = X_metric
-                    total = 0
-                # loop through the different values for this category, normally only one
-                xvalbuckets = xfacet.valbuckets(bucket)
+                dt.loc[X_key, X_label] = X_key
+                count = X_metric
+                if nr_respondents > 0:
+                    percentile = count / nr_respondents
+                else:
+                    percentile = count
+                if calc == 'percentile':
+                    dt.loc[X_key, "Total"] = percentile * 100
+                else:
+                    dt.loc[X_key, "Total"] = count
+                total = 0
+            # loop through the different values for this category, normally only one
+            xvalbuckets = xfacet.valbuckets(bucket)
+            X_value_rownr = 0
+            X_value_count = 0
+            X_value_total = 0
+            X_value_calc = {'v-sum':'*'}
+            # ONLY X FACET
+            if Y_field == "":
                 for X_value_key, xvalbucket in xvalbuckets.items():
                     # skip and map values
                     X_value_key = xfacet.get_value_key(X_value_key, xvalbucket, X_facet)
                     if X_value_key == None:
                         continue
-                    if Y_field == "" or Y_field not in xvalbucket:
-                        if X_value_key not in dt_columns:
+                    X_value_metric = xfacet.get_metric(xvalbucket)
+                    X_value_code = answer_value_decode(X_value_key)
+                    X_value_rownr = X_value_rownr + 1
+                    X_value_count = X_value_count + X_value_metric
+                    if type(X_value_code) == int:
+                        X_value_total = X_value_total + (X_value_metric * X_value_code)
+                    if 'single' in X_value_calc:
+                        if mode == 'sizing_':
                             sub_total = True
-                            if mode == 'sizing_':
+                            if X_value_key not in dt_columns:
                                 dt_columns.append(X_value_key)
+                                series.append(X_value_key)
                         if mode == 'filling_':
-                            Y_metric = xfacet.get_metric(xvalbucket)
-                            count = Y_metric
-                            value_code = answer_value_decode(X_value_key)
-                            if type(value_code) == int:
-                                total = total + (value_code * count)
-                            if nr_respondents > 0:
-                                percentile = count / nr_respondents
+                            count = X_value_metric
+                            if X_metric > 0:
+                                percentile = count / X_metric
                             else:
                                 percentile = count
                             if calc == 'percentile':
                                 dt.loc[X_key, X_value_key] = percentile * 100
                             else:
                                 dt.loc[X_key, X_value_key] = count
-                    else:
+                if any(aggr in X_value_calc for aggr in ['v-sum','v-mean']):
+                    if mode == 'filling_':
+                        count = X_value_count
+                        if X_metric > 0:
+                            percentile = count / X_metric
+                        else:
+                            percentile = count
+                        if calc == 'percentile':
+                            dt.loc[X_key, "Total"] = percentile * 100
+                        else:
+                            dt.loc[X_key, "Total"] = count
+            # X FACET AND Y FACET
+            if Y_field != "":
+                for X_value_key, xvalbucket in xvalbuckets.items():
+                    # skip and map values
+                    X_value_key = xfacet.get_value_key(X_value_key, xvalbucket, X_facet)
+                    if X_value_key == None:
+                        continue
+                    X_value_metric = xfacet.get_metric(xvalbucket)
+                    X_value_code = answer_value_decode(X_value_key)
+                    X_value_rownr = X_value_rownr + 1
+                    X_value_count = X_value_count + X_value_metric
+                    if type(X_value_code) == int:
+                        X_value_total = X_value_total + (X_value_metric * X_value_code)
+                    if Y_field in xvalbucket:
                         subagg = xvalbucket[Y_field]
                         subbuckets = yfacet.buckets(subagg)
+                        Y_rownr = 0
+                        Y_count = 0
+                        Y_total = 0
                         for Y_key, subbucket in subbuckets.items():
                             # skip and map answers, categories
-                            if 'answers' in Y_facet:
-                                if Y_key not in Y_facet['answers'] and len(Y_facet['answers']) > 0:
-                                    continue
-                            Y_key = yfacet.get_category(Y_key, subbucket, Y_facet)
+                            Y_key = yfacet.get_answer(Y_key, subbucket, Y_facet)
                             if Y_key == None:
                                 continue
                             sub_total = True
                             Y_metric = yfacet.get_metric(subbucket)
                             # check whether Y facet has subbuckets (multiple values)
                             # loop through the different values for this category, normally only one
-                            Y_metric = 0
                             yvalbuckets = yfacet.valbuckets(subbucket)
+                            Y_value_rownr = 0
+                            Y_value_count = 0
+                            Y_value_total = 0
+                            Y_code = answer_value_decode(Y_key)
+                            Y_value_calc = {'v-sum':'*'}
                             for Y_value_key, yvalbucket in yvalbuckets.items():
                                 # skip and map values
                                 Y_value_key = yfacet.get_value_key(Y_value_key, yvalbucket, Y_facet)
                                 if Y_value_key == None:
                                     continue
-                                V_metric = xfacet.get_metric(yvalbucket)
-                                Y_metric = Y_metric + V_metric
-                                #yes_count = 0
-                                #for value_bucket in subbucket.buckets:
-                                #    V_key, V_metric, subvaluebucket = bucket_coor(value_bucket, subbucket.buckets, chart['Y_facet'])
-                                #    if self.decoder:
-                                #        V_key = self.decoder(Y_key, V_key)
-                                #    if type(V_key) == int:
-                                #        V_key = "{0:d}".format(Y_key)
-                                #    if V_key in Y_facet['values']:
-                                #        yes_count = yes_count + V_metric
-                                #Y_metric = yes_count
-                            if Y_key not in dt_columns:
+                                V_metric = yfacet.get_metric(yvalbucket)
+                                Y_value_code = answer_value_decode(Y_value_key)
+                                Y_value_rownr = Y_value_rownr + 1
+                                Y_value_count = Y_value_count + V_metric
+                                if type(Y_value_code) == int:
+                                    Y_value_total = Y_value_total + (V_metric * Y_value_code)
+                                if  'single' in Y_value_calc:
+                                    if mode == 'sizing_':
+                                        if Y_value_key not in dt_columns:
+                                            series.append(Y_value_key)
+                                            inserted = False
+                                            for i in range(y_start, len(dt_columns)):
+                                                if Y_key < dt_columns[i]:
+                                                    dt_columns.insert(i, Y_value_key)
+                                                    inserted = True
+                                                    break
+                                            if not inserted:
+                                                dt_columns.append(Y_value_key)
+                                    if mode == 'filling_':
+                                        count = V_metric
+                                        if Y_metric > 0:
+                                            percentile = count / Y_metric
+                                        else:
+                                            percentile = count
+                                        if calc == 'percentile':
+                                            dt.loc[X_key, Y_value_key] = percentile * 100
+                                        else:
+                                            dt.loc[X_key, Y_value_key] = count
+                            if any(aggr in Y_value_calc for aggr in ['v-sum','v-mean']):
                                 if mode == 'sizing_':
-                                    inserted = False
-                                    for i in range(y_start, len(dt_columns)):
-                                        if Y_key < dt_columns[i]:
-                                            dt_columns.insert(i, Y_key)
-                                            inserted = True
-                                            break
-                                    if not inserted:
-                                        dt_columns.append(Y_key)
-                            if mode == 'filling_':
-                                count = Y_metric
-                                value_code = answer_value_decode(X_value_key)
-                                if type(value_code) == int:
-                                    total = total + (value_code * count)
-                                if nr_respondents_x > 0:
-                                    percentile = count / nr_respondents_x
-                                else:
-                                    percentile = count
-                                if calc == 'percentile':
-                                    dt.loc[X_key, Y_key] = percentile * 100
-                                else:
-                                    dt.loc[X_key, Y_key] = count
-                                #zero = pd.Series(0.0, index=dt.index)
-                                #dt.loc[rownr, Y_key] = dt.loc[rownr, Y_key] + Y_metric
-                                #dt.loc[X_key, Y_key] = Y_metric
-                rownr = rownr + 1
+                                    if Y_key not in dt_columns:
+                                        series.append(Y_key)
+                                        inserted = False
+                                        for i in range(y_start, len(dt_columns)):
+                                            if Y_key < dt_columns[i]:
+                                                dt_columns.insert(i, Y_key)
+                                                inserted = True
+                                                break
+                                        if not inserted:
+                                            dt_columns.append(Y_key)
+                                if mode == 'filling_':
+                                    count = Y_value_count
+                                    if type(Y_code) == int:
+                                        total = total + (Y_code * count)
+                                    if X_metric > 0:
+                                        percentile = count / X_metric
+                                    else:
+                                        percentile = count
+                                    if calc == 'percentile':
+                                        dt.loc[X_key, Y_key] = percentile * 100
+                                    else:
+                                        dt.loc[X_key, Y_key] = count
+                            Y_rownr + Y_rownr + 1
+                            Y_count = Y_count + Y_value_count
+                            if type(Y_code) == int:
+                                Y_total = Y_total + (Y_code * Y_value_count)
+                if mode == 'filling_':
+                    if any(aggr in Y_total_calc for aggr in ['a-sum','a-mean','a-wmean']):
+                        if 'a-sum' in Y_total_calc:
+                            dt.loc[X_key, 'Mean'] =  Y_count
+                        if 'a-mean' in Y_total_calc:
+                            if Y_rownr > 0:
+                                dt.loc[X_key, 'Mean'] =  Y_count / Y_rownr
+                            else:
+                                dt.loc[X_key, 'Mean'] =  Y_count
+                        if 'a-wmean' in Y_total_calc:
+                            if Y_count > 0:
+                                dt.loc[X_key, 'Mean'] =  Y_total / Y_count
+                            else:
+                                dt.loc[X_key, 'Mean'] =  Y_total
+            rownr = rownr + 1
 
-        dt.fillna(0, inplace=True)
-        if sub_total == True and x_total == False:
-            dt_columns.remove('Total')
-            del dt['Total']
-        transpose = False
-        if 'transpose' in chart:
-            transpose = chart['transpose']
-        if transpose:
-            # first column contains the labels, remove this column before transpose and add it again after transpose
-            del dt[X_label]
-            dt = dt.transpose()
-            dt_trans_columns = [Y_label]
-            dt_trans_columns.extend(dt_index)
-            dt_trans_index = dt_columns[1:]
-            dt.insert(0, Y_label, dt_trans_index)
-            dt_columns = dt_trans_columns
-        chart_data.append(dt_columns)
-        for ix, row in dt.iterrows():
-            chart_data.append(row.tolist())
+    if 'q-mean' in X_total_calc:
+        for col in dt_columns[1:]:
+            xq_mean = dt[col].mean();
+            dt.loc['Mean', X_label] = 'Mean'
+            dt.loc['Mean', col] = xa_mean
+        if X_total_calc['q-mean'] == '*':
+            dt.drop(categories, axis=0, inplace=True)
+            dt_index = list(dt.index)
+    # ONLY X FACET
+    if Y_field == "":
+        if 'a-mean' in X_total_calc:
+            for cat in dt_index:
+                a_mean = dt.ix[cat][series].mean();
+                dt.loc[cat, 'Mean'] = a_mean
+            if X_total_calc['a-mean'][0] == '*':
+                dt.drop(series, axis=1, inplace=True)
+                dt_columns = list(dt.columns)
+            if X_total_calc['a-mean'] == '**':
+                q_mean = dt['Mean'].mean();
+                dt['q-Mean'] = pd.Series([q_mean for c in dt.index], index=dt.index)
+    else:
+        if 'a-mean' in Y_total_calc:
+            for cat in dt_index:
+                a_mean = dt.ix[cat][series].mean();
+                dt.loc[cat, 'Mean'] = a_mean
+            if Y_total_calc['a-mean'][0] == '*':
+                dt.drop(series, axis=1, inplace=True)
+                dt_columns = list(dt.columns)
+            if Y_total_calc['a-mean'] == '**':
+                q_mean = dt['Mean'].mean();
+                dt['q-Mean'] = pd.Series([q_mean for c in dt.index], index=dt.index)
+        if 'a-wmean' in Y_total_calc:
+            #for cat in dt_index:
+            #    a_mean = dt.ix[cat][series].mean();
+            #    dt.loc[cat, 'Mean'] = a_mean
+            if Y_total_calc['a-wmean'][0] == '*':
+                dt.drop(series, axis=1, inplace=True)
+                dt_columns = list(dt.columns)
+            if Y_total_calc['a-wmean'] == '**':
+                q_mean = dt['Mean'].mean();
+                dt['q-Mean'] = pd.Series([q_mean for c in dt.index], index=dt.index)
+
+    dt.fillna(0, inplace=True)
+    if sub_total == True and x_total == False and 'Total' in dt_columns:
+        dt_columns.remove('Total')
+        del dt['Total']
+    transpose = False
+    if 'transpose' in chart:
+        transpose = chart['transpose']
+    if transpose:
+        # first column contains the labels, remove this column before transpose and add it again after transpose
+        del dt[X_label]
+        dt = dt.transpose()
+        dt_trans_columns = [Y_label]
+        dt_trans_columns.extend(dt_index)
+        dt_trans_index = dt_columns[1:]
+        dt.insert(0, Y_label, dt_trans_index)
+        dt_columns = dt_trans_columns
+    chart_data.append(dt_columns)
+    for ix, row in dt.iterrows():
+        chart_data.append(row.tolist())
     return chart_data, meta_data
 
 def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, benchmark=None):
@@ -933,7 +1074,7 @@ def stats(seekerview, chart_name, tiles_d):
                         values, nr_respondents = get_fqa_v_respondents(fqav_df, q, a, facet)
                         for value in values:
                             value_code = answer_value_decode(value)
-                            if value_code == "Yes":
+                            if value_code in ["Yes", "Total"]:
                                 value_code = 1
                             elif value_code == "No":
                                 value_code = 0
@@ -987,7 +1128,7 @@ def stats(seekerview, chart_name, tiles_d):
                         percentile = 0
                         values, percentiles = get_fqa_v_respondents(fqav_df, q, a, facet)
                         for value in values:
-                            if value == "Yes":
+                            if value in ["Yes", "Total"]:
                                 percentile = fqav_df[(q, a, value)][facet]
                         if fact['calc'] == 'w-avg':
                             fqa_df.loc [facet, (q, a)] = percentile

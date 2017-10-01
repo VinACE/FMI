@@ -84,19 +84,122 @@ class Facet (object):
     def get_metric(self, bucket):
         return bucket['doc_count']
 
-    def get_category(self, key, bucket, chart_facet):
-        categories = []
-        if 'categories' in chart_facet:
-            categories = chart_facet['categories']
-        if len(categories) > 0 and key not in categories:
+    def get_answer_total_calc(self, chart_facet):
+        # mean type: '-' mean no mean, '+' add a mean, '*' replace mean
+        total_calc = {}
+        if 'answers' in chart_facet:
+            total_calc = {'single':'+'}
+            for answer in chart_facet['answers']:
+                if type(answer) == dict:
+                    for aggr, aggr_type in answer.items():
+                        if aggr in ['a-sum','a-mean','a-wmean']:
+                            total_calc[aggr] = aggr_type
+        else:
+            total_calc = {'single':'+'}
+        return total_calc
+
+    def __match_key(self, key, answer_key):
+        found = False
+        if type(answer_key) == str or type(answer_key) == int:
+            if key == answer_key:
+                found = True
+        elif type(answer_key) == list:
+            if key in answer_key:
+                found = True
+        return found
+
+    def get_answer(self, key, bucket, chart_facet):
+        answers = []
+        if 'answers' in chart_facet:
+            answers = chart_facet['answers']
+        if len(answers) == 0:
+            return key
+        # check on exclude, include or all and special mappings
+        all = True
+        exclude = False
+        include = False
+        for answer in answers:
+            if type(answer) == str or type(answer) == int:
+                all = False
+                answer_key = answer
+                if self.__match_key(key, answer_key):
+                    include = True
+            elif type(answer) == tuple:
+                options = answer[0]
+                answer_key = answer[1]
+                if options != '!':
+                    all = False
+                    if options == '=':
+                        if self.__match_key(key, answer_key):
+                            include = True
+                        if answer_key == '*':
+                            include = True
+                else:
+                    if self.__match_key(key, answer_key):
+                        exclude = True
+            elif type(answer) == dict:
+                for to_key, from_key in answer.items():
+                    if not (to_key in ['a-sum', 'a-mean', 'a-wmean', 'q-mean']):
+                        all = False
+                        if self.__match_key(key, from_key):
+                            key = to_key
+                            include = True
+        if exclude or not(all or include):
             key = None
         return key
 
+    def get_value_total_calc(self, chart_facet):
+        # mean type: '-' mean no mean, '+' add a mean, '*' replace mean
+        total_calc = {}
+        if 'values' in chart_facet:
+            total_calc = {'single':'+'}
+            for answer in chart_facet['answers']:
+                if type(answer) == dict:
+                    for aggr, aggr_type in answer.items():
+                        if aggr in ['v-sum','v-mean','v-wmean']:
+                            total_calc[aggr] = aggr_type
+        else:
+            total_calc = {'v-sum':'*'}
+        return total_calc
+
     def get_value_key(self, value_key, bucket, chart_facet):
         values = []
+        # in case no values in facet, the default is summation
         if 'values' in chart_facet:
             values = chart_facet['values']
-        if len(values) > 0 and value_key not in values:
+        if len(values) == 0:
+            return value_key                 
+        # check on exclude, include or all and special mappings
+        all = True
+        exclude = False
+        include = False
+        for value in values:
+            if type(value) == str or type(value) == int:
+                all = False
+                value_key2 = value
+                if self.__match_key(value_key, value_key2):
+                    include = True
+            elif type(value) == tuple:
+                options = value[0]
+                value_key2 = value[1]
+                if options != '!':
+                    all = False
+                    if options == '=':
+                        if self.__match_key(value_key, value_key2):
+                            include = True
+                        if value_key2 == '*':
+                            include = True
+                else:
+                    if self.__match_key(value_key, value_key2):
+                        exclude = True  
+            elif type(value) == dict:
+                for to_key, from_key in value.items():
+                    if not (to_key in ['v-sum', 'v-mean', 'v-wmean']):
+                        all = False
+                        if self.__match_key(value_key, from_key):
+                            value_key = to_key
+                            include = True
+        if exclude or not(all or include):
             value_key = None
         return value_key
 
@@ -122,23 +225,46 @@ class TermsFacet (Facet):
         self.filter_operator = kwargs.pop('filter_operator', 'or')
         super(TermsFacet, self).__init__(field, **kwargs)
 
-    def _get_aggregation(self, **extra):
-        params = {
-            'field': self.field,
-            'size' : 40,
-            'min_doc_count': 1
-            }
-        params.update(self.kwargs)
-        params.update(extra)
-        return A('terms', **params)
+    def _get_aggregation(self, reverse_nested, **extra):
+        if reverse_nested == False:
+            params = {
+                'field': self.field,
+                'size' : 40,
+                'min_doc_count': 1
+                }
+            params.update(self.kwargs)
+            params.update(extra)
+            return A('terms', **params)
+        else:
+            params = {
+                'aggs' : {
+                    self.field : {
+                        'terms' : {
+                            "field" : self.field,
+                            "size"  : 40,
+                            "min_doc_count" : 1
+                            }
+                        }
+                    }
+                }
+            params.update(self.kwargs)
+            params.update(extra)
+            return A('reverse_nested', **params)
 
     # use apply for aggregation (facet, chart, tile)
     def apply(self, search, agg_name, aggs_stack, **extra):
         #search.aggs[self.name] = self._get_aggregation(**extra)
+        reverse_nested = False;
         if agg_name in aggs_stack:
             aggs_tail = search.aggs[agg_name]
+            t = type(aggs_tail)
+            if t.name == 'nested':
+                reverse_nested = True
             for sub_agg_name in aggs_stack[agg_name][1:]:
                 aggs_tail = aggs_tail.aggs[sub_agg_name]
+                t = type(aggs_tail)
+                if t.name == 'nested':
+                    reverse_nested = True
             aggs_stack[agg_name].append(self.name)
             sub_agg_name = self.name
             #aggs_tail.bucket(self.name, 'terms', field=self.field, size=40, min_doc_count=1)
@@ -146,7 +272,7 @@ class TermsFacet (Facet):
             aggs_tail = search
             aggs_stack[agg_name] = [agg_name]
             sub_agg_name = agg_name
-        aggs_tail.aggs[sub_agg_name] = self._get_aggregation(**extra)
+        aggs_tail.aggs[sub_agg_name] = self._get_aggregation(reverse_nested, **extra)
         if extra:
             aggs_stack[agg_name].append(list(extra['aggs'].keys())[0])
         #search.aggs.bucket(agg_name, 'terms', field=self.field, size=40, min_doc_count=1)

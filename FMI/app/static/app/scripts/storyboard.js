@@ -282,7 +282,7 @@ function draw_dashboard(dashboard, charts, facet_value, tiles_select) {
                     var div_card = draw_dashboard_layout(dashboard, chart_name, chart, facet_value, tiles_select)
                     div_col.appendChild(div_card);
                 } else {
-                    var re = /(grid)(-*)([1-9]*)(x*)([1-9]*)/
+                    var re = /(grid)(-?)([A-Za-z1-9]?)(x?)([1-9]?)/
                     var ar = re.exec(tiles);
                     var nrrow = (ar[3] == '') ? 1 : parseInt(ar[3]);
                     var nrcol = (ar[5] == '') ? 1 : parseInt(ar[5]);

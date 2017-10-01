@@ -39,12 +39,23 @@ from django.utils.encoding import python_2_unicode_compatible
 # <transpose>           : True | False
 # <X_facet>, <Y-facet> < Z_facet> : <facet>
 #
-# <facet>               : <field> <label> <total> <type> <question> <answers> <metric> <mean> <order>
+# <facet>               : <field> <label> <total> <type> <question> <answers> <values> <metric> <mean> <order>
 # <type>                : 'date'
 # <metric>              : <ElasticSearch metric>
 # <ElasticSearch metric>: 'doc_count', 'prc'
 # <order>               : <ElasticSearch order>
 # <ElasticSearch order> : '_count'|'_term' 'asc'|'desc'
+#
+# <answers>             : [ <answer>* ]
+# <answer>              : <string> | <number> (<range>) | {<mapping>*}
+# <range>               : <sign>, <string>|<number>
+# <mapping>             : <to value> : [<from value>*] | 'single' | 'a-mean' : *|+ | 'a-wmean' : *|+ 'a-sum': x|+|- | 'q-mean' : *|+
+# <aggr_type>           : * answer mean replace single, ** question+answer mean replace single, '+' means add                       
+#
+# <values>              : [ <value>* ]
+# <value>               : <string> | <number> (<range>) | {<mapping>*}
+# <range>               : <sign>, <string>|<number>
+# <mapping>             : <to value> : [<from value>*] | 'single' | 'v-mean' : *|+ | 'v-wmean' : *|+ 'v-sum': *|+
 #
 # Mean can be the average of the different series within a category, type=answer
 # Mean can be the average of a serie of all categores, type=question
@@ -714,7 +725,7 @@ class SurveyWorkbook:
                 'field'   : "emotion",
                 'question': "Emotion",
                 "answers" : ["Addictive","Classic"],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "metric"  : "doc_count",
                 "a-mean"  : True,
                 'label'   : "Emotion"
@@ -734,6 +745,7 @@ class SurveyWorkbook:
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
+                'answers' : [('=', '*'), ('!', [0,'','0'])],
                 },
             'Y_facet'     : {
                 'field'   : "blindcode.keyword",
@@ -827,7 +839,7 @@ class SurveyWorkbook:
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_stage",
-                "categories" : [],
+                "answers" : [],
                 "values"  : [],
                 'total'   : False,
                 'label'   : "Suitable Stage" },
@@ -838,7 +850,7 @@ class SurveyWorkbook:
             'data_type'  : "aggr",
             'X_facet'     : {
                 'field'   : "suitable_product",
-                "categories" : [],
+                "answers" : [],
                 "values"  : [],
                 'total'   : False,
                 'label'   : "Suitable Product" },
@@ -850,7 +862,7 @@ class SurveyWorkbook:
             'listener'    : {'select' : {'colsort': None}},
             'X_facet'     : {
                 'field'   : "emotion",
-                "categories" : [],
+                "answers" : [],
                 "values"  : ["Yes", "No"],
                 'total'   : False,
                 'label'   : "Emotion" },
@@ -879,7 +891,7 @@ class SurveyWorkbook:
                 'field'   : "concept",
                 'question': "Concept",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Concept"
                 },
@@ -903,7 +915,7 @@ class SurveyWorkbook:
                 'field'   : "emotion",
                 'question': "Emotion",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Emotion"
                 },
@@ -927,7 +939,7 @@ class SurveyWorkbook:
                 'field'   : "mood",
                 'question': "Mood",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Mood"
                 },
@@ -1007,6 +1019,25 @@ class SurveyWorkbook:
         'topline_liking_table'      : dashboard_fresh['topline_liking_table'],
         'freshness_blindcode_col'   : dashboard_fresh['freshness_blindcode_col'],
         'topline_freshness_table'   : dashboard_fresh['topline_freshness_table'],
+        "cand_liking_col" : {
+            'chart_type': "ComboChart",
+            'chart_title' : "Liking Candidates #",
+            'data_type'  : "aggr",
+            'X_facet'     : {
+                'field'   : "blindcode.keyword",
+                'label'   : "Candidate",
+                'total'   : False
+                },
+            'Y_facet'     : {
+                'field'   : "liking.keyword",
+                'label'   : "Liking/Hedonics",
+                'answers' : [('!', [0,'','0']), {'a-wmean' : '**', 'q-mean' : '*'}],
+                },
+            'options'     : {
+                "seriesType" : 'bars',
+                "series"  : {1: {"type": 'line'}, 2: {"type": 'line'}}
+                },
+            },
         "liking_blindcode_perc_col" : {
             'chart_type': "Table",
             'chart_title' : "Liking Candidate %",
@@ -1015,6 +1046,7 @@ class SurveyWorkbook:
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking/Hedonics",
+                'answers' : [('!', [0,'','0']), {'a-mean' : '+'}],
                 'calc'    : 'percentile',
                 },
             'Y_facet'     : {
@@ -1036,6 +1068,7 @@ class SurveyWorkbook:
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Hedonics_",
+                'answers' : [('!', [0,'','0'])],
                 'calc'    : 'percentile',
                 'lines'   : {"liking.keyword" : {'0-Mean':['mean'], '1-Excellent':[7], '2-Top2':[7,6], '3-Bottom2':[2,1]}},
                 },
@@ -1077,28 +1110,30 @@ class SurveyWorkbook:
                 'field'   : "emotion",
                 'label'   : "Emotion",
                 'calc'    : 'percentile',
-                "categories" : [],
-                "values"  : ["Yes"],
+                "answers" : [],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 'total'   : False },
             },
         "liking_perc_col" : {
             'chart_type': "ColumnChart",
             'chart_title' : "Liking %",
             'data_type'  : "facet",
+            'controls'    : ['CategoryFilter', 'tile_value_select'],
             'help'        : "Select Legend for sorting Categories",
             'listener'    : {'select' : {'colsort': 'categories'}},
             'X_facet'     : {
                 'field'   : "liking.keyword",
                 'label'   : "Liking with Mean ",
+                #'answers' : [('=', '*'), ('!', [0,'','0']), {'a-mean' : '*'}, {'q-mean' : '+'}],
+                'answers' : [('!', [0,'','0']), {'a-mean' : '+'}],
                 'calc'    : 'percentile',
                 'order'   : { "_term" : "asc" },
-                "mean"    : {"type" : "answer", "layout" : "header"},
                 },
             'Z_facet'     : {
                 'field'   : "product_form.keyword",
                 'label'   : "Product Form",
                 'order'   : { "_term" : "asc" },
-                'tiles'   : 'grid-2x3',
+                'tiles'   : 'dropdown',
                 },
             },
         "liking_emotion_corr_table" : {
@@ -1148,7 +1183,7 @@ class SurveyWorkbook:
 
     storyboard_link = [
         {'name'     : 'Topline',
-         'layout'   : {'rows' : [['liking_blindcode_col'], ['liking_blindcode_perc_col'], ['topline_liking_table'], ['topline_liking_perc_table']]},
+         'layout'   : {'rows' : [['liking_blindcode_col'], ['cand_liking_col'], ['liking_blindcode_perc_col'], ['topline_liking_table'], ['topline_liking_perc_table']]},
          'active'   : False,
         },
         {'name'     : 'Hedonics',
@@ -1164,7 +1199,7 @@ class SurveyWorkbook:
          'active'   : False,
         },
         {'name'     : 'Fresh',
-         'layout'   : {'rows' : [['liking_perc_col']]},
+         'layout'   : {'rows' : [['liking_blindcode_perc_col']]},
          'active'   : False,
         }
         ]
@@ -1186,7 +1221,12 @@ class SurveyWorkbook:
             'chart_type': "Table",
             'chart_title' : "Strength Candidate #",
             'data_type'  : "aggr",
+            'transpose'   : True,
+            # USE TRANSPOSE SINCE THE REVERSE_NESTING ON AGGR DOESN'T WORK
             'X_facet'     : {
+                'field'   : "blindcode.keyword",
+                'label'   : "Candidate" },
+            'Y_facet'     : {
                 'field'   : "hedonics",
                 'question': "Strength",
                 "answers" : ["strength"],
@@ -1194,9 +1234,6 @@ class SurveyWorkbook:
                 "a-mean"  : True,
                 'label'   : "Strength"
                 },
-            'Y_facet'     : {
-                'field'   : "blindcode.keyword",
-                'label'   : "Candidate" },
             },
         "topline_liking_table" : {
             'chart_type'  : "Table",
@@ -1249,7 +1286,7 @@ class SurveyWorkbook:
                 'field'   : "affective",
                 'question': "Affective",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Affective"
                 },
@@ -1273,7 +1310,7 @@ class SurveyWorkbook:
                 'field'   : "behavioral",
                 'question': "Behavioral",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Behavioral"
                 },
@@ -1297,7 +1334,7 @@ class SurveyWorkbook:
                 'field'   : "ballot",
                 'question': "Ballot",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Ballot"
                 },
@@ -1321,7 +1358,7 @@ class SurveyWorkbook:
                 'field'   : "descriptors",
                 'question': "Descriptors",
                 "answers" : [],
-                "values"  : ["Yes"],
+                "values"  : ["Yes", {'v-sum':'*'}],
                 "a-mean"  : True,
                 'label'   : "Descriptors"
                 },
