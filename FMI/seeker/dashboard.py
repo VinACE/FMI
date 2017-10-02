@@ -127,22 +127,25 @@ def bind_facet(seekerview, chart, aggregations):
                 else:
                     dt.loc[X_key, 'Total'] = dt.loc[X_key, 'Total'] + count
             rownr = rownr + 1
-        if mode == 'filling_' and nr_respondents > 0:
-            if calc == 'percentile':
-                mean = total / nr_respondents
-            else:
-                mean = nr_respondents / rownr
-            meta_data['mean'] = mean
-            meta_data['size'] = nr_respondents
-            if 'a-mean' in X_total_calc:
-                x_mean = dt['Total'].mean();
-                dt.loc['Mean', X_label] = 'Mean'
-                dt.loc['Mean', 'Total'] = x_mean
-                if X_total_calc['a-mean'] == '*':
-                    dt_index.remove('Mean')
-                    dt.drop(dt_index, axis=0, inplace=True)
-                if 'q_mean' in X_total_calc:
-                    dt['Mean'] = pd.Series([x_mean for c in dt.index], index=dt.index)
+
+    if calc == 'percentile':
+        if nr_respondents > 0:
+            mean = total / nr_respondents
+        else:
+            mean = total
+    else:
+        mean = nr_respondents / rownr
+    meta_data['mean'] = mean
+    meta_data['size'] = nr_respondents
+    if 'a-mean' in X_total_calc:
+        x_mean = dt['Total'].mean();
+        dt.loc['Mean', X_label] = 'Mean'
+        dt.loc['Mean', 'Total'] = x_mean
+        if X_total_calc['a-mean'] == '*':
+            dt_index.remove('Mean')
+            dt.drop(dt_index, axis=0, inplace=True)
+        if 'q_mean' in X_total_calc:
+            dt['Mean'] = pd.Series([x_mean for c in dt.index], index=dt.index)
 
     dt.fillna(0, inplace=True)
     # remove Total only when sub_totals exists
@@ -154,248 +157,6 @@ def bind_facet(seekerview, chart, aggregations):
         chart_data.append(row.tolist())
     return chart_data, meta_data
 
-def bind_hits(seekerview, chart, hits, benchmark=None):
-    chart_data = []
-    meta_data = {}
-    X_facet = chart['X_facet']
-    X_field = X_facet['field']
-    X_label = X_facet['label']
-    xfacet = seekerview.get_facet_by_field_name(X_field)
-    x_total = True
-    if 'total' in X_facet:
-        x_total = X_facet['total']
-    if 'Y_facet' in chart:
-        Y_facet = chart['Y_facet']
-        Y_field = Y_facet['field']
-        Y_label = Y_facet['label']
-        yfacet = seekerview.get_facet_by_field_name(Y_field)
-    else:
-        Y_facet = None
-        Y_field = None
-        Y_Label = X_label
-        yfacet = None
-
-    # next fill the series for the categories
-    Y_total = 0
-    hit_count = 0
-    Y_benchmark = 0
-    benchmark_count = 0
-    dt_index = []
-    dt_columns = [X_label]
-    if x_total:
-        dt_columns.append("Total")
-    dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
-    rownr = 0
-    for hit in hits.hits:
-        X_key = hit['_source'][X_field]
-        #series = [0] * len(categories)
-        #series[0] = X_key
-        dt.loc[rownr, X_label] = X_key
-        dt_index.append(X_key)
-        #if x_total:
-        #    series[1] = 1
-        if Y_facet:
-            Y_key = hit['_source'][Y_field]
-            if type(Y_key) == list:
-                Y_key_nested = Y_key
-                Y_nested = 0
-                nested_count = 0
-                for Y_value in Y_key_nested:
-                    Y_key = Y_value['val']
-                    Y_metric = Y_value[Y_facet['metric']]
-                    if 'answers' in Y_facet:
-                        # in case anaswers is empty, add all y values
-                        if Y_value['val'] in Y_facet['answers'] or len( Y_facet['answers']) == 0:
-                            Y_nested = Y_nested + Y_metric
-                            nested_count = nested_count + 1
-                            Y_key = yfacet.decoder(X_key, Y_key)
-                            if type(Y_key) == int:
-                                Y_key = "{0:d}".format(Y_key)
-                            #series[categories.index(Y_key)] = Y_metric
-                            if Y_key not in dt_columns:
-                                dt_columns.append(Y_key)
-                            dt.loc[rownr, Y_key] = Y_metric
-                    else:
-                        # in case the answer is scaled, starts with a number, use weight factor for average
-                        try:
-                            weight = int(float(Y_key.split(' ')[0]))
-                        except:
-                            weight = 1
-                        Y_nested = Y_nested + Y_metric * weight
-                        nested_count = nested_count + 1
-                if nested_count == 0:
-                    Y_metric= Y_nested
-                else:
-                    Y_metric = Y_nested / nested_count
-                if 'answers' not in Y_facet:
-                    Y_key = Y_facet['label']
-                    #series[categories.index(Y_key)] = Y_metric
-                    dt.loc[rownr, Y_key] = Y_metric
-                    if Y_key not in dt_columns:
-                        dt_columns.append(Y_key)
-                elif 'a-mean' in Y_facet:
-                    if Y_facet['a-mean'] == True:
-                        Y_key = "A-Mean"
-                        #series[categories.index(Y_key)] = Y_metric
-                        dt.loc[rownr, Y_key] = Y_metric
-                        if Y_key not in dt_columns:
-                            dt_columns.append(Y_key)
-                        if 'series' in chart:
-                            if 'average' in chart['series']:
-                                chart['series'][dt_columns.index(Y_key)] = {"type": 'line'}
-                                del chart['series']['average']
-            else:
-                if type(Y_key) == str:
-                    try:
-                        Y_metric = float(Y_key.split(' ')[0])
-                    except:
-                        Y_metric = 0
-                else:
-                    Y_metric = hit['_source'][Y_field]
-                Y_key = Y_facet['label']
-                #series[categories.index(Y_key)] = Y_metric
-                dt.loc[rownr, Y_key] = Y_metric
-                if Y_key not in dt_columns:
-                    dt_columns.append(Y_key)
-        Y_total = Y_total + Y_metric
-        hit_count = hit_count + 1
-        if X_key in benchmark:
-            Y_benchmark = Y_benchmark + Y_metric
-            benchmark_count = benchmark_count + 1
-        #chart_data.append(series)
-        rownr = rownr + 1
-    if ('q-mean' in Y_facet):
-        if hit_count == 0:
-            Y_metric= Y_total
-        else:
-            Y_metric = Y_total / hit_count
-        Y_key = "Q-Mean"
-        rownr = 0
-        #for series in chart_data['data']:
-        #    series[categories.index(Y_key)] = Y_metric
-        for rownr in range(0, len(dt)):
-            dt.loc[rownr, Y_key] = Y_metric
-            if Y_key not in dt_columns:
-                dt_columns.append(Y_key)
-            rownr = rownr + 1
-        if 'series' in chart:
-            if 'average' in chart['series']:
-                chart['series'][dt_columns.index(Y_key)] = {"type": 'line'}
-                del chart['series']['average']
-    if len(benchmark) > 0:
-        if benchmark_count == 0:
-            Y_metric= Y_benchmark
-        else:
-            Y_metric = Y_benchmark / benchmark_count
-        Y_key = "Benchmark"
-        rownr = 0
-        #for series in chart_data['data']:
-        #    series[categories.index(Y_key)] = Y_metric
-        for rownr in range(0, len(dt)):
-            dt.loc[rownr, Y_key] = Y_metric
-            if Y_key not in dt_columns:
-                dt_columns.append(Y_key)
-            rownr = rownr + 1
-        # replace average and benchmark for combobox with real position
-        if 'series' in chart:
-            if 'series' in chart:
-                if 'benchmark' in chart['series']:
-                    chart['series'][categories.index(Y_key)] = {"type": 'line'}
-                    del chart['series']['benchmark']
-
-    #if len(chart_data) > 0:
-    #    chart_data.insert(0, categories)
-    transpose = False
-    if 'transpose' in chart:
-        transpose = chart['transpose']
-    if transpose:
-        # first column contains the labels, remove this column before transpose and add it again after transpose
-        del dt[X_label]
-        dt = dt.transpose()
-        dt_trans_columns = [Y_label]
-        dt_trans_columns.extend(dt_index)
-        dt_trans_index = dt_columns[1:]
-        dt.insert(0, Y_label, dt_trans_index)
-        dt_columns = dt_trans_columns
-
-    dt.fillna(0, inplace=True)
-    chart_data.append(dt_columns)
-    for ix, row in dt.iterrows():
-        chart_data.append(row.tolist())
-    return chart_data, meta_data
-
-def _nested_box(nestedlist, values):
-    prc = 0
-    for item in nestedlist:
-        try:
-            item_code = int(float(item['val'].split(' ')[0]))
-        except:
-            item_code = item['val']
-        for value in values:
-            if item_code == value:
-                prc = prc + item['prc']
-    return prc
-
-def _nested_mean(nestedlist):
-    prc = 0
-    if len(nestedlist) > 0:
-        for item in nestedlist:
-            try:
-                weight = int(float(item['val'].split(' ')[0]))
-            except:
-                weight = 1
-            prc = prc + item['prc'] * weight
-        prc = prc / len(nestedlist)
-    return prc
-
-
-def bind_topline(seekerview, chart, hits, benchmark=None):
-    chart_data = []
-    meta_data = {}
-    X_facet = chart['X_facet']
-    X_fields = X_facet['fields']
-    Y_facet = chart['Y_facet']
-    Y_field = Y_facet['field']
-
-    topline_columns = []
-    for hit in hits.hits:
-        IPC = hit['_source'][Y_field]
-        # benchmark will be the first column(s)
-        if IPC in benchmark:
-            topline_columns.insert(0, IPC)
-        else:
-            topline_columns.append(IPC)
-    topline_index = ['Hedonics Mean', 'Hedonics Excellent', 'Hedonics Top2', 'Hedonics Top3', 'Hedonics Bottom2']
-    topline_df = pd.DataFrame(0.0, columns=topline_columns, index=topline_index)
-
-    # scan through the hits to populate df
-    Y_total = 0
-    hit_count = 0
-    Y_benchmark = 0
-    benchmark_count = 0
-    cand_topline = {}
-    for hit in hits.hits:
-        IPC = hit['_source'][Y_field]
-        hedonics = hit['_source']['hedonics']
-        Y_nested = _nested_mean(hedonics)
-        topline_df.loc['Hedonics Mean', IPC] = Y_nested
-        topline_df.loc['Hedonics Excellent', IPC] = _nested_box(hedonics, [7])
-        topline_df.loc['Hedonics Top2', IPC] = _nested_box(hedonics, [7, 6])
-        topline_df.loc['Hedonics Top3', IPC] = _nested_box(hedonics, [7, 6, 5])
-        topline_df.loc['Hedonics Bottom2', IPC] = _nested_box(hedonics, [2, 1])
-        Y_total = Y_total + Y_nested
-        hit_count = hit_count + 1
-
-    for ix in topline_df.index:
-        series = [ix]
-        series.extend(topline_df.ix[ix].tolist())
-        chart_data.append(series)
-
-    if len(chart_data) > 0:
-        categories = ['Questions']
-        categories.extend(topline_columns)
-        chart_data.insert(0, categories)
-    return chart_data, meta_data
 
 def bind_aggr(seekerview, chart, agg_name, aggregations):
     chart_data = []
@@ -667,6 +428,15 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
         if X_total_calc['q-mean'] == '*':
             dt.drop(categories, axis=0, inplace=True)
             dt_index = list(dt.index)
+    if calc == 'percentile':
+        if nr_respondents > 0:
+            mean = X_total / nr_respondents
+        else:
+            mean = X_total
+    else:
+        mean = nr_respondents / X_rownr
+    meta_data['mean'] = mean
+    meta_data['size'] = nr_respondents
     # ONLY X FACET
     if Y_field == "":
         if 'a-mean' in X_total_calc:
@@ -864,6 +634,250 @@ def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, benchmark=None
     chart_data.append(dt_columns)
     for ix, row in dt.iterrows():
         chart_data.append(row.tolist())
+    return chart_data, meta_data
+
+
+def bind_hits(seekerview, chart, hits, benchmark=None):
+    chart_data = []
+    meta_data = {}
+    X_facet = chart['X_facet']
+    X_field = X_facet['field']
+    X_label = X_facet['label']
+    xfacet = seekerview.get_facet_by_field_name(X_field)
+    x_total = True
+    if 'total' in X_facet:
+        x_total = X_facet['total']
+    if 'Y_facet' in chart:
+        Y_facet = chart['Y_facet']
+        Y_field = Y_facet['field']
+        Y_label = Y_facet['label']
+        yfacet = seekerview.get_facet_by_field_name(Y_field)
+    else:
+        Y_facet = None
+        Y_field = None
+        Y_Label = X_label
+        yfacet = None
+
+    # next fill the series for the categories
+    Y_total = 0
+    hit_count = 0
+    Y_benchmark = 0
+    benchmark_count = 0
+    dt_index = []
+    dt_columns = [X_label]
+    if x_total:
+        dt_columns.append("Total")
+    dt = pd.DataFrame(0.0, columns=dt_columns, index=[0])
+    rownr = 0
+    for hit in hits.hits:
+        X_key = hit['_source'][X_field]
+        #series = [0] * len(categories)
+        #series[0] = X_key
+        dt.loc[rownr, X_label] = X_key
+        dt_index.append(X_key)
+        #if x_total:
+        #    series[1] = 1
+        if Y_facet:
+            Y_key = hit['_source'][Y_field]
+            if type(Y_key) == list:
+                Y_key_nested = Y_key
+                Y_nested = 0
+                nested_count = 0
+                for Y_value in Y_key_nested:
+                    Y_key = Y_value['val']
+                    Y_metric = Y_value[Y_facet['metric']]
+                    if 'answers' in Y_facet:
+                        # in case anaswers is empty, add all y values
+                        if Y_value['val'] in Y_facet['answers'] or len( Y_facet['answers']) == 0:
+                            Y_nested = Y_nested + Y_metric
+                            nested_count = nested_count + 1
+                            Y_key = yfacet.decoder(X_key, Y_key)
+                            if type(Y_key) == int:
+                                Y_key = "{0:d}".format(Y_key)
+                            #series[categories.index(Y_key)] = Y_metric
+                            if Y_key not in dt_columns:
+                                dt_columns.append(Y_key)
+                            dt.loc[rownr, Y_key] = Y_metric
+                    else:
+                        # in case the answer is scaled, starts with a number, use weight factor for average
+                        try:
+                            weight = int(float(Y_key.split(' ')[0]))
+                        except:
+                            weight = 1
+                        Y_nested = Y_nested + Y_metric * weight
+                        nested_count = nested_count + 1
+                if nested_count == 0:
+                    Y_metric= Y_nested
+                else:
+                    Y_metric = Y_nested / nested_count
+                if 'answers' not in Y_facet:
+                    Y_key = Y_facet['label']
+                    #series[categories.index(Y_key)] = Y_metric
+                    dt.loc[rownr, Y_key] = Y_metric
+                    if Y_key not in dt_columns:
+                        dt_columns.append(Y_key)
+                elif 'a-mean' in Y_facet:
+                    if Y_facet['a-mean'] == True:
+                        Y_key = "A-Mean"
+                        #series[categories.index(Y_key)] = Y_metric
+                        dt.loc[rownr, Y_key] = Y_metric
+                        if Y_key not in dt_columns:
+                            dt_columns.append(Y_key)
+                        if 'series' in chart:
+                            if 'average' in chart['series']:
+                                chart['series'][dt_columns.index(Y_key)] = {"type": 'line'}
+                                del chart['series']['average']
+            else:
+                if type(Y_key) == str:
+                    try:
+                        Y_metric = float(Y_key.split(' ')[0])
+                    except:
+                        Y_metric = 0
+                else:
+                    Y_metric = hit['_source'][Y_field]
+                Y_key = Y_facet['label']
+                #series[categories.index(Y_key)] = Y_metric
+                dt.loc[rownr, Y_key] = Y_metric
+                if Y_key not in dt_columns:
+                    dt_columns.append(Y_key)
+        Y_total = Y_total + Y_metric
+        hit_count = hit_count + 1
+        if X_key in benchmark:
+            Y_benchmark = Y_benchmark + Y_metric
+            benchmark_count = benchmark_count + 1
+        #chart_data.append(series)
+        rownr = rownr + 1
+    if ('q-mean' in Y_facet):
+        if hit_count == 0:
+            Y_metric= Y_total
+        else:
+            Y_metric = Y_total / hit_count
+        Y_key = "Q-Mean"
+        rownr = 0
+        #for series in chart_data['data']:
+        #    series[categories.index(Y_key)] = Y_metric
+        for rownr in range(0, len(dt)):
+            dt.loc[rownr, Y_key] = Y_metric
+            if Y_key not in dt_columns:
+                dt_columns.append(Y_key)
+            rownr = rownr + 1
+        if 'series' in chart:
+            if 'average' in chart['series']:
+                chart['series'][dt_columns.index(Y_key)] = {"type": 'line'}
+                del chart['series']['average']
+    if len(benchmark) > 0:
+        if benchmark_count == 0:
+            Y_metric= Y_benchmark
+        else:
+            Y_metric = Y_benchmark / benchmark_count
+        Y_key = "Benchmark"
+        rownr = 0
+        #for series in chart_data['data']:
+        #    series[categories.index(Y_key)] = Y_metric
+        for rownr in range(0, len(dt)):
+            dt.loc[rownr, Y_key] = Y_metric
+            if Y_key not in dt_columns:
+                dt_columns.append(Y_key)
+            rownr = rownr + 1
+        # replace average and benchmark for combobox with real position
+        if 'series' in chart:
+            if 'series' in chart:
+                if 'benchmark' in chart['series']:
+                    chart['series'][categories.index(Y_key)] = {"type": 'line'}
+                    del chart['series']['benchmark']
+
+    #if len(chart_data) > 0:
+    #    chart_data.insert(0, categories)
+    transpose = False
+    if 'transpose' in chart:
+        transpose = chart['transpose']
+    if transpose:
+        # first column contains the labels, remove this column before transpose and add it again after transpose
+        del dt[X_label]
+        dt = dt.transpose()
+        dt_trans_columns = [Y_label]
+        dt_trans_columns.extend(dt_index)
+        dt_trans_index = dt_columns[1:]
+        dt.insert(0, Y_label, dt_trans_index)
+        dt_columns = dt_trans_columns
+
+    dt.fillna(0, inplace=True)
+    chart_data.append(dt_columns)
+    for ix, row in dt.iterrows():
+        chart_data.append(row.tolist())
+    return chart_data, meta_data
+
+def _nested_box(nestedlist, values):
+    prc = 0
+    for item in nestedlist:
+        try:
+            item_code = int(float(item['val'].split(' ')[0]))
+        except:
+            item_code = item['val']
+        for value in values:
+            if item_code == value:
+                prc = prc + item['prc']
+    return prc
+
+def _nested_mean(nestedlist):
+    prc = 0
+    if len(nestedlist) > 0:
+        for item in nestedlist:
+            try:
+                weight = int(float(item['val'].split(' ')[0]))
+            except:
+                weight = 1
+            prc = prc + item['prc'] * weight
+        prc = prc / len(nestedlist)
+    return prc
+
+
+def bind_topline(seekerview, chart, hits, benchmark=None):
+    chart_data = []
+    meta_data = {}
+    X_facet = chart['X_facet']
+    X_fields = X_facet['fields']
+    Y_facet = chart['Y_facet']
+    Y_field = Y_facet['field']
+
+    topline_columns = []
+    for hit in hits.hits:
+        IPC = hit['_source'][Y_field]
+        # benchmark will be the first column(s)
+        if IPC in benchmark:
+            topline_columns.insert(0, IPC)
+        else:
+            topline_columns.append(IPC)
+    topline_index = ['Hedonics Mean', 'Hedonics Excellent', 'Hedonics Top2', 'Hedonics Top3', 'Hedonics Bottom2']
+    topline_df = pd.DataFrame(0.0, columns=topline_columns, index=topline_index)
+
+    # scan through the hits to populate df
+    Y_total = 0
+    hit_count = 0
+    Y_benchmark = 0
+    benchmark_count = 0
+    cand_topline = {}
+    for hit in hits.hits:
+        IPC = hit['_source'][Y_field]
+        hedonics = hit['_source']['hedonics']
+        Y_nested = _nested_mean(hedonics)
+        topline_df.loc['Hedonics Mean', IPC] = Y_nested
+        topline_df.loc['Hedonics Excellent', IPC] = _nested_box(hedonics, [7])
+        topline_df.loc['Hedonics Top2', IPC] = _nested_box(hedonics, [7, 6])
+        topline_df.loc['Hedonics Top3', IPC] = _nested_box(hedonics, [7, 6, 5])
+        topline_df.loc['Hedonics Bottom2', IPC] = _nested_box(hedonics, [2, 1])
+        Y_total = Y_total + Y_nested
+        hit_count = hit_count + 1
+
+    for ix in topline_df.index:
+        series = [ix]
+        series.extend(topline_df.ix[ix].tolist())
+        chart_data.append(series)
+
+    if len(chart_data) > 0:
+        categories = ['Questions']
+        categories.extend(topline_columns)
+        chart_data.insert(0, categories)
     return chart_data, meta_data
 
 

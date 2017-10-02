@@ -32,7 +32,7 @@ from django.utils.encoding import python_2_unicode_compatible
 # <chart_type>          : 'chart_type' : <google chart types> | <d3.js chart types>
 # <chart_title>         : 'chart_title' : "chart title"
 # <data_type>           : 'facet' | 'aggr' | 'hits' | 'topline'
-# <controls>            : [ <google chart controls> | 'tile_value_select' ]
+# <controls>            : [ <google chart controls> | 'tile_layout_select' ]
 # <google chart controls> : 'CategoryFilter', 'ChartRangeFilter', 'DateRangeFilter', 'NumberRangeFilter', 'StringFilter'
 # <options>             : <google chart options>
 # <google chart options> : 'width', 'height', 'colors', 'legend', 'bar', <vAxis>, <hAxis>, 'seriesType', <series>
@@ -1062,7 +1062,7 @@ class SurveyWorkbook:
             'chart_title' : "Topline Liking - Candidate %",
             'data_type'   : "aggr",
             'base'        : "liking_blindcode_perc_col",
-            'controls'    : ['CategoryFilter', 'tile_value_select'],
+            'controls'    : ['CategoryFilter', 'tile_layout_select'],
             'help'        : "Select Row for sorting, Select Column Header for filter",
             'listener'    : {'sort' : ["cand_emotion_col", "cand_concept_radar", "cand_emotion_radar", "cand_mood_radar"], 'select' : {'rowsort': None}},
             'X_facet'     : {
@@ -1118,7 +1118,7 @@ class SurveyWorkbook:
             'chart_type': "ColumnChart",
             'chart_title' : "Liking %",
             'data_type'  : "facet",
-            'controls'    : ['CategoryFilter', 'tile_value_select'],
+            'controls'    : ['CategoryFilter', 'tile_layout_select'],
             'help'        : "Select Legend for sorting Categories",
             'listener'    : {'select' : {'colsort': 'categories'}},
             'X_facet'     : {
@@ -1140,7 +1140,7 @@ class SurveyWorkbook:
             'chart_type': "ColumnChart",
             'chart_title' : "Freshness %",
             'data_type'  : "aggr",
-            'controls'    : ['CategoryFilter', 'tile_value_select'],
+            'controls'    : ['CategoryFilter', 'tile_layout_select'],
             'help'        : "Select Legend for sorting Categories",
             'listener'    : {'select' : {'colsort': 'categories'}},
             'X_facet'     : {

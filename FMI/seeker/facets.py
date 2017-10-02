@@ -153,7 +153,7 @@ class Facet (object):
         total_calc = {}
         if 'values' in chart_facet:
             total_calc = {'single':'+'}
-            for answer in chart_facet['answers']:
+            for answer in chart_facet['values']:
                 if type(answer) == dict:
                     for aggr, aggr_type in answer.items():
                         if aggr in ['v-sum','v-mean','v-wmean']:

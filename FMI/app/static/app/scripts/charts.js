@@ -4,23 +4,22 @@
 
 
 
-function chart_tile_value_select_onchange(chart_name, containerId) {
+function chart_tile_layout_select_onchange(chart_name, containerId) {
     var selectList = document.getElementById(containerId);
-    var tile_facet_value = selectList.getElementsByTagName("select")[0].value;
+    var layout_value = selectList.getElementsByTagName("select")[0].value;
     var facet_value = document.getElementById("tile_value_select").value;
     
     var old_tiles = g_charts[chart_name]['Z_facet']['tiles'];
-    var new_tiles = tile_facet_value;
+    var new_tiles = layout_value;
     if (new_tiles.substr(0,4) == 'grid') {
         g_charts[chart_name]['Z_facet']['tiles'] = new_tiles;
         draw_dashboard(g_storyboard[g_storyboard_ix], g_charts, facet_value, g_tiles_select);
     } else if (old_tiles.substr(0, 4) == 'grid') {
         g_charts[chart_name]['Z_facet']['tiles'] = 'dropdown';
-        facet_value = tile_facet_value;
         draw_dashboard(g_storyboard[g_storyboard_ix], g_charts, facet_value, g_tiles_select);
     } else {
         g_charts[chart_name]['Z_facet']['tiles'] = new_tiles;
-        facet_value = tile_facet_value;
+        facet_value = layout_value;
         var chart = g_charts[chart_name];
         var X_facet = chart['X_facet']
 
@@ -92,11 +91,11 @@ function fill_tiles_chart(chart_name, chart_def, facet_value, containerId) {
     var selectList = document.getElementById(containerId);
     selectList.innerHTML =
         //"<div class='form-group'>" +
-        //    "<label for='sel1'>Select Tile-Value:</label>" +
-        //    "<select name='tile_value_select' class='form-control' id='tile_value_select'></select>" +
+        //    "<label for='sel1'>Select Tile-Layout:</label>" +
+        //    "<select name='tile_layout_select' class='form-control' id='tile_layout_select'></select>" +
         //"</div>";
         '<div class="google-visualization-controls-categoryfilter">' +
-	        '<label class="google-visualization-controls-label">Tile-Value</label>' +
+	        '<label class="google-visualization-controls-label">Tile-Layout</label>' +
 	        '<div>' +
 	            '<span class="goog-combobox goog-inline-block">' +
 	            '<select name="" type="text" autocomplete="off" label="Choose facet..." placeholder="Choose facet..." aria-label="Choose facet..." class="label-input-label">' +
@@ -105,25 +104,19 @@ function fill_tiles_chart(chart_name, chart_def, facet_value, containerId) {
 	        '</div>' +
 	    '</div>';
     var selectList = selectList.getElementsByTagName('select')[0];
-    selectList.setAttribute("onChange", "chart_tile_value_select_onchange('" + chart_name + "','" + containerId + "')");
-    var tiles_select = new Object();
-    tiles_select['Layout'] = ['grid-nx1', 'grid-nx2', 'grid-nx3', 'grid-nx4'];
-    tiles_select = Object.assign(tiles_select, g_tiles_select);
-    for (var facet_tile in tiles_select) {
-        var optgroup = document.createElement("optgroup");
-        optgroup.setAttribute("label", facet_tile);
-        optgroup.text = facet_tile;
-        selectList.appendChild(optgroup);
-        for (var fi = 0; fi < tiles_select[facet_tile].length; fi++) {
-            var option_facet_value = tiles_select[facet_tile][fi];
-            var option = document.createElement("option");
-            option.setAttribute("value", option_facet_value);
-            if (option_facet_value == facet_value) {
-                option.setAttribute('selected', true);
-            }
-            option.text = option_facet_value;
-            selectList.appendChild(option);
+    selectList.setAttribute("onChange", "chart_tile_layout_select_onchange('" + chart_name + "','" + containerId + "')");
+    var layout_select = new Object();
+    layout_select = ['dropdown', 'grid-nx1', 'grid-nx2', 'grid-nx3', 'grid-nx4'];
+    var tiles = chart_def['Z_facet']['tiles'];
+    for (var li = 0; li < layout_select.length; li++) {
+        var layout = layout_select[li];
+        var option = document.createElement("option");
+        option.setAttribute("value", layout);
+        if (layout == tiles) {
+            option.setAttribute('selected', true);
         }
+        option.text = layout;
+        selectList.appendChild(option);
     }
 }
 
@@ -686,7 +679,7 @@ function google_chart(chart_name, chart_def, facet_value) {
                         }
                     });
                     //document.getElementById(ctdivs[cix]).style.height = "50px";
-                } else if (control == 'tile_value_select') {
+                } else if (control == 'tile_layout_select') {
                     if (tiles == 'dropdown' || facet_value == 'All') {
                         fill_tiles_chart(chart_name, chart_def, facet_value, ctdivs[cix]);
                     }
