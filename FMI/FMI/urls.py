@@ -46,6 +46,7 @@ urlpatterns = patterns('',
 
     url(r'^scrape', app.views.scrape_view, name='scrape'),
 
+    url(r'^api/site_menu$', 'app.api.site_menu', name='api/site_menu'),
     url(r'^api/platformsearch$', 'app.api.platformsearch', name='api/platformsearch'),
     url(r'^api/scrape_pollresults$', 'app.scrape_ds.scrape_pollresults_api', name='api/scrape_pollresults'),
     url(r'^api/scrape_accords$', 'app.api.scrape_accords_api', name='scrape_accords_api'),

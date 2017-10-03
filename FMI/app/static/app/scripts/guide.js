@@ -454,7 +454,10 @@ function site_onchange() {
     input.value = '';
     var input = document.getElementsByName("view_name")[0];
     input.value = '';
-    document.getElementById("guide_form").submit();
+    //document.getElementById("guide_form").submit();
+    if (site_name != "") {
+        api_site_menu(site_name);
+    }
 }
 
 
@@ -469,6 +472,7 @@ function site_route(site_name, menu_name, view_name, sites, site_views, tiles_d)
     g_tiles_d = tiles_d;
 
     var select = document.getElementById("site_select");
+    select.innerHTML = "";
     select.setAttribute("onChange", "site_onchange()");
     // remove any existing options
     var option = document.createElement("option");
@@ -591,6 +595,47 @@ function search(site_name, menu_name, view_name) {
         //var stats_df = JSON.parse(data['stats_df']);
         fill_tiles(facets_data, tiles_select, tiles_d);
         draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
+    });
+
+    //params['csrfmiddlewaretoken'] = csrftoken;
+    //$.post(url, params, function (data, status) {
+    //    var view_name = data['view_name'];
+    //    var dashboard_name = data['dashboard_name'];
+    //    var site_view = g_site_views[view_name];
+    //    //var storyboard = site_view['storyboard'];
+    //    var storyboard = JSON.parse(data['storyboard']);
+    //    var charts = JSON.parse(data['dashboard']);
+    //    var facets_data = JSON.parse(data['facets_data']);
+    //    var tiles_select = JSON.parse(data['tiles_select']);
+    //    var tiles_d = JSON.parse(data['tiles_d']);
+    //    //var stats_df = JSON.parse(data['stats_df']);
+    //    fill_tiles(facets_data, tiles_select, tiles_d);
+    //    draw_storyboard(storyboard, dashboard_name, charts, tiles_select);
+    //});
+}
+
+
+function api_site_menu(site_name) {
+    var params = {};
+    params['site_select'] = site_name;
+    var url = getBaseUrl() + '/api/site_menu';
+    $.get(url, params, function (data, status) {
+        // var csrftoken = '{{ csrf_token }}';
+        var route_name = data['route_name'];
+        var step_name = data['step_name'];
+        var site_name = data['site_name'];
+        var menu_name = data['menu_name'];
+        var view_name = data['view_name'];
+        var benchmark = data['benchmark'];
+        var guide = data['guide'];
+        var tiles_d = data['tiles_d'];
+        var sites = data['sites'];
+        var site_views = data['site_views'];
+
+        guide_route(route_name, step_name, guide);
+        set_hidden_param("benchmark", benchmark);
+        get_workbook_dashboard_names();
+        site_route(site_name, menu_name, view_name, sites, site_views, tiles_d);
     });
 
     //params['csrfmiddlewaretoken'] = csrftoken;

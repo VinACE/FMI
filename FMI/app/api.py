@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.core.files import File
 from datetime import datetime
 import json
+import app.guide as guide
 import app.models as models
 
 from .scrape_ds import *
@@ -26,6 +27,72 @@ platformseekers = {
     #'CI Surveys'            : (models.SurveySeekerView, "search_survey"),
     }
 
+
+def site_menu(request):
+    """Renders the guide page."""
+    route_name = ''
+    step_name = ''
+    site_name = ''
+    menu_name = ''
+    view_name = ''
+    benchmark = ''
+    results = {}
+    tiles_d = {}
+    facets = {}
+    if request.method == 'GET':
+        route_name = request.GET.get('route_select', '')
+        site_name = request.GET.get('site_select', '')
+        if route_name != '':
+            step_name = request.GET.get('step_name', '')
+            route_steps = guide.routes[route_name][1]
+            step_ix = 0
+            # new route selected, start with the first step of this route
+            if not ('guide_previous' in request.GET or 'guide_next' in request.GET):
+                step_name = route_steps[0]
+            else:
+                for step in route_steps:
+                    if step == step_name:
+                        break
+                    else:
+                        step_ix = step_ix + 1
+                if 'guide_previous' in request.GET:
+                    if step_ix > 0:
+                        step_name = route_steps[step_ix - 1]
+                    else:
+                        step_name = route_steps[0]
+                if 'guide_next' in request.GET:
+                    if step_ix < len(route_steps)-1:
+                        step_name = route_steps[step_ix + 1]
+            if step_ix < len(route_steps)-1:
+                results, facets = guide.route_step(request, route_name, step_name)
+            else:      
+                # destination reached, determine step_name                     
+                step_name = guide.route_dest(request, route_name, step_name)
+        else:
+            if site_name != '':
+                menu_name = request.GET.get('menu_name', '')
+                view_name = request.GET.get('view_name', '')
+                benchmark = request.GET.get('benchmark', '')
+                tile_facet_field = request.GET.get('tile_facet_field', '')
+                if site_name != '':
+                    results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name, tile_facet_field)
+
+    context = {
+            'route_name': route_name,
+            'step_name' : step_name,
+            'guide'     : guide.guide,
+            #'facets'    : facets,
+            #'results'   : results,
+            'tiles_d'   : tiles_d,
+            'site_name' : site_name,
+            'menu_name' : menu_name,
+            'view_name' : view_name,
+            'benchmark' : benchmark,
+            'sites'     : guide.sites,
+            'site_views': guide.site_views
+            }
+    json_results = json.dumps(context)
+    return HttpResponse(json_results, content_type='application/json')
 
 
 def platformsearch(request):
