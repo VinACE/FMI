@@ -42,40 +42,53 @@ def site_menu(request):
     if request.method == 'GET':
         route_name = request.GET.get('route_select', '')
         site_name = request.GET.get('site_select', '')
-        if route_name != '':
-            step_name = request.GET.get('step_name', '')
-            route_steps = guide.routes[route_name][1]
-            step_ix = 0
-            # new route selected, start with the first step of this route
-            if not ('guide_previous' in request.GET or 'guide_next' in request.GET):
-                step_name = route_steps[0]
-            else:
-                for step in route_steps:
-                    if step == step_name:
-                        break
-                    else:
-                        step_ix = step_ix + 1
-                if 'guide_previous' in request.GET:
-                    if step_ix > 0:
-                        step_name = route_steps[step_ix - 1]
-                    else:
-                        step_name = route_steps[0]
-                if 'guide_next' in request.GET:
-                    if step_ix < len(route_steps)-1:
-                        step_name = route_steps[step_ix + 1]
-            if step_ix < len(route_steps)-1:
-                results, facets = guide.route_step(request, route_name, step_name)
-            else:      
-                # destination reached, determine step_name                     
-                step_name = guide.route_dest(request, route_name, step_name)
+        menu_name = request.GET.get('menu_name', '')
+        view_name = request.GET.get('view_name', '')
+        benchmark = request.GET.get('benchmark', '')
+        tile_facet_field = request.GET.get('tile_facet_field', '')
+    if request.method == 'POST':
+        route_name = request.POST.get('route_select', '')
+        site_name = request.POST.get('site_select', '')
+        menu_name = request.POST.get('menu_name', '')
+        view_name = request.POST.get('view_name', '')
+        benchmark = request.POST.get('benchmark', '')
+        tile_facet_field = request.POST.get('tile_facet_field', '')
+        site_view = json.loads(request.POST['site_views'])
+
+    if route_name != '':
+        step_name = request.GET.get('step_name', '')
+        route_steps = guide.routes[route_name][1]
+        step_ix = 0
+        # new route selected, start with the first step of this route
+        if not ('guide_previous' in request.GET or 'guide_next' in request.GET):
+            step_name = route_steps[0]
         else:
+            for step in route_steps:
+                if step == step_name:
+                    break
+                else:
+                    step_ix = step_ix + 1
+            if 'guide_previous' in request.GET:
+                if step_ix > 0:
+                    step_name = route_steps[step_ix - 1]
+                else:
+                    step_name = route_steps[0]
+            if 'guide_next' in request.GET:
+                if step_ix < len(route_steps)-1:
+                    step_name = route_steps[step_ix + 1]
+        if step_ix < len(route_steps)-1:
+            results, facets = guide.route_step(request, route_name, step_name)
+        else:      
+            # destination reached, determine step_name                     
+            step_name = guide.route_dest(request, route_name, step_name)
+    else:
+        if site_name != '':
+            menu_name = request.GET.get('menu_name', '')
+            view_name = request.GET.get('view_name', '')
+            benchmark = request.GET.get('benchmark', '')
+            tile_facet_field = request.GET.get('tile_facet_field', '')
             if site_name != '':
-                menu_name = request.GET.get('menu_name', '')
-                view_name = request.GET.get('view_name', '')
-                benchmark = request.GET.get('benchmark', '')
-                tile_facet_field = request.GET.get('tile_facet_field', '')
-                if site_name != '':
-                    results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name, tile_facet_field)
+                results, tiles_d, facets = guide.site_menu(request, site_name, menu_name, view_name, tile_facet_field)
 
     context = {
             'route_name': route_name,
