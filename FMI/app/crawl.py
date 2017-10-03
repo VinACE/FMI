@@ -836,7 +836,7 @@ def map_survey(survey_filename):
     return col_map
 
 
-def crawl_survey1(survey_filename):
+def crawl_survey1(survey_filename, map_filename):
     survey_name = os.path.splitext(survey_filename)[0].split('-', 1)[0].strip()
     ml_file = 'data/' + survey_filename
     survey_df = pd.read_csv(ml_file, sep=';', encoding='ISO-8859-1', low_memory=False)
@@ -920,12 +920,12 @@ def crawl_survey1(survey_filename):
     pass
 
 
-def crawl_survey(survey_filename):
+def crawl_survey(survey_filename, map_filename):
     survey_name = os.path.splitext(survey_filename)[0].split('-', 1)[0].strip()
     if survey_name == 'fresh and clean':
-         crawl_survey1(survey_filename)
+         crawl_survey1(survey_filename, map_filename)
     elif survey_name == 'orange beverages':
-         crawl_survey1(survey_filename)
+         crawl_survey1(survey_filename, map_filename)
 
 
 

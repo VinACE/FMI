@@ -219,6 +219,7 @@ def guide_view(request):
 
 
     context = {
+            'insight_api' : FMI.settings.INSIGHT_API['url'],
             'route_name': route_name,
             'step_name' : step_name,
             'guide'     : json.dumps(guide.guide),
@@ -312,9 +313,10 @@ def crawl_view(request):
         form = crawl_form(request.POST)
         form.is_valid()
         ci_filename = form.cleaned_data['ci_filename_field']
+        cimap_filename = form.cleaned_data['cimap_filename_field']
         # called form crawlresults.html
         if 'crawl_survey' in form.data:
-            crawl.crawl_survey(ci_filename)
+            crawl.crawl_survey(ci_filename, cimap_filename)
         # called from crawh.html
         if form.is_valid():
             from_date = form.cleaned_data['from_date']
@@ -329,6 +331,7 @@ def crawl_view(request):
             excel_choices = form.cleaned_data['excel_choices_field']
             excel_filename = form.cleaned_data['excel_filename_field']
             ci_filename = form.cleaned_data['ci_filename_field']
+            cimap_filename = form.cleaned_data['cimap_filename_field']
             if from_date == None:
                 today = datetime.now()
                 from_date = datetime(today.year-1, 1, 1, 0, 0, 0)

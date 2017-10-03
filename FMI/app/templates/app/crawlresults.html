@@ -12,6 +12,7 @@
     {% csrf_token %}
     <div class="row">
         {{ form.ci_filename_field.label_tag }} {{ form.ci_filename_field }}
+        {{ form.cimap_filename_field.label_tag }} {{ form.cimap_filename_field }}
         <button type="submit" name="crawl_survey" class="btn btn-primary">Crawl Survey
             <span class="glyphicon glyphicon-asterisk glyphicon-circle-arrow-up" aria-hidden="true"></span>
         </button>

@@ -105,6 +105,7 @@ def site_menu(request):
             'site_views': guide.site_views
             }
     json_results = json.dumps(context)
+    #json_results['Access-Control-Allow-Origin'] = '*'
     return HttpResponse(json_results, content_type='application/json')
 
 

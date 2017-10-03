@@ -37,6 +37,10 @@ DATABASES = {
 #    }
 #}
 
+INSIGHT_API = {'url': 'http://10.20.33.102/FMI'}
+#INSIGHT_API = {'url': ''}
+CORS_ORIGIN_ALLOW_ALL = True
+
 #ES_HOSTS = [{'host': '108.61.167.27'}]
 #ES_HOSTS = [{'host': '10.20.33.33'}]
 ES_HOSTS = [{'host': '10.20.33.102'}]
@@ -110,6 +114,7 @@ STATICFILES_FINDERS = (
 SECRET_KEY = 'n(bd1f1c%e8=_xad02x5qtfn%wgwpi492e$8_erx+d)!tpeoim'
 
 MIDDLEWARE_CLASSES = (
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -172,6 +177,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
+    'corsheaders',
 )
 
 # A sample logging configuration. The only tangible logging

@@ -155,6 +155,7 @@
 
 <script>
     var csrftoken = '{{ csrf_token }}';
+    var insight_api = '{{ insight_api }}';
     guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }});
     set_hidden_param("benchmark", "{{benchmark}}");
     get_workbook_dashboard_names();

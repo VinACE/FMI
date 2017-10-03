@@ -517,11 +517,15 @@ function getParameterByName(name, url) {
 }
 
 function getBaseUrl() {
-    var url = window.location.href;
-    //strip of the last part of the URL so it can be replaced by the destination url
-    var to = url.lastIndexOf('/');
-    to = to == -1 ? url.length : to;
-    url = url.substring(0, to);
+    if (insight_api == '') {
+        var url = window.location.href;
+        //strip of the last part of the URL so it can be replaced by the destination url
+        var to = url.lastIndexOf('/');
+        to = to == -1 ? url.length : to;
+        url = url.substring(0, to);
+    } else {
+        var url = insight_api;
+    }
     return url;
 }
 
