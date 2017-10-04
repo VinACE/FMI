@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.core.files import File
 from datetime import datetime
 import json
+import FMI.settings
 import app.guide as guide
 import app.models as models
 
@@ -39,6 +40,7 @@ def site_menu(request):
     results = {}
     tiles_d = {}
     facets = {}
+    default_methods = FMI.settings.CORS_ALLOW_METHODS
     if request.method == 'GET':
         route_name = request.GET.get('route_select', '')
         site_name = request.GET.get('site_select', '')

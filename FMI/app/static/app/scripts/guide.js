@@ -618,47 +618,80 @@ function search(site_name, menu_name, view_name) {
     //});
 }
 
+//function csrfSafeMethod(method) {
+//    // these HTTP methods do not require CSRF protection
+//    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+//}
+
+//$.ajaxSetup({
+//    beforeSend: function (xhr, settings) {
+//        var csrf_required = csrfSafeMethod(settings.type);
+//        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+//            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+//        }
+//    }
+//});
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function api_site_menu_callback(data, status) {
+    // var csrftoken = '{{ csrf_token }}';
+    var route_name = data['route_name'];
+    var step_name = data['step_name'];
+    var site_name = data['site_name'];
+    var menu_name = data['menu_name'];
+    var view_name = data['view_name'];
+    var benchmark = data['benchmark'];
+    var guide = data['guide'];
+    var tiles_d = data['tiles_d'];
+    var sites = data['sites'];
+    var site_views = data['site_views'];
+    guide_route(route_name, step_name, guide);
+    set_hidden_param("benchmark", benchmark);
+    get_workbook_dashboard_names();
+    site_route(site_name, menu_name, view_name, sites, site_views, tiles_d);
+}
 
 function api_site_menu(site_name) {
+    var headers = {};
     var params = {};
     params['site_select'] = site_name;
     var url = getBaseUrl() + '/api/site_menu';
-    //$.get(url, params, function (data, status) {
-    //    // var csrftoken = '{{ csrf_token }}';
-    //    var route_name = data['route_name'];
-    //    var step_name = data['step_name'];
-    //    var site_name = data['site_name'];
-    //    var menu_name = data['menu_name'];
-    //    var view_name = data['view_name'];
-    //    var benchmark = data['benchmark'];
-    //    var guide = data['guide'];
-    //    var tiles_d = data['tiles_d'];
-    //    var sites = data['sites'];
-    //    var site_views = data['site_views'];
-    //    guide_route(route_name, step_name, guide);
-    //    set_hidden_param("benchmark", benchmark);
-    //    get_workbook_dashboard_names();
-    //    site_route(site_name, menu_name, view_name, sites, site_views, tiles_d);
+    //$.get(url, params, api_site_menu_callback);
+    //$.ajax({
+    //    url: url,
+    //    headers: headers,
+    //    method: 'GET',
+    //    dataType: 'json',
+    //    data: params,
+    //    success: api_site_menu_callback
     //});
 
+    var cookie_csrftoken = getCookie('csrftoken');
+    headers['csrftoken'] = csrftoken;
     params['csrfmiddlewaretoken'] = csrftoken;
     params['site_views'] = JSON.stringify(g_site_views);
-    $.post(url, params, function (data, status) {
-        // var csrftoken = '{{ csrf_token }}';
-        var route_name = data['route_name'];
-        var step_name = data['step_name'];
-        var site_name = data['site_name'];
-        var menu_name = data['menu_name'];
-        var view_name = data['view_name'];
-        var benchmark = data['benchmark'];
-        var guide = data['guide'];
-        var tiles_d = data['tiles_d'];
-        var sites = data['sites'];
-        var site_views = data['site_views'];
-        guide_route(route_name, step_name, guide);
-        set_hidden_param("benchmark", benchmark);
-        get_workbook_dashboard_names();
-        site_route(site_name, menu_name, view_name, sites, site_views, tiles_d);
+    //$.post(url, headers = headers, params = params, api_site_menu_callback);
+    $.ajax({
+        url: url,
+        headers: headers,
+        method: 'POST',
+        dataType: 'json',
+        data: params,
+        success: api_site_menu_callback
     });
-
 }
+
