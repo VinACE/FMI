@@ -47,8 +47,10 @@ CORS_ALLOW_CREDENTIALS = False
 CORS_ORIGIN_WHITELIST = ()
 CORS_ALLOW_METHODS = default_methods + (
     'POST',
-)
-CORS_ALLOW_HEADERS = default_headers
+    )
+CORS_ALLOW_HEADERS = default_headers + (
+    'csrftoken',
+    )
 
 #ES_HOSTS = [{'host': '108.61.167.27'}]
 #ES_HOSTS = [{'host': '10.20.33.33'}]

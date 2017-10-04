@@ -6,6 +6,7 @@
 
 
 <form action="" method="get" class="form-horizontal iff-box-content" id="guide_form" style="width: 100%">
+    {% csrf_token %}
     <div style="display: -webkit-flex; display: flex">
         <div style="flex: 0 0 auto; margin-right: 5px;">
             <div class="panel panel-default">
@@ -154,7 +155,8 @@
         <script src="{% static 'app/scripts/guide.js' %}"></script>
 
 <script>
-    var csrftoken = '{{ csrf_token }}';
+    //var csrftoken = '{{ csrf_token }}';
+    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
     var insight_api = '{{ insight_api }}';
     guide_route("{{route_name}}", "{{step_name}}", {{ guide|safe }});
     set_hidden_param("benchmark", "{{benchmark}}");

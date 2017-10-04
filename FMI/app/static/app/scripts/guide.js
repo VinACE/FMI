@@ -681,8 +681,9 @@ function api_site_menu(site_name) {
     //});
 
     var cookie_csrftoken = getCookie('csrftoken');
-    headers['csrftoken'] = csrftoken;
-    params['csrfmiddlewaretoken'] = csrftoken;
+    var dom_csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    //headers['csrftoken'] = csrftoken;
+    params['csrfmiddlewaretoken'] = dom_csrftoken;
     params['site_views'] = JSON.stringify(g_site_views);
     //$.post(url, headers = headers, params = params, api_site_menu_callback);
     $.ajax({
