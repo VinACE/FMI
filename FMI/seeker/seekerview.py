@@ -214,24 +214,25 @@ class NestedColumn (Column):
 
         value2 = AttrList([])
         selval = facets[self.nestedfacet]
-        for v in value:
-            # NestedFacet
-            if 'val' in v:
-                newval = v['val']+": {0:4.2f}".format(v['prc'])
-                if len(selval) > 0:
-                    if v['val'] in selval:
-                        value2.append(newval)
-            # OptionFacet
-            if 'question' in v:
-                answer_value = v['answer']
-                if type(answer_value) == int or type(answer_value) == float:
-                    answer_value = int(float(answer_value))
-                option_value = v['question']+'^'+answer_value
-                if len(selval) > 0:
-                    if option_value in selval:
-                        value2.append(v['question']+': '+answer_value)
-            #else:
-            #    value2.append(newval)
+        if value:
+            for v in value:
+                # NestedFacet
+                if 'val' in v:
+                    newval = v['val']+": {0:4.2f}".format(v['prc'])
+                    if len(selval) > 0:
+                        if v['val'] in selval:
+                            value2.append(newval)
+                # OptionFacet
+                if 'question' in v:
+                    answer_value = v['answer']
+                    if type(answer_value) == int or type(answer_value) == float:
+                        answer_value = int(float(answer_value))
+                    option_value = v['question']+'^'+answer_value
+                    if len(selval) > 0:
+                        if option_value in selval:
+                            value2.append(v['question']+': '+answer_value)
+                #else:
+                #    value2.append(newval)
         value = value2
 
         params = {
@@ -1330,7 +1331,9 @@ class SeekerView (View):
                 result['url'] = url
             for c in columns:
                 if c.sumheader:
-                    header = header + getattr(result, c.field, '')
+                    header_field = getattr(result, c.field, '')
+                    if header_field:
+                        header = header + header_field
             article = ""
             for c in columns:
                 if c.summary:

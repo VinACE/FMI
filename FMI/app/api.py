@@ -13,8 +13,9 @@ from django.core.files import File
 from datetime import datetime
 import json
 import FMI.settings
-import app.guide as guide
 import app.models as models
+import app.guide as guide
+import app.workbooks as workbooks
 
 from .scrape_ds import *
 
@@ -27,6 +28,25 @@ platformseekers = {
     #'Scent Emotion (Studies)' : (models.StudiesSeekerView, "search_studies"),
     #'CI Surveys'            : (models.SurveySeekerView, "search_survey"),
     }
+
+def storyboard_def(request):
+    if request.method == 'GET':
+        storyboard_name = request.GET.get('storyboard_select', '')
+        api_request = request.GET.get('api_request', '')
+        if api_request == 'api_csrftoken':
+            params = {
+                'storyboard_select' : storyboard_name,
+                }
+            return render(request, 'app/api_csrftoken.html', {'params': params})
+    if request.method == 'POST':
+        storyboard_name = request.POST.get('storyboard_select', '')
+        storyboard = json.loads(request.POST['site_views'])
+    context = {
+        'storyboard_select': storyboard_name,
+        'storyboard'     : workbooks.SurveyWorkbook.storyboard_link,
+        }
+    json_results = json.dumps(context)
+    return HttpResponse(json_results, content_type='application/json')
 
 
 def site_menu(request):

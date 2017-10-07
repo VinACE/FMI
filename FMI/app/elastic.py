@@ -249,3 +249,60 @@ def convert_for_bulk(objmap, action=None):
             "doc" : data
         }
     return bulkdata
+
+
+def convert_field(data, field, map, field_value):
+    # map: 0=question, 1=answer, 2=column, 3=field_type
+    question = map[0]
+    answer = map[1]
+    field_type = map[3]
+    if field_type == 'string':
+        if type(field_value) == int:
+            field_value = "{0:d}".format(field_value)
+        data[field] = field_value
+    elif field_type == 'text':
+        if type(field_value) == int:
+            field_value = "{0:d}".format(field_value)
+        data[field] = field_value
+    elif field_type == 'integer':
+        data[field] = int(float(field_value))
+    elif field_type == 'float':
+        data[field] = float(field_value)
+    elif field_type == 'date':
+        data[field] = datetime.strptime(field_value,'%Y-%m-%d').date()
+    elif field_type == 'nested_qst_ans':
+        if field not in data:
+            data[field] = []
+        data[field].append({'question': answer, 'answer': field_value})
+    elif field_type == 'nested_val_prc':
+        if field not in data:
+            data[field] = []
+        data[field].append({'val':question, 'prc':field_value})
+
+
+def convert_data_for_bulk(data, es_index, es_type, action=None):
+    if action == 'create':
+        metadata = {
+            '_op_type': action,
+            "_index": objmap._meta.es_index_name,
+            "_type": objmap._meta.es_type_name,
+        }
+        data.update(**metadata)
+        bulk_data = data
+    elif action == 'update':
+        id = data['_id']
+        data.pop('_id', None)
+        bulkdata = {
+            '_op_type': action,
+            "_index": es_index,
+            "_type": es_type,
+            '_id': id,
+            "doc_as_upsert" : 'true',
+            "doc" : data
+        }
+    return bulkdata
+
+
+
+
+

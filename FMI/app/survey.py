@@ -4,6 +4,7 @@ from datetime import timedelta
 import re
 from pandas import Series, DataFrame
 import pandas as pd
+import json
 
 import seeker
 import app.models as models
@@ -66,29 +67,29 @@ fld_encode = {
 # Direct mapping of a column to a ElasticSearch field
 # In case multiple columns are mapped to the same field, the one column with a value is loaded (variant for Fresh&Clean)
 col2fld = {
-    'resp_id'       : ["RESPID - RESPONDENT ID", "Resp No/ID", "Panelist_Code"],
-    #'survey'       : ["Year"],
-    'country'       : ["COUNTRY - COUNTRY", "Country"],
-    'cluster'       : ["Cluster", "Choice model Cluster"],
-    'ethnics'       : ["Ethnies"],
-    'city'          : ["City", "Test City"],
-    'regions'       : ["Regions"],
-    'education'     : ["Education"],
-    'income'        : ["Income"],
-    'blindcode'     : ["Code", "Product Code", "Sample", "Blinding_Code"],
-    'brand'         : ["Brand", "Global Brand BUMO"],
-    'variant'       : ["variant", "brand used most often liquid detergent + variant", "brand used most often powder detergent + variant"],
-    'olfactive'     : ["FF", "olfactive Family"],
+    'resp_id'       : (["RESPID - RESPONDENT ID", "Resp No/ID", "Panelist_Code"], 'string'),
+    #'survey'       : (["Year"], 'string'),
+    'country'       : (["COUNTRY - COUNTRY", "Country"], 'string'),
+    'cluster'       : (["Cluster", "Choice model Cluster"], 'string'),
+    'ethnics'       : (["Ethnies"], 'string'),
+    'city'          : (["City", "Test City"], 'string'),
+    'regions'       : (["Regions"], 'string'),
+    'education'     : (["Education"], 'string'),
+    'income'        : (["Income"], 'string'),
+    'blindcode'     : (["Code", "Product Code", "Sample", "Blinding_Code"], 'string'),
+    'brand'         : (["Brand", "Global Brand BUMO"], 'string'),
+    'variant'       : (["variant", "brand used most often liquid detergent + variant", "brand used most often powder detergent + variant"], 'string'),
+    'olfactive'     : (["FF", "olfactive Family"], 'string'),
     ## Fresh & Clean
-    "method"        : ["Wash Method"],
-    "freshness"     : ["h9_Freshness"],
-    "cleanliness"   : ["h9_Cleanliness"],
-    "lastingness"   : ["h9_Long lastingness"],
-    "intensity"     : ["j_JAR Strength"],
-    'age'           : ["Age cat", "Age group", "Q17_1__Age"],
-    "product_form"  : ["Detergent format"],
-    'gender'        : ["Woman/Man", "Gender", "Q16__Gender"],
-    "perception"    : ["would you say this fragrance is"],
+    "method"        : (["Wash Method"], 'string'),
+    "freshness"     : (["h9_Freshness"], 'integer'),
+    "cleanliness"   : (["h9_Cleanliness"], 'integer'),
+    "lastingness"   : (["h9_Long lastingness"], 'integer'),
+    "intensity"     : (["j_JAR Strength"], 'integer'),
+    'age'           : (["Age cat", "Age group", "Q17_1__Age"], 'string'),
+    "product_form"  : (["Detergent format"], 'string'),
+    'gender'        : (["Woman/Man", "Gender", "Q16__Gender"], 'string'),
+    "perception"    : (["would you say this fragrance is"], 'string'),
     }
 
 
@@ -312,21 +313,24 @@ aggr2ans = {
     }
 
 qst2fld = {
-    "affective"     : ["affective"],
-    "ballot"        : ["ballot"],
-    "behavioral"    : ["behavioral"],
-    "children"      : ["children"],
-    "concept"       : ["concept"],
-    "descriptors"   : ["descriptors"],
-    "emotion"       : ["emotion"],
-    "fragrattr"     : ["fragrattr"],
-    "hedonics"      : ["hedonics"],
-    "liking"        : ["liking"],
-    "mood"          : ["mood"],
-    "physical"      : ["physical"],
-    "smell"         : ["smell"],
-    "suitable_product"  : ["suitable_product"],
-    "suitable_stage"  : ["suitable_stage"],
+    "affective"     : (["affective"], 'nested_qst_ans'),
+    "ballot"        : (["ballot"], 'nested_qst_ans'),
+    "behavioral"    : (["behavioral"], 'nested_qst_ans'),
+    "children"      : (["children"], 'nested_qst_ans'),
+    "concept"       : (["concept"], 'nested_qst_ans'),
+    "descriptors"   : (["descriptors"], 'nested_qst_ans'),
+    "emotion"       : (["emotion"], 'nested_qst_ans'),
+    "fragrattr"     : (["fragrattr"], 'nested_qst_ans'),
+    "hedonics"      : (["hedonics"], 'nested_qst_ans'),
+    "liking"        : (["liking"], 'string'),
+    "mood"          : (["mood"], 'nested_qst_ans'),
+    "physical"      : (["physical"], 'nested_qst_ans'),
+    "smell"         : (["smell"], 'nested_qst_ans'),
+    "suitable_product"  : (["suitable_product"], 'nested_qst_ans'),
+    "suitable_stage"  : (["suitable_stage"], 'nested_qst_ans'),
+    "industry"      : (["industry"], 'nested_qst_ans'),
+    "health_condition" : (["health_condition"], 'nested_qst_ans'),
+    "product"       : (["product"], 'nested_qst_ans'),
     }
 
 
@@ -338,7 +342,7 @@ survey2qst = {
                     "liking",
                     "suitable_product",
                     "suitable_stage",
-        ],
+                    ],
     "orange beverages" : [
                     "affective",
                     "ballot",
@@ -347,9 +351,30 @@ survey2qst = {
                     "liking",
                     "physical",
                     "hedonics",
-
-        ]
+                    ],
+    "global panels" : [
+                    "industry",
+                    "health_condition",
+                    "product"
+                    ]
     }
+
+# mapping_file = 'Panel_QAs.json'
+def qa_map(map_filename):
+    global qa
+    with open('data/'+ map_filename) as panel_raw_data:
+        panel_columns = json.load(panel_raw_data)
+
+    ci_qa_temp = {}
+
+    for i in range(len(panel_columns)):
+        ci_qa_temp.update(panel_columns[i])
+
+    for i in ci_qa_temp:
+        qa[i] = {}
+        for j in ci_qa_temp[i]:
+            qa[i][j] = ([ci_qa_temp[i][j][0]], eval(ci_qa_temp[i][j][1]))
+    return qa
 
 def answer_value_to_string(answer_value):
     if type(answer_value) == int:
@@ -393,10 +418,12 @@ def seekerview_answer_value_decode(seererview, answer, answer_code):
 def col_map_field(column):
     global col2fld
 
-    for field, columns in col2fld.items():
+    for field, field_map in col2fld.items():
+        columns = field_map[0]
+        field_type = field_map[1]
         if column.strip() in columns:
-            return field
-    return None
+            return field, field_type
+    return None, None
 
 
 def aggr_map_ans(aggr):
@@ -410,10 +437,12 @@ def aggr_map_ans(aggr):
 def qst_map_field(question):
     global qst2fld
 
-    for field, questions in qst2fld.items():
+    for field, field_map in qst2fld.items():
+        questions = field_map[0]
+        field_type = field_map[1]
         if question in questions:
-            return field
-    return None
+            return field, field_type
+    return None, None
 
 def col_map_answer(survey_name, column):
     global survey2qst
@@ -441,32 +470,32 @@ def field_map_dashboard(field):
 def map_column(survey_name, column):
     # returns ES fieldname, question and nested ES fieldname (=answer)
     # Check on a direct mapping between column and field
-    field = col_map_field(column)
+    field, field_type = col_map_field(column)
     if field:
-        return field, None, None
+        return field, None, None, field_type
     # Check on a mapping to an answer
     question, answer = col_map_answer(survey_name, column)
     if answer:
         # Check wheter answer belongs to a question
         if question:
             # Check on a mapping between question and field
-            field = qst_map_field(question)
-            return field, question, answer
-    return None, None, None
+            field, field_type = qst_map_field(question)
+            return field, question, answer, field_type
+    return None, None, None, None
 
 
 def map_columns(survey_name, columns):
     field_map = {}
     col_map = {}
     for column in columns:
-        field, question, answer = map_column(survey_name, column)
+        field, question, answer, field_type = map_column(survey_name, column)
         dbname = field_map_dashboard(field)
-        col_map[column] = (field, question, answer, dbname)
+        col_map[column] = (field, question, answer, dbname, field_type)
         if field != None:
             if field not in field_map.keys():
-                field_map[field] = [(question, answer, column)]
+                field_map[field] = [(question, answer, column, field_type)]
             else:
-                field_map[field].append((question, answer, column))
+                field_map[field].append((question, answer, column, field_type))
     return field_map, col_map
 
 

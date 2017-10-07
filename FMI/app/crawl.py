@@ -827,7 +827,9 @@ def crawl_scentemotion(cft_filename):
     bulk(models.client, actions=bulk_data, stats_only=True)
     pass
 
-def map_survey(survey_filename):
+def map_survey(survey_filename, map_filename):
+    if map_filename != '':
+        survey.qa = survey.qa_map(map_filename)
     survey_name = os.path.splitext(survey_filename)[0].split('-', 1)[0].strip()
     ml_file = 'data/' + survey_filename
     survey_df = pd.read_csv(ml_file, sep=';', encoding='ISO-8859-1', low_memory=False)
@@ -837,42 +839,34 @@ def map_survey(survey_filename):
 
 
 def crawl_survey1(survey_filename, map_filename):
+    if map_filename != '':
+        survey.qa = survey.qa_map(map_filename)
     survey_name = os.path.splitext(survey_filename)[0].split('-', 1)[0].strip()
     ml_file = 'data/' + survey_filename
     survey_df = pd.read_csv(ml_file, sep=';', encoding='ISO-8859-1', low_memory=False)
     survey_df.fillna(0, inplace=True)
     # col_map[column]: (field, question, answer, dashboard)
-    # field_map[field]: [question=0, answer=1, column=2)]
+    # field_map[field]: [question=0, answer=1, column=2, field_type=3)]
     field_map , col_map = survey.map_columns(survey_name, survey_df.columns)
     survey_df.index = survey_df[field_map['resp_id'][0][2]]
     bulk_data = []
     count = 0
     total_count = 0
     for resp_id, survey_s in survey_df.iterrows():
-        sl = models.SurveyMap()
         resp_id = survey.answer_value_to_string(survey_s[field_map['resp_id'][0][2]])
         blindcode = survey.answer_value_to_string(survey_s[field_map['blindcode'][0][2]])
-        sl.resp_id = resp_id+"_"+blindcode
-        sl.survey  = survey_name
-        sl.affective = {}
-        sl.ballot = {}
-        sl.behavioral = {}
-        sl.children = {}
-        sl.concept = {}
-        sl.descriptors = {}
-        sl.emotion = {}
-        sl.fragrattr = {}
-        sl.hedonics = {}
-        sl.mood = {}
-        sl.physical = {}
-        sl.smell = {}
-        sl.suitable_product = {}
-        sl.suitable_stage = {}
+        #sl = models.SurveyMap()
+        #sl.resp_id = resp_id+"_"+blindcode
+        #sl.survey  = survey_name
+        data = {}
+        data['_id'] = resp_id+"_"+blindcode
+        data['resp_id'] = resp_id+"_"+blindcode
+        data['survey'] = survey_name
         for field, maps in field_map.items():
             # resp_id is the unique id of the record, this is already set above
             if field == 'resp_id':
                 continue
-            # map: 0=question, 1=answer, 2=column
+            # map: 0=question, 1=answer, 2=column, 3=field_type
             map = maps[0]
             answer_value = survey_s[map[2]]
             answer_value = survey.answer_value_to_string(answer_value)
@@ -889,26 +883,29 @@ def crawl_survey1(survey_filename, map_filename):
                     else:
                         if len(answer_value_2) > len(answer_value):
                             answer_value = answer_value_2
-                setattr(sl, field, answer_value)
+                #setattr(sl, field, answer_value)
+                elastic.convert_field(data, field, map, answer_value)
             # question mapping, no answer
             elif map[1][0] == '_':
-                setattr(sl, field, answer_value)
+                #setattr(sl, field, answer_value)
+                elastic.convert_field(data, field, map, answer_value)
             # answer mapping
             else:
-                setattr(sl, field, {map[1]: answer_value})
-                attr = getattr(sl, field)
+                #setattr(sl, field, {map[1]: answer_value})
+                #attr = getattr(sl, field)
                 for ix in range(1, len(maps)):
                     map = maps[ix]
                     answer_value = survey_s[map[2]]
                     answer_value = survey.answer_value_to_string(answer_value)
                     answer_value = survey.answer_value_encode(map[0], map[1], field, answer_value)
-                    attr[map[1]] = answer_value
-                    #attr.append({map[1]: answer_value})
-
-        data = elastic.convert_for_bulk(sl, 'update')
+                    #attr[map[1]] = answer_value
+                    ##attr.append({map[1]: answer_value})
+                    elastic.convert_field(data, field, map, answer_value)
+        #data = elastic.convert_for_bulk(sl, 'update')
+        data = elastic.convert_data_for_bulk(data, 'survey', 'survey', 'update')
         bulk_data.append(data)
         count = count + 1
-        if count > 100:
+        if count > 10:
             bulk(models.client, actions=bulk_data, stats_only=True)
             total_count = total_count + count
             print("crawl_survey: written another batch, total written {0:d}".format(total_count))
@@ -926,11 +923,5 @@ def crawl_survey(survey_filename, map_filename):
          crawl_survey1(survey_filename, map_filename)
     elif survey_name == 'orange beverages':
          crawl_survey1(survey_filename, map_filename)
-
-
-
-
-
-
-
-
+    elif survey_name == 'global panels':
+         crawl_survey1(survey_filename, map_filename)

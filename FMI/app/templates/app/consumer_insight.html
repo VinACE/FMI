@@ -7,9 +7,10 @@
 </div>
 
 {% load staticfiles %}
-<form action="" method="post" class="form-horizontal">
+<form id="consumer_insight_form" method="post" class="form-horizontal">
     {% csrf_token %}
-    <input type="hidden" id="workbook_name" name="workbook_name"value="test">
+    <input type="hidden" id="workbook_name" name="workbook_name" value="test">
+    <input type="hidden" id="dashboard_name" name="dashboard_name" value="initial">
     <div class="row">
         <div class="col-md-5 iff-dataset">
             <div class="container-fluid">
@@ -32,7 +33,7 @@
                             Analyze the Fresh and Clean study.
                         </p>
                         <p>
-                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('fresh and clean')">Fresh and Clean
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('fresh and clean', 'Topline')">Fresh and Clean
                                 <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
                             </button>
                         </p>
@@ -61,7 +62,7 @@
                             Analyze the Orange Beverages study
                         </p>
                         <p>
-                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('orange beverages')">Orange Beverages
+                            <button  type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('orange beverages', 'Hedonics')">Orange Beverages
                                 <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
                             </button>
                         </p>
@@ -107,28 +108,24 @@
                     <div class="col-md-5">
 		                <div class="info-card">
 				                <div class="info-card-front">
-					                <img class="card-image" src="{% static "app/media/CI2.jpg" %}">
+					                <img class="card-image" src="{% static "app/media/guide.jpg" %}">
 				                </div>
 			                <div class="info-card-back">
-				                <h3>Facts and Norms</h3>
+				                <h3>Global Panels</h3>
                                 <p>
-                                    They survey data is interpreted to derive facts and norms.
+                                    Analyze the Global Panels study.
                                 </p>
 			                </div>
 		                </div>
                     </div>
                     <div class="col-md-7">
                         <p>
-                            They survey data is interpreted to derive facts and norms. A <em>Fact</em> expresses a survey Q&A as a percentile; the response of the
-                            respondents to this Q&A compared to the total number of respondents. In case of a boolean response (no/yes), the response value
-                            is a 0 or 1. For a nominal response, the response value is normalized between 0 and 1.
-                            These Facts can be computed for the whole population, but it is also possible to compute these Facts for sub-groups of respondents.
-                            These sub-groups corresponds to Facets that characterize respondents such as Age group, Gender, Country.
-                            Having different Fact values for these sub-groups results into <em>Norms</em>. What are the average Fact values for the different groups
-                            and where do you see patterns or correlations.
+                            Analyze the Global Panels study.
                         </p>
                         <p>
-                            <a class="btn btn-primary" href="{% url 'facts' %}">Facts and Norms &raquo;</a>
+                            <button type="submit" name="search_survey"  class="btn btn-primary" onclick="fill_workbook('global panels', 'Topline')">Global Panels
+                                <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>
+                            </button>
                         </p>
                     </div>
                 </div>

@@ -1442,6 +1442,16 @@ class SurveyWorkbook:
             'dashboard_data': 'push',
             'filters'       : {'survey.keyword' : ["orange beverages"]}
             },
+        "global panels" : {
+            'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
+            'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
+                               "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
+            'tiles'         : ["country.keyword", "gender.keyword", "age.keyword", "product_form.keyword", "method.keyword", "blindcode.keyword"],
+            'charts'        : dashboard_link,
+            'storyboard'    : storyboard_link,
+            'dashboard_data': 'pull',
+            'filters'       : {'survey.keyword' : ["global panels"]}
+            },
     }
 
     ### GLOBAL VARIABLES

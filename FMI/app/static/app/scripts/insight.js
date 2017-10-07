@@ -5,10 +5,10 @@
 // JQuery
 
 
-function fill_workbook(workbook_name) {
+function fill_workbook(workbook_name, dashboard_name) {
     var input = document.getElementById("workbook_name");
     input.value = workbook_name
+    var input = document.getElementById("dashboard_name");
+    input.value = dashboard_name
 }
-
-
 

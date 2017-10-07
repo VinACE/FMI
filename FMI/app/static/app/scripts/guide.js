@@ -457,6 +457,7 @@ function site_onchange() {
     //document.getElementById("guide_form").submit();
     if (site_name != "") {
         api_site_menu(site_name);
+        api_storyboard_def('link');
     }
 }
 
@@ -647,6 +648,11 @@ function getCookie(name) {
     return cookieValue;
 }
 
+function api_error(xhr, error) {
+    console.debug(xhr);
+    console.debug(error);
+}
+
 function api_site_menu_callback(data, status) {
     // var csrftoken = '{{ csrf_token }}';
     var route_name = data['route_name'];
@@ -677,7 +683,8 @@ function api_site_menu(site_name) {
     //    method: 'GET',
     //    dataType: 'json',
     //    data: params,
-    //    success: api_site_menu_callback
+    //    success: api_site_menu_callback,
+    //    error: api_error
     //});
 
     var cookie_csrftoken = getCookie('csrftoken');
@@ -692,7 +699,59 @@ function api_site_menu(site_name) {
         method: 'POST',
         dataType: 'json',
         data: params,
-        success: api_site_menu_callback
+        success: api_site_menu_callback,
+        error: api_error
+    });
+}
+
+
+function api_storyboard_def_put_callback(data, status) {
+    var storyboard_name = data['storyboard_select'];
+    var storyboard = data['storyboard'];
+}
+
+function api_storyboard_def_get_callback(html, status) {
+    var dom_array = $.parseHTML(html);
+    var form_elm = $(dom_array).filter('form').get(0)
+    var input_elm = form_elm.getElementsByTagName('input')[0];
+    var csrfoken = input_elm.value;
+    var table_elm = $(dom_array).filter('table').get(0)
+    var td_elms = table_elm.getElementsByTagName('td');
+    var storyboard_name = td_elms[1].textContent;
+    var headers = {};
+    var params = {};
+    var url = getBaseUrl() + '/api/storyboard_def';
+    params['csrfmiddlewaretoken'] = csrftoken;
+    params['storyboard_select'] = storyboard_name;
+    params['site_views'] = JSON.stringify(g_site_views);
+    //$.post(url, headers = headers, params = params, api_site_menu_callback);
+    $.ajax({
+        url: url,
+        headers: headers,
+        method: 'POST',
+        dataType: 'json',
+        data: params,
+        success: api_storyboard_def_put_callback,
+        error: api_error
+    });
+}
+
+function api_storyboard_def(storyboard_name) {
+    var headers = {};
+    var params = {};
+    params['api_request'] = 'api_csrftoken'
+    params['storyboard_select'] = storyboard_name;
+    var url = getBaseUrl() + '/api/storyboard_def';
+    // first to the get on this website to obtain the token.
+    //$.get(url, params, api_site_menu_callback);
+    $.ajax({
+        url: url,
+        headers: headers,
+        method: 'GET',
+        dataType: 'html',
+        data: params,
+        success: api_storyboard_def_get_callback,
+        error: api_error
     });
 }
 

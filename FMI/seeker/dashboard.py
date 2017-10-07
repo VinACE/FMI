@@ -434,7 +434,10 @@ def bind_aggr(seekerview, chart, agg_name, aggregations):
         else:
             mean = X_total
     else:
-        mean = nr_respondents / X_rownr
+        if X_rownr > 0:
+            mean = nr_respondents / X_rownr
+        else:
+            mean = nr_respondents
     meta_data['mean'] = mean
     meta_data['size'] = nr_respondents
     # ONLY X FACET
@@ -588,7 +591,7 @@ def bind_topline_aggr(seekerview, chart, aggr_name, aggregations, benchmark=None
     # className have to be set. This win/lose is set based on the first columns, which contains either the benchmark
     # or the average.
     # The cells in a DataTable start at rownr 0 (this not the header) and at colnr 0 (this is the label)
-    if 'formatter' in chart:
+    if 'formatter' in chart and len(dt.columns) > 1:
         if 'setProperty' in chart['formatter']:
             winlose = []
             for rownr in range(0, len(dt)):

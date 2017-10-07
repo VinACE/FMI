@@ -278,13 +278,11 @@ def consumer_insight_view(request):
             #seekerview.request = request
             #return seekerview.render()
             #url = reverse('search_survey', args=(), kwargs={'survey.keyword': '2015'})
+            kwargs={}
             if 'workbook_name' in request.POST:
-                kwargs={
-                    'workbook_name' : request.POST['workbook_name'],
-                    #'survey.keyword': request.POST['survey.keyword'],
-                    }
-            else:
-                kwargs={}
+                kwargs['workbook_name'] = request.POST['workbook_name']
+            if 'dashboard_name' in request.POST:
+                kwargs['dashboard_name'] = request.POST['dashboard_name']
             url = reverse('search_survey')
             params = urllib.parse.urlencode(kwargs)
             return HttpResponseRedirect(url + "?%s" % params)
@@ -370,14 +368,13 @@ def crawl_view(request):
             for question in survey.qa.keys():
                 answers.extend(list(survey.qa[question].keys()))
             if 'map_survey' in form.data:
-                col_map = crawl.map_survey(ci_filename)
+                col_map = crawl.map_survey(ci_filename, cimap_filename)
                 answers = sorted(answers)
                 context = {
                     'form'      : form,
                     'col_map'   : col_map,
                     'answers'   : answers,
                     'qa'        : survey.qa,
-                    'dashboard' : models.SurveySeekerView.dashboard
                     }
                 return render(request, 'app/crawlresults.html', context )
             if 'return_survey' in form.data:
