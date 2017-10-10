@@ -313,24 +313,32 @@ aggr2ans = {
     }
 
 qst2fld = {
-    "affective"     : (["affective"], 'nested_qst_ans'),
-    "ballot"        : (["ballot"], 'nested_qst_ans'),
-    "behavioral"    : (["behavioral"], 'nested_qst_ans'),
-    "children"      : (["children"], 'nested_qst_ans'),
-    "concept"       : (["concept"], 'nested_qst_ans'),
-    "descriptors"   : (["descriptors"], 'nested_qst_ans'),
-    "emotion"       : (["emotion"], 'nested_qst_ans'),
-    "fragrattr"     : (["fragrattr"], 'nested_qst_ans'),
-    "hedonics"      : (["hedonics"], 'nested_qst_ans'),
-    "liking"        : (["liking"], 'string'),
-    "mood"          : (["mood"], 'nested_qst_ans'),
-    "physical"      : (["physical"], 'nested_qst_ans'),
-    "smell"         : (["smell"], 'nested_qst_ans'),
+    "affective"         : (["affective"], 'nested_qst_ans'),
+    "ballot"            : (["ballot"], 'nested_qst_ans'),
+    "behavioral"        : (["behavioral"], 'nested_qst_ans'),
+    "children"          : (["children"], 'nested_qst_ans'),
+    "concept"           : (["concept"], 'nested_qst_ans'),
+    "descriptors"       : (["descriptors"], 'nested_qst_ans'),
+    "emotion"           : (["emotion"], 'nested_qst_ans'),
+    "fragrattr"         : (["fragrattr"], 'nested_qst_ans'),
+    "hedonics"          : (["hedonics"], 'nested_qst_ans'),
+    "liking"            : (["liking"], 'string'),
+    "mood"              : (["mood"], 'nested_qst_ans'),
+    "physical"          : (["physical"], 'nested_qst_ans'),
+    "smell"             : (["smell"], 'nested_qst_ans'),
     "suitable_product"  : (["suitable_product"], 'nested_qst_ans'),
-    "suitable_stage"  : (["suitable_stage"], 'nested_qst_ans'),
-    "industry"      : (["industry"], 'nested_qst_ans'),
-    "health_condition" : (["health_condition"], 'nested_qst_ans'),
-    "product"       : (["product"], 'nested_qst_ans'),
+    "suitable_stage"    : (["suitable_stage"], 'nested_qst_ans'),
+    "industry"          : (["industry"], 'nested_qst_ans'),
+    "health_condition"  : (["health_condition"], 'nested_qst_ans'),
+    "product"           : (["product"], 'nested_qst_ans'),
+    "format_used"       : (["format_used"], 'nested_qst_ans'),
+    "format_rejected"   : (["format_rejected"], 'nested_qst_ans'),
+    "consumer_nature"   : (["consumer_nature"], 'nested_qst_ans'),
+    "purpose"           : (["purpose"], 'nested_qst_ans'),
+    "ideal_benefits"    : (["ideal_benefits"], 'nested_qst_ans'),
+    "air_emotion"       : (["air_emotion"], 'nested_qst_ans'),
+    "cleaners_emotion"  : (["cleaners_emotion"], 'nested_qst_ans'),
+    "expected_benefits" : (["expected_benefits"], 'nested_qst_ans'),
     }
 
 
@@ -355,7 +363,15 @@ survey2qst = {
     "global panels" : [
                     "industry",
                     "health_condition",
-                    "product"
+                    "product",
+                    "format_used",
+                    "format_rejected",
+                    "consumer_nature",
+                    "purpose",
+                    "ideal_benefits",
+                    "air_emotion",
+                    "cleaners_emotion",
+                    "expected_benefits"
                     ]
     }
 

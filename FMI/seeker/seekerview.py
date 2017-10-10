@@ -462,6 +462,7 @@ class SeekerView (View):
          }
     ]
     tiles = []
+    qst2fld = {}
 
     #workbook = {
     #    }
@@ -723,6 +724,14 @@ class SeekerView (View):
                 if facet_base_field_name == base_field_name:
                     return facet
             print("get_facet_by_field_name: facet not found, field_name ", field_name)
+            for qst, mapping in self.qst2fld.items():
+                fields = mapping[0]
+                field_type = mapping[1]
+                if field_name in fields:
+                    if field_type == 'nested_qst_ans':
+                        facet = seeker.facets.OptionFacet(field_name, label = field_name, nestedfield=field_name, visible_pos=0)
+                        return facet
+            print("get_facet_by_field_name: facet also not found in qstfld, field_name ", field_name)
         return None
 
     def get_search_fields(self, mapping=None, prefix=''):
@@ -1014,6 +1023,7 @@ class SeekerView (View):
     # The workbook and dashboard objects of the specified workbook_name and dashboard_name are returned.
     def get_workbook_dashboard_names(self):
         workbook = {}
+        dashboard = None
         workbook_name = self.request.GET.get('workbook_name', '').strip()
         if workbook_name == '':
             workbook_name = 'initial'
@@ -1021,23 +1031,18 @@ class SeekerView (View):
         if hasattr(self, 'workbooks'):
             if workbook_name in self.workbooks:
                 workbook = self.workbooks[workbook_name]
-                if 'display' in workbook:
-                    self.display = workbook['display']
                 if 'facets' in workbook:
                     for facet in self.facets:
                         if facet.field in workbook['facets']:
                             facet.visible_pos = 1
                         else:
                             facet.visible_pos = 0
-                if 'charts' in workbook:
-                    self.dashboard = workbook['charts']
-                if 'tiles' in workbook:
-                    self.tiles = workbook['tiles']
-                if 'storyboard' in workbook:
-                    self.storyboard = workbook['storyboard']
-                if 'dashboard_data' in workbook:
-                    dashboard_data = workbook['dashboard_data']
-        dashboard = None
+                self.display = workbook.get('display', [])
+                self.dashboard = workbook.get('charts', [])
+                self.tiles = workbook.get('tiles', [])
+                self.storyboard = workbook.get('storyboard', None)
+                dashboard_data = workbook.get('dashboard_data', 'push')
+                self.qst2fld = workbook.get('qst2fld', {})
         dashboard_name = self.request.GET.get('dashboard_name', '').strip()
         for db in self.storyboard:
             if dashboard_name != '':

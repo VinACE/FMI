@@ -1411,6 +1411,32 @@ class SurveyWorkbook:
         }
         ]
 
+    dashboard_panels = {
+        "industry_perc_col" : {
+            'chart_type': "ColumnChart",
+            'chart_title' : "Industry %",
+            'data_type'  : "aggr",
+            'listener'    : {'select' : {'colsort': None}},
+            'X_facet'     : {
+                'field'   : "industry",
+                'label'   : "Industry",
+                'calc'    : 'percentile',
+                "answers" : [],
+                "values"  : ["Yes", {'v-sum':'*'}],
+                'total'   : False },
+            },
+        }
+
+    dashboard_panels_industry = OrderedDict()
+    dashboard_panels_industry['rows'] = [["industry_perc_col"]]
+
+    storyboard_panels = [
+        {'name'     : "Industry",
+         'layout'   : dashboard_panels_industry,
+         'active'   : True,
+        }
+        ]
+
     workbooks = {
         "fresh and clean" : {
             'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
@@ -1430,7 +1456,8 @@ class SurveyWorkbook:
             'charts'        : dashboard_link,
             'storyboard'    : storyboard_link,
             'dashboard_data': 'pull',
-            'filters'       : {'survey.keyword' : ["fresh and clean"]}
+            'filters'       : {'survey.keyword' : ["fresh and clean"]},
+            'qst2fld'       : {},
             },
         "orange beverages" : {
             'display'       : ["gender", "age", 'brand', "blindcode", "liking"],
@@ -1440,17 +1467,31 @@ class SurveyWorkbook:
             'charts'        : dashboard_orange,
             'storyboard'    : storyboard_orange,
             'dashboard_data': 'push',
-            'filters'       : {'survey.keyword' : ["orange beverages"]}
+            'filters'       : {'survey.keyword' : ["orange beverages"]},
+            'qst2fld'       : {},
             },
         "global panels" : {
             'display'       : ["gender", "age", 'brand', "blindcode", "freshness"],
             'facets'        : ["survey.keyword", "country.keyword", "gender.keyword", "age.keyword", "cluster.keyword", "brand.keyword", "product_form.keyword",
                                "method.keyword", "blindcode.keyword", "olfactive.keyword", "perception.keyword", "liking.keyword"],
             'tiles'         : ["country.keyword", "gender.keyword", "age.keyword", "product_form.keyword", "method.keyword", "blindcode.keyword"],
-            'charts'        : dashboard_link,
-            'storyboard'    : storyboard_link,
+            'charts'        : dashboard_panels,
+            'storyboard'    : storyboard_panels,
             'dashboard_data': 'pull',
-            'filters'       : {'survey.keyword' : ["global panels"]}
+            'filters'       : {'survey.keyword' : ["global panels"]},
+            'qst2fld'       : {
+                                "industry"          : (["industry"], 'nested_qst_ans'),
+                                "health_condition"  : (["health_condition"], 'nested_qst_ans'),
+                                "product"           : (["product"], 'nested_qst_ans'),
+                                "format_used"       : (["format_used"], 'nested_qst_ans'),
+                                "format_rejected"   : (["format_rejected"], 'nested_qst_ans'),
+                                "consumer_nature"   : (["consumer_nature"], 'nested_qst_ans'),
+                                "purpose"           : (["purpose"], 'nested_qst_ans'),
+                                "ideal_benefits"    : (["ideal_benefits"], 'nested_qst_ans'),
+                                "air_emotion"       : (["air_emotion"], 'nested_qst_ans'),
+                                "cleaners_emotion"  : (["cleaners_emotion"], 'nested_qst_ans'),
+                                "expected_benefits" : (["expected_benefits"], 'nested_qst_ans'),
+                              },
             },
     }
 

@@ -905,7 +905,7 @@ def crawl_survey1(survey_filename, map_filename):
         data = elastic.convert_data_for_bulk(data, 'survey', 'survey', 'update')
         bulk_data.append(data)
         count = count + 1
-        if count > 10:
+        if count > 100:
             bulk(models.client, actions=bulk_data, stats_only=True)
             total_count = total_count + count
             print("crawl_survey: written another batch, total written {0:d}".format(total_count))

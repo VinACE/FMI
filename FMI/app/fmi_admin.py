@@ -19,6 +19,7 @@ from elasticsearch.helpers import bulk
 import seeker
 import app.models as models
 import app.crawl as crawl
+import app.survey as survey
 from FMI.settings import BASE_DIR
 
 
@@ -137,11 +138,31 @@ def create_index_survey():
         indices_client.delete(index=index_name)
     indices_client.create(index=index_name)
     #put_settings(models.ScentemotionMap)
+    # add qstfld fields
+    es_mapping = models.SurveyMap._meta.es_mapping
+    for qst, mapping in survey.qst2fld.items():
+        fields = mapping[0]
+        field_type = mapping[1]
+        if field_type == 'nested_qst_ans':
+            for field in fields:
+                if field not in es_mapping['properties']:
+                    es_mapping['properties'][field] = {}
+                    es_mapping['properties'][field]['type'] = 'nested'
+                    es_mapping['properties'][field]['properties'] = {}
+                    es_mapping['properties'][field]['properties']['question'] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+                    es_mapping['properties'][field]['properties']['answer'] = {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}}
+                        #'type'       : 'nested',
+                        #'properties' : {
+                        #    'question' : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
+                        #    'answer'   : {'type' : 'string', 'fields' : {'keyword' : {'type' : 'keyword', 'ignore_above' : 256}}},
+                        #    }
+                        #},
     indices_client.put_mapping(
         doc_type=models.SurveyMap._meta.es_type_name,
-        body=models.SurveyMap._meta.es_mapping,
+        #body=models.SurveyMap._meta.es_mapping,
+        body=es_mapping,
         index=index_name
-    )
+        )
 
 
 def create_index_elastic(index_choices, excel_filename):

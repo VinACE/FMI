@@ -29,6 +29,7 @@ platformseekers = {
     #'CI Surveys'            : (models.SurveySeekerView, "search_survey"),
     }
 
+
 def storyboard_def(request):
     if request.method == 'GET':
         storyboard_name = request.GET.get('storyboard_select', '')

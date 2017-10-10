@@ -3,12 +3,14 @@ from datetime import datetime
 import requests
 from requests_ntlm import HttpNtlmAuth
 from requests.auth import HTTPBasicAuth
+import json
 
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
 from elasticsearch_dsl.connections import connections
 import seeker
 import app.models as models
+from FMI.settings import BASE_DIR, ES_HOSTS
 
 #from elasticsearch_dsl import DocType, String, Date, Double, Long, Integer
 
@@ -225,6 +227,29 @@ def elastic_dsl():
 
 ## Display cluster health
 #print(connections.get_connection().cluster.health())
+
+
+def elastic_get(index, endpoint, params):
+    es_host = ES_HOSTS[0]
+    headers = {}
+    if 'http_auth' in es_host:
+        headers['http_auth'] = es_host['http_auth']
+    host = es_host['host']
+    url = "http://" + host + ":9200/" + index
+    data = json.dumps(params)
+    r = requests.get(url + "/" + endpoint + "/" + index, headers=headers, data=data)
+    results = json.loads(r.text)
+    return results
+
+def elastic_put(index, endpoint, params):
+    es_host = ES_HOSTS[0]
+    headers = {}
+    if 'http_auth' in es_host:
+        headers['http_auth'] = es_host['http_auth']
+    host = es_host['host']
+    url = "http://" + host + ":9200/" + index
+    data = json.dumps(params)
+    r = requests.put(url + "/" + endpoint + "/" + index, headers=headers, data=data)
 
 
 def convert_for_bulk(objmap, action=None):
